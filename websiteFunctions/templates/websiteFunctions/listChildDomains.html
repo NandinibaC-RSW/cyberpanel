@@ -1,0 +1,839 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Sub/Addon Domains - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Page Structure */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .page-title-section {
+        flex: 1;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    /* Search and Filter Section */
+    .search-section {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--shadow-md, 0 2px 8px rgba(0,0,0,0.08));
+        border: 1px solid var(--border-primary, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .search-row {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .search-input-wrapper {
+        flex: 1;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-primary, white);
+        transition: all 0.2s ease;
+    }
+    
+    /* Select dropdown Windows compatibility */
+    select.form-control {
+        background-color: var(--bg-primary, white) !important;
+        color: var(--text-primary, #2f3640) !important;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f3640' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+        padding-right: 40px;
+    }
+    
+    select.form-control option {
+        background-color: var(--bg-primary, white);
+        color: var(--text-primary, #2f3640);
+    }
+    
+    .form-control:hover {
+        border-color: #5b5fcf;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5b5fcf;
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    .form-select {
+        width: 120px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-primary, white);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    /* Domain Cards */
+    .domain-card {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--shadow-md, 0 2px 8px rgba(0,0,0,0.08));
+        border: 1px solid var(--border-primary, #e8e9ff);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .domain-card:hover {
+        box-shadow: var(--shadow-lg, 0 4px 16px rgba(0,0,0,0.12));
+        border-color: #5b5fcf;
+    }
+    
+    .domain-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .domain-info {
+        flex: 1;
+    }
+    
+    .domain-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        text-decoration: none;
+        display: inline-block;
+        margin-bottom: 5px;
+        transition: color 0.2s ease;
+    }
+    
+    .domain-name:hover {
+        color: #5b5fcf;
+    }
+    
+    .master-domain {
+        font-size: 13px;
+        color: var(--text-secondary, #8893a7);
+        margin-top: 5px;
+    }
+    
+    .master-domain a {
+        color: #5b5fcf;
+        text-decoration: none;
+    }
+    
+    .master-domain a:hover {
+        text-decoration: underline;
+    }
+    
+    .manage-btn {
+        background: #5b5fcf;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .manage-btn:hover {
+        background: #4a4fc4;
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+    }
+    
+    /* Domain Details Grid */
+    .domain-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .detail-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5b5fcf;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    
+    .detail-content {
+        flex: 1;
+    }
+    
+    .detail-label {
+        font-size: 11px;
+        color: var(--text-secondary, #8893a7);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    
+    .detail-value {
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        font-weight: 600;
+    }
+    
+    .detail-value a {
+        color: #5b5fcf;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .detail-value a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        background: var(--bg-secondary, #f8f9ff);
+        color: #5b5fcf;
+    }
+    
+    .action-btn:hover {
+        background: #eef0ff;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.delete {
+        color: #dc3545;
+    }
+    
+    .action-btn.delete:hover {
+        background: #ffebee;
+    }
+    
+    .action-btn.convert {
+        color: #ff9800;
+    }
+    
+    .action-btn.convert:hover {
+        background: var(--bg-warning-light, #fff3e0);
+    }
+    
+    /* Pagination */
+    .pagination-section {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+    }
+    
+    .pagination-select {
+        width: 120px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-primary, white);
+        cursor: pointer;
+        background-color: var(--bg-primary, white) !important;
+    }
+    
+    select.pagination-select option {
+        background-color: var(--bg-primary, white);
+        color: var(--text-primary, #2f3640);
+    }
+    
+    /* Modal Styles */
+    .modal-content {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .modal-header {
+        background: var(--bg-secondary, #f8f9ff);
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 12px 12px 0 0;
+        padding: 20px 25px;
+    }
+    
+    .modal-header .close {
+        color: var(--text-primary, #2f3640);
+        opacity: 0.8;
+    }
+    
+    .modal-header .close:hover {
+        color: var(--text-primary, #2f3640);
+        opacity: 1;
+    }
+    
+    .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+    }
+    
+    .modal-body {
+        padding: 25px;
+        background: var(--bg-primary, white);
+    }
+    
+    .modal-footer {
+        background: var(--bg-secondary, #f8f9ff);
+        border-top: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 0 0 12px 12px;
+        padding: 15px 25px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: #5b5fcf;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #4a4fc4;
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        box-shadow: 0 4px 12px rgba(220,53,69,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary, #f8f9ff);
+        color: #5b5fcf;
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .btn-secondary:hover {
+        background: #eef0ff;
+        border-color: #5b5fcf;
+    }
+    
+    /* Form styles in modal */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Checkbox styles */
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--bg-secondary, #f8f9ff);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    
+    .checkbox-wrapper:hover {
+        border-color: #5b5fcf;
+        background: var(--bg-hover, #f0f1ff);
+    }
+    
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        cursor: pointer;
+        accent-color: #5b5fcf;
+    }
+    
+    .checkbox-label {
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    /* Progress styles */
+    .progress-section {
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 10px;
+        padding: 25px;
+        margin-top: 20px;
+    }
+    
+    .progress-status {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .progress-bar-container {
+        background: #e8e9ff;
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    
+    .progress-bar-fill {
+        background: #5b5fcf;
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--border-light, #f3f3f3);
+        border-top: 2px solid #5b5fcf;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .alert-danger {
+        background: #ffebee;
+        border: 1px solid #ffcdd2;
+        color: #c62828;
+    }
+    
+    .alert-success {
+        background: #e8f5e9;
+        border: 1px solid #c8e6c9;
+        color: #2e7d32;
+    }
+    
+    /* Responsive */
+    /* Ensure modal form controls have proper backgrounds */
+    .modal-body .form-control,
+    .modal-body select {
+        background-color: var(--bg-primary, white) !important;
+        color: var(--text-primary, #2f3640) !important;
+    }
+    
+    /* Additional fixes for select dropdowns in dark mode */
+    select.form-select option,
+    select.pagination-select option,
+    .modal-body select option {
+        background-color: var(--bg-primary, white) !important;
+        color: var(--text-primary, #2f3640) !important;
+    }
+    
+    @media (max-width: 768px) {
+        .domain-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .domain-details {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-wrap: wrap;
+        }
+        
+        .search-row {
+            flex-direction: column;
+        }
+        
+        .search-input-wrapper {
+            width: 100%;
+        }
+        
+        .form-select {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div ng-controller="listChildDomainsMain" class="page-wrapper">
+    <div class="page-container">
+        <div class="page-header">
+            <div class="page-title-section">
+                <h1 class="page-title">
+                    {% trans "List Child Domains" %}
+                    <span ng-hide="cyberPanelLoading" class="loading-spinner"></span>
+                </h1>
+                <p class="page-subtitle">{% trans "Manage your sub-domains and addon domains from one place" %}</p>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-row">
+                <div class="search-input-wrapper">
+                    <input ng-change="searchWebsites()" placeholder="{% trans 'Search domains...' %}" 
+                           ng-model="patternAdded" name="dom" type="text" class="form-control">
+                </div>
+                <select ng-model="recordsToShow" ng-change="getFurtherWebsitesFromDB()" 
+                        class="form-select">
+                    <option>10</option>
+                    <option>50</option>
+                    <option>100</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Domains List -->
+        <div ng-repeat="web in WebSitesList track by $index">
+            <div class="domain-card">
+                <div class="domain-header">
+                    <div class="domain-info">
+                        <a href="http://{$ web.domain $}" target="_blank" rel="noopener" class="domain-name">
+                            {$ web.domain $}
+                        </a>
+                        <div class="master-domain">
+                            <i class="fas fa-folder"></i>
+                            Master Domain: {$ web.masterDomain $} • 
+                            <a target="_blank" rel="noopener" href="/filemanager/{$ web.masterDomain $}">
+                                <i class="fas fa-folder-open"></i> File Manager
+                            </a>
+                        </div>
+                    </div>
+                    <a href="/websites/{$ web.masterDomain $}/{$ web.domain $}" target="_blank" rel="noopener"
+                       class="manage-btn">
+                        <i class="fas fa-cog"></i>
+                        {% trans "Manage" %}
+                    </a>
+                </div>
+
+                <div class="domain-details">
+                    <div class="detail-item">
+                        <div class="detail-icon">
+                            <i class="fas fa-network-wired"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">{% trans "IP Address" %}</div>
+                            <div class="detail-value">{$ web.ipAddress $}</div>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">{% trans "Package" %}</div>
+                            <div class="detail-value">{$ web.package $}</div>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">{% trans "Owner" %}</div>
+                            <div class="detail-value">{$ web.admin $}</div>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">{% trans "SSL Certificate" %}</div>
+                            <div class="detail-value">
+                                <a ng-click="issueSSL(web.domain)" href="" ng-class="{'disabled': issuingSSL[web.domain]}">
+                                    <span ng-hide="issuingSSL[web.domain]">{% trans "Issue SSL" %}</span>
+                                    <span ng-show="issuingSSL[web.domain]"><i class="fas fa-spinner fa-spin"></i> {% trans "Issuing SSL..." %}</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn convert" ng-click="initConvert(web.domain)" 
+                            data-toggle="modal" data-target="#settings">
+                        <i class="fas fa-exchange-alt"></i>
+                        {% trans "Convert to Website" %}
+                    </button>
+                    <button class="action-btn delete" ng-click="deleteDomainInit(web.domain)" 
+                            data-toggle="modal" data-target="#DeleteChild">
+                        <i class="fas fa-trash"></i>
+                        {% trans "Delete" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <div id="listFail" class="alert alert-danger" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{% trans "Cannot list websites. Error message:" %} {$ errorMessage $}</span>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-section" ng-show="pagination.length > 0">
+            <select ng-model="currentPage" class="pagination-select" ng-change="getFurtherWebsitesFromDB()">
+                <option ng-repeat="page in pagination" value="{$ $index + 1 $}">{% trans "Page" %} {$ $index + 1 $}</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="DeleteChild" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        {% trans "Delete Sub/Addon Domain" %}
+                        <span ng-hide="cyberPanelLoading" class="loading-spinner"></span>
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form name="DeleteDocumentRootForm">
+                        <div class="form-group">
+                            <div class="checkbox-wrapper">
+                                <input ng-model="DeleteDocRoot" type="checkbox" id="deleteDocRoot">
+                                <label for="deleteDocRoot" class="checkbox-label">
+                                    {% trans "Delete Document Root" %}
+                                </label>
+                            </div>
+                            <p style="margin-top: 10px; font-size: 13px; color: var(--text-secondary, #8893a7);">
+                                {% trans "Warning: This will permanently delete all files in the document root directory." %}
+                            </p>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="button" class="btn btn-danger" ng-click="deleteChildDomain()">
+                        <i class="fas fa-trash"></i>
+                        {% trans "Delete Now" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Convert to Website Modal -->
+    <div id="settings" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        {% trans "Convert Sub/Addon Domain to Website" %}
+                        <span ng-hide="cyberPanelLoading" class="loading-spinner"></span>
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form name="containerSettingsForm">
+                        <div ng-hide="installationDetailsForm">
+                            <div class="form-group">
+                                <label class="form-label">{% trans "Domain Name" %}</label>
+                                <input name="dom" type="text" class="form-control" 
+                                       ng-model="domainName" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">{% trans "Select Owner" %}</label>
+                                <select ng-model="websiteOwner" class="form-control">
+                                    <option value="">-- {% trans "Select an owner" %} --</option>
+                                    {% for items in owernList %}
+                                        <option>{{ items }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">{% trans "Select Package" %}</label>
+                                <select ng-model="packageForWebsite" class="form-control">
+                                    <option value="">-- {% trans "Select a package" %} --</option>
+                                    {% for items in packageList %}
+                                        <option>{{ items }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">{% trans "Email" %}</label>
+                                <input type="email" name="email" class="form-control" 
+                                       ng-model="adminEmail" placeholder="admin@example.com" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">{% trans "Select PHP Version" %}</label>
+                                <select ng-model="phpSelection" class="form-control">
+                                    {% for php in phps %}
+                                        <option>{{ php }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div ng-hide="installationProgress" class="progress-section">
+                            <div class="progress-status">{$ currentStatus $}</div>
+                            <div class="progress-bar-container">
+                                <div id="installProgress" class="progress-bar-fill" style="width:0%"></div>
+                            </div>
+                        </div>
+
+                        <div ng-hide="installationProgress" style="margin-top: 20px;">
+                            <button type="button" ng-disabled="goBackDisable" ng-click="goBack()"
+                                    class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                {% trans "Go Back" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="button" class="btn btn-primary" ng-click="convert()">
+                        <i class="fas fa-exchange-alt"></i>
+                        {% trans "Convert" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

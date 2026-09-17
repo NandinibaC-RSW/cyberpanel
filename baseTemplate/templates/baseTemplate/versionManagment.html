@@ -1,0 +1,459 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Version Management - CyberPanel" %}*{% endblock %}
+
+{% block content %}
+
+    {% load static %}
+
+    <style>
+        /* Modern page styles matching new design */
+        .page-wrapper {
+            background: transparent;
+            padding: 20px;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-heading, #2f3640);
+            margin-bottom: 8px;
+        }
+        
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary, #8893a7);
+        }
+        
+        /* Card styles */
+        .content-card {
+            background: var(--bg-secondary, white);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            margin-bottom: 25px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary, #2f3640);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-color, #5b5fcf);
+            border-radius: 2px;
+        }
+        
+        /* Form styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-select,
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary, #2f3640);
+            background: var(--bg-secondary, white);
+            transition: all 0.2s ease;
+        }
+        
+        .form-select:hover,
+        .form-control:hover {
+            border-color: var(--accent-color, #5b5fcf);
+        }
+        
+        .form-select:focus,
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+        }
+        
+        /* Button styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4a4fc4);
+            box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-hover, #f8f9ff);
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover, #eef0ff);
+            border-color: var(--accent-color, #5b5fcf);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        /* Alert styles */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert-warning {
+            background: var(--warning-bg, #fef3e9);
+            border: 1px solid #fddfb9;
+            color: #b95e00;
+        }
+        
+        .alert-warning a {
+            color: #b95e00;
+            font-weight: 600;
+        }
+        
+        /* Info grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #8893a7);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            color: var(--text-primary, #2f3640);
+            font-weight: 500;
+            font-family: 'SF Mono', Monaco, monospace;
+            background: var(--bg-hover, #f8f9ff);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color, #e8e9ff);
+            word-break: break-all;
+        }
+        
+        /* Progress log */
+        .log-container {
+            background: var(--text-primary, #1e1e1e);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .log-textarea {
+            width: 100%;
+            min-height: 300px;
+            background: transparent;
+            border: none;
+            color: var(--bg-secondary, #f0f0f0);
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            resize: vertical;
+        }
+        
+        .log-textarea:focus {
+            outline: none;
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color, #f3f3f3);
+            border-top: 2px solid var(--accent-color, #5b5fcf);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content-card {
+                padding: 20px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+
+    <div class="page-wrapper" ng-controller="versionManagment">
+        <div class="page-container">
+            <div class="page-header">
+                <h1 class="page-title">{% trans "Version Management" %}</h1>
+                <p class="page-subtitle">{% trans "Here you can manage versions and check for updates to CyberPanel" %}</p>
+            </div>
+            {% if Notecheck %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>{% trans "Note: Latest commit does not match, please upgrade CyberPanel." %} <a href="https://cyberpanel.net/KnowledgeBase/home/upgrading-cyberpanel/">Learn how to upgrade CyberPanel.</a></span>
+            </div>
+            {% endif %}
+
+            <div class="content-card">
+                <h2 class="card-title">CyberPanel Version Control</h2>
+                
+                <div class="form-group">
+                    <label for="branchSelect" class="form-label">{% trans "Select Branch" %}</label>
+                    <select ng-model="branchSelect" id="branchSelect" class="form-select"></select>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" ng-click="upgrade()" class="btn btn-primary">
+                        <i class="fas fa-arrow-up"></i>
+                        {% trans "Upgrade CyberPanel to selected branch (Beta)" %}
+                    </button>
+                    <button type="button" onclick="refreshPage()" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                        {% trans "Refresh page" %}
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <h2 class="card-title">Version Information</h2>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">{% trans "Current Version" %}</span>
+                        <span class="info-value">{{ currentVersion }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">{% trans "Build" %}</span>
+                        <span class="info-value">{{ build }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">{% trans "Current Commit" %}</span>
+                        <span class="info-value">{{ Currentcomt }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">{% trans "Latest Version" %}</span>
+                        <span class="info-value">{{ latestVersion }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">{% trans "Latest Build" %}</span>
+                        <span class="info-value">{{ latestBuild }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">{% trans "Latest Commit" %}</span>
+                        <span class="info-value">{{ latestcomit }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card" ng-hide="upgradelogBox">
+                <h2 class="card-title">
+                    {% trans "Upgrade Progress Log" %}
+                    <span ng-hide="upgradeLoading" class="loading-spinner"></span>
+                </h2>
+                <div id="upgradeProgressLog"></div>
+                <div class="log-container">
+                    <textarea ng-model="upgradeLog" class="log-textarea" readonly>{{ logs }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to populate the branch dropdown
+        function populateBranches(branches) {
+            var branchSelect = document.getElementById("branchSelect");
+            for (let i = branches.length - 1; i >= 0; i--) {
+                const branch = branches[i];
+                var option = document.createElement("option");
+                option.value = branch;
+                option.text = branch;
+                if (branch.startsWith("v") && branch.indexOf("dev") === -1 && branch.indexOf("version-counter") === -1) {
+                    branchSelect.appendChild(option);
+                }
+            }
+
+        }
+
+        function getBranches(url, branches, page) {
+            if (!page) page = 1;
+            fetch(url + '?page=' + page)
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.length === 0) {
+                        populateBranches(branches);
+                    } else {
+                        const branchNames = data.map(branch => branch.name);
+                        branches = branches.concat(branchNames);
+                        getBranches(url, branches, page + 1);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error fetching branches: ' + error);
+                });
+        }
+
+        // Call the function to get all branches
+        getBranches('https://api.github.com/repos/usmannasir/cyberpanel/branches', [], 1);
+
+        function upgradeCyberPanel() {
+            try {
+                var selectedBranch = document.getElementById("branchSelect").value;
+
+                // Use the shell script URL based on the selected branch
+                var shellScriptUrl = selectedBranch;
+
+                if (confirm("Are you sure you want to upgrade to the selected branch from the remote script?")) {
+                    // Use fetch to trigger a server-side action (execute shell script)
+                    fetch('/base/upgrade', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            scriptUrl: shellScriptUrl,
+                        }),
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Failed to start upgrade. HTTP status ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Log the response from the server
+                            console.log('Upgrade response:', data);
+
+                            // Check if the progress value is defined and a finite number before setting it on the progress bar
+                            if (typeof data.progress !== 'undefined' && isFinite(data.progress)) {
+                                var upgradeProgressLog = document.getElementById("upgradeProgressLog");
+                                upgradeProgressLog.innerText = 'Upgrade Progress: ' + data.progress + '%';
+                                // You may also update other UI elements based on the response data
+                            } else {
+                                console.error('Invalid progress value received from the server:', data.progress);
+                                var upgradeProgressLog = document.getElementById("upgradeProgressLog");
+                                upgradeProgressLog.innerText = 'Upgrade failed. Invalid progress value received from the server.';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Upgrade failed. Error starting upgrade:', error);
+                            alert('Upgrade failed. Error starting upgrade. Check the console for details.');
+                        });
+
+                    // Download and execute the upgrade script using wget
+                    fetch(shellScriptUrl)
+                        .then(response => response.text())
+                        .then(scriptContent => {
+                            // Create a Blob from the script content
+                            var blob = new Blob([scriptContent], {type: 'text/plain'});
+
+                            // Create a temporary URL for the Blob
+                            var scriptUrl = URL.createObjectURL(blob);
+
+                            // Create an invisible iframe to trigger the download
+                            var iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            iframe.src = scriptUrl;
+                            document.body.appendChild(iframe);
+                        })
+                        .catch(error => {
+                            console.error('Failed to download upgrade script:', error);
+                            alert('Failed to download upgrade script. Check the console for details.');
+                        });
+                }
+            } catch (error) {
+                console.error('An unexpected error occurred:', error);
+
+                // Additional error handling
+                alert('An unexpected error occurred during the upgrade. Check the console for details.');
+
+                // Log detailed error information
+                console.error('Detailed error information:', error);
+            }
+        }
+
+        function refreshPage() {
+            location.reload();
+        }
+
+    </script>
+
+{% endblock %}

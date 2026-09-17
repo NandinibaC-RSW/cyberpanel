@@ -1,0 +1,436 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Restore Backups - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Restore Backups Page Specific Styles */
+    .restore-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .restore-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .restore-section {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-heading, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    .restore-description {
+        color: var(--text-secondary, #8893a7);
+        font-size: 14px;
+        margin-bottom: 25px;
+        line-height: 1.5;
+    }
+    
+    /* Table Styles */
+    .table-container {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .table {
+        width: 100%;
+        margin-bottom: 0;
+        background: var(--bg-secondary, white);
+    }
+    
+    .table thead {
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .table th {
+        border: none;
+        padding: 15px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-secondary, #8893a7);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .table td {
+        border: none;
+        padding: 15px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        border-bottom: 1px solid #f1f3f5;
+        vertical-align: middle;
+    }
+    
+    .table tbody tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Backup Type Badge */
+    .backup-type {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .backup-type.full {
+        background: var(--info-bg, #e0f2fe);
+        color: var(--info-text, #0369a1);
+    }
+    
+    .backup-type.data {
+        background: var(--success-bg, #f0fdf4);
+        color: var(--success-text, #065f46);
+    }
+    
+    .backup-type.database {
+        background: var(--warning-bg, #fef3c7);
+        color: var(--warning-text, #92400e);
+    }
+    
+    /* Destination Badge */
+    .destination-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--bg-hover, #f8f9ff);
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-action {
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        border: 1px solid transparent;
+        background: transparent;
+    }
+    
+    .btn-restore {
+        color: var(--success-text, #065f46);
+        border-color: #d1fae5;
+        background: var(--success-bg, #f0fdf4);
+    }
+    
+    .btn-restore:hover {
+        background: var(--success-text, #065f46);
+        color: white;
+        border-color: var(--success-text, #065f46);
+        text-decoration: none;
+    }
+    
+    .btn-delete {
+        color: var(--danger-text, #ef4444);
+        border-color: #fee2e2;
+        background: var(--danger-bg, #fef2f2);
+    }
+    
+    .btn-delete:hover {
+        background: var(--danger-text, #ef4444);
+        color: white;
+        border-color: var(--danger-text, #ef4444);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    .empty-state svg {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+    
+    .empty-state h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-heading, #2f3640);
+        margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    
+    /* Modal Styles */
+    .modal-content {
+        border-radius: 12px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        box-shadow: 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+    }
+    
+    .modal-header {
+        background: var(--bg-hover, #f8f9ff);
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        padding: 20px;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-heading, #2f3640);
+        margin: 0;
+    }
+    
+    .modal-body {
+        padding: 25px;
+    }
+    
+    .modal-footer {
+        background: var(--bg-hover, #f8f9ff);
+        border-top: 1px solid var(--border-color, #e8e9ff);
+        padding: 15px 20px;
+        border-radius: 0 0 12px 12px;
+    }
+    
+    .btn-default {
+        background: var(--bg-secondary, white);
+        border: 1px solid var(--border-color, #e8e9ff);
+        color: var(--text-primary, #2f3640);
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-default:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    .btn-danger {
+        background: var(--danger-text, #ef4444);
+        border: 1px solid var(--danger-text, #ef4444);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-danger:hover {
+        background: #dc2626;
+        border-color: #dc2626;
+        box-shadow: 0 3px 8px rgba(239,68,68,0.3);
+    }
+    
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        margin-left: 8px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .restore-wrapper {
+            padding: 15px;
+        }
+        
+        .restore-section {
+            padding: 20px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-action {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<script>
+    var deleteUrl = '';
+    
+    // Ensure modal is hidden on page load
+    $(document).ready(function() {
+        $('#DeleteMember').modal('hide');
+    });
+    
+    function DeleteWPNow(url) {
+        deleteUrl = url;
+        $('#DeleteMember').modal('show');
+    }
+    
+    function FinalDeleteWPNow() {
+        window.location.href = deleteUrl;
+    }
+    
+    // Helper function to format backup type
+    function getBackupTypeClass(type) {
+        if (type.toLowerCase().includes('full')) return 'full';
+        if (type.toLowerCase().includes('data')) return 'data';
+        if (type.toLowerCase().includes('database')) return 'database';
+        return '';
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="restore-wrapper" ng-controller="listWebsites">
+    <div class="restore-container">
+        <!-- Header Section -->
+        <div class="restore-section">
+            <h2 class="section-title">
+                RESTORE BACKUPS
+                <img ng-hide="cyberPanelLoading" src="{% static 'images/loading.gif' %}" class="loading-spinner">
+            </h2>
+            <p class="restore-description">{% trans "On this page you can restore, list, and delete backups of WordPress sites from your server." %}</p>
+        </div>
+
+        <!-- Backups List -->
+        <div class="restore-section">
+            <h3 class="section-title">AVAILABLE BACKUPS</h3>
+            
+            {% if job %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Website</th>
+                                <th>Type</th>
+                                <th>Backup Destination</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in job %}
+                                <tr>
+                                    <td>
+                                        <strong>#{{ sub.id }}</strong>
+                                    </td>
+                                    <td>
+                                        <strong>{{ sub.title }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="backup-type {{ sub.Backuptype|lower }}">
+                                            {{ sub.Backuptype }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="destination-badge">
+                                            <i class="fas fa-server"></i>
+                                            {{ sub.BackupDestination }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{% url 'RestoreHome' %}?BackupID={{ sub.id }}" 
+                                               class="btn-action btn-restore">
+                                                <i class="fas fa-undo"></i>
+                                                Restore
+                                            </a>
+                                            <button onclick="DeleteWPNow('{% url 'RestoreBackups' %}?DeleteID={{ sub.id }}')"
+                                                    class="btn-action btn-delete">
+                                                <i class="fas fa-trash"></i>
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    <h3>No Backups Found</h3>
+                    <p>You don't have any backups available to restore.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="DeleteMember" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Delete Backup</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this backup? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" onclick="FinalDeleteWPNow()" class="btn btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

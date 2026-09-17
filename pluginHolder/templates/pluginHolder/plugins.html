@@ -1,0 +1,496 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Installed Plugins - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Installed Plugins Specific Styles */
+    .plugins-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .plugins-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: var(--shadow-md, 0 2px 8px rgba(0,0,0,0.08));
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-header .icon {
+        width: 48px;
+        height: 48px;
+        background: #5856d6;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .page-header p {
+        font-size: 15px;
+        color: var(--text-secondary, #64748b);
+        margin: 0;
+    }
+    
+    /* Content Section */
+    .content-section {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: var(--shadow-md, 0 2px 8px rgba(0,0,0,0.08));
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5856d6;
+        border-radius: 2px;
+    }
+    
+    /* Plugin Cards */
+    .plugins-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+    
+    .plugin-card {
+        background: var(--bg-primary, white);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 12px;
+        padding: 25px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .plugin-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.1));
+        border-color: #5856d6;
+    }
+    
+    .plugin-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #5856d6, #4a90e2);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .plugin-card:hover::before {
+        transform: translateX(0);
+    }
+    
+    .plugin-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .plugin-icon {
+        width: 56px;
+        height: 56px;
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 24px;
+        color: #5856d6;
+    }
+    
+    .plugin-info {
+        flex: 1;
+    }
+    
+    .plugin-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 5px;
+    }
+    
+    .plugin-type {
+        display: inline-block;
+        padding: 4px 12px;
+        background: var(--purple-light, #e8e6ff);
+        color: #5856d6;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .plugin-description {
+        font-size: 14px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .plugin-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .plugin-version {
+        font-size: 13px;
+        color: var(--text-muted, #94a3b8);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .plugin-version-number {
+        background: var(--bg-secondary, #f8f9ff);
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+    }
+    
+    /* Table View (Alternative) */
+    .plugins-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .plugins-table th {
+        background: var(--bg-secondary, #f8f9ff);
+        padding: 15px;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .plugins-table td {
+        padding: 20px 15px;
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+    }
+    
+    .plugins-table tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .plugins-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 36px;
+        color: var(--text-muted, #94a3b8);
+    }
+    
+    .empty-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 10px;
+    }
+    
+    .empty-description {
+        font-size: 15px;
+        color: var(--text-secondary, #64748b);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    /* View Toggle */
+    .view-toggle {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .view-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        background: var(--bg-primary, white);
+        color: var(--text-secondary, #64748b);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .view-btn.active {
+        background: #5856d6;
+        color: white;
+        border-color: #5856d6;
+    }
+    
+    .view-btn:hover:not(.active) {
+        background: var(--bg-hover, #f8f9ff);
+        color: #5856d6;
+        border-color: #5856d6;
+    }
+    
+    /* Alert Messages */
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+    }
+    
+    .alert-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    
+    .alert-danger {
+        background: var(--alert-danger-bg, #fee2e2);
+        color: var(--alert-danger-text, #991b1b);
+        border: 1px solid var(--alert-danger-border, #fecaca);
+    }
+    
+    .alert-danger .alert-icon {
+        color: var(--alert-danger-icon, #ef4444);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .plugins-wrapper {
+            padding: 15px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .content-section {
+            padding: 20px;
+        }
+        
+        .plugins-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .plugins-table-wrapper {
+            overflow-x: auto;
+        }
+        
+        .view-toggle {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="plugins-wrapper">
+    <div class="plugins-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <div class="icon">
+                    <i class="fas fa-plug"></i>
+                </div>
+                {% trans "Installed Plugins" %}
+            </h1>
+            <p>{% trans "List of installed plugins on your CyberPanel" %}</p>
+        </div>
+
+        <!-- Plugins Section -->
+        <div class="content-section">
+            <h2 class="section-title">{% trans "Plugins" %}</h2>
+            
+            {% if plugins %}
+            <!-- View Toggle -->
+            <div class="view-toggle">
+                <button class="view-btn active" onclick="toggleView('grid')">
+                    <i class="fas fa-th-large"></i>
+                    {% trans "Grid View" %}
+                </button>
+                <button class="view-btn" onclick="toggleView('table')">
+                    <i class="fas fa-list"></i>
+                    {% trans "Table View" %}
+                </button>
+            </div>
+            
+            <!-- Grid View -->
+            <div id="gridView" class="plugins-grid">
+                {% for plugin in plugins %}
+                <div class="plugin-card">
+                    <div class="plugin-header">
+                        <div class="plugin-icon">
+                            {% if plugin.type == "Security" %}
+                                <i class="fas fa-shield-alt"></i>
+                            {% elif plugin.type == "Performance" %}
+                                <i class="fas fa-rocket"></i>
+                            {% elif plugin.type == "Utility" %}
+                                <i class="fas fa-tools"></i>
+                            {% elif plugin.type == "Backup" %}
+                                <i class="fas fa-save"></i>
+                            {% else %}
+                                <i class="fas fa-puzzle-piece"></i>
+                            {% endif %}
+                        </div>
+                        <div class="plugin-info">
+                            <h3 class="plugin-name">{{ plugin.name }}</h3>
+                            <span class="plugin-type">{{ plugin.type }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="plugin-description">
+                        {{ plugin.desc }}
+                    </div>
+                    
+                    <div class="plugin-footer">
+                        <div class="plugin-version">
+                            <span>{% trans "Version" %}</span>
+                            <span class="plugin-version-number">{{ plugin.version }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Table View -->
+            <div id="tableView" style="display: none;">
+                <div class="plugins-table-wrapper">
+                    <table class="plugins-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Description" %}</th>
+                                <th>{% trans "Version" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plugin in plugins %}
+                            <tr>
+                                <td>
+                                    <strong>{{ plugin.name }}</strong>
+                                </td>
+                                <td>
+                                    <span class="plugin-type">{{ plugin.type }}</span>
+                                </td>
+                                <td>{{ plugin.desc }}</td>
+                                <td>
+                                    <span class="plugin-version-number">{{ plugin.version }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-plug"></i>
+                </div>
+                <h3 class="empty-title">{% trans "No Plugins Installed" %}</h3>
+                <p class="empty-description">{% trans "You haven't installed any plugins yet. Plugins extend CyberPanel's functionality with additional features." %}</p>
+            </div>
+            {% endif %}
+            
+            <div ng-controller="listWebsites" id="listFail" class="alert alert-danger" style="display: none;">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Cannot list plugins. Error message:" %} {$ errorMessage $}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleView(view) {
+    const gridView = document.getElementById('gridView');
+    const tableView = document.getElementById('tableView');
+    const viewBtns = document.querySelectorAll('.view-btn');
+    
+    viewBtns.forEach(btn => btn.classList.remove('active'));
+    
+    if (view === 'grid') {
+        gridView.style.display = 'grid';
+        tableView.style.display = 'none';
+        viewBtns[0].classList.add('active');
+    } else {
+        gridView.style.display = 'none';
+        tableView.style.display = 'block';
+        viewBtns[1].classList.add('active');
+    }
+}
+</script>
+{% endblock %}

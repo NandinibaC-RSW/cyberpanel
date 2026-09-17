@@ -1,0 +1,423 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'backup/backup.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Restore Website - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        body {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .modern-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            border-radius: 20px;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 1.5rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        
+        .page-subtitle strong {
+            color: var(--accent-color, #5b5fcf);
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            border: none;
+            padding: 0.875rem 2.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1.125rem;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(91, 95, 207, 0.4);
+            color: white;
+        }
+        
+        .btn-primary:disabled {
+            background: var(--text-secondary, #d1d5db);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: #fff;
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.875rem 2.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1.125rem;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover, #f8f9ff);
+            border-color: var(--accent-color, #5b5fcf);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.2);
+        }
+        
+        .main-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.5s ease-out;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            flex: 0 0 150px;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 1.125rem;
+        }
+        
+        .form-control {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 10px;
+            font-size: 1.125rem;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        .progress-section {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: var(--bg-hover, #f8f9ff);
+            border-radius: 12px;
+        }
+        
+        .status-message {
+            background: var(--info-bg, #e0f2fe);
+            border: 1px solid var(--info-border, #7dd3fc);
+            color: var(--info-text, #0369a1);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            font-size: 1.125rem;
+        }
+        
+        .progress-wrapper {
+            background: var(--border-light, #e2e8f0);
+            border-radius: 10px;
+            overflow: hidden;
+            height: 24px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-color, #5b5fcf) 0%, var(--accent-light, #8187ff) 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            font-size: 1.125rem;
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-success {
+            background: var(--success-bg, #d1fae5);
+            color: var(--success-text, #065f46);
+            border: 1px solid var(--success-border, #a7f3d0);
+        }
+        
+        .alert-danger {
+            background: var(--danger-bg, #fee2e2);
+            color: var(--danger-text, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .alert i {
+            font-size: 1.25rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .form-label {
+                flex: none;
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .form-actions button {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <div class="modern-container">
+        <!-- Page header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-undo-alt"></i>
+                {% trans "Restore Website" %}
+            </h1>
+            <p class="page-subtitle">
+                {% trans "Restore your websites from backups. Backups are automatically detected from" %} <strong>/home/backup</strong> 
+                {% trans "directory. Select a backup folder and file to begin the restoration process." %}
+            </p>
+            <div class="header-actions">
+                <a href="https://cyberpanel.net/KnowledgeBase/home/backup-restore/" 
+                   target="_blank" 
+                   class="btn-secondary">
+                    <i class="fas fa-book"></i>
+                    {% trans "Backup Documentation" %}
+                </a>
+            </div>
+        </div>
+
+        <div ng-controller="OneClickrestoreWebsiteControl">
+            <!-- Restore Form Card -->
+            <div class="main-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-folder-open"></i>
+                        {% trans "Select Backup to Restore" %}
+                        <img ng-hide="restoreLoading" src="{% static 'images/loading.gif' %}" style="width: 24px; margin-left: 10px;">
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form action="/">
+                        <div class="form-row">
+                            <label class="form-label">{% trans "Select Folder" %}</label>
+                            <select ng-change="FetchOCSites()" ng-model="ocFolder" class="form-control">
+                                {% for items in directories %}
+                                    <option>{{ items }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">{% trans "Select Backup" %}</label>
+                            <select ng-model="ocFile" class="form-control">
+                                <option ng-repeat="item in backups">{$ item $}</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" ng-click="StartOCRestore()" class="btn-primary">
+                                <i class="fas fa-download"></i>
+                                {% trans "Restore Backup" %}
+                            </button>
+                        </div>
+
+                        <!-- Progress Section -->
+                        <div ng-hide="installationProgress" class="progress-section">
+                            <div class="status-message">
+                                <i class="fas fa-info-circle"></i>
+                                {$ currentStatus $}
+                            </div>
+
+                            <div class="progress-wrapper">
+                                <div id="installProgress" class="progress-bar" role="progressbar" 
+                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 
+                                     style="width:0%">
+                                    <span>{$ installPercentage $}%</span>
+                                </div>
+                            </div>
+
+                            <div ng-hide="errorMessageBox" class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <div>
+                                    <strong>{% trans "Error occurred:" %}</strong><br>
+                                    {$ errorMessage $}
+                                </div>
+                            </div>
+
+                            <div ng-hide="success" class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <div>
+                                    <strong>{% trans "Success!" %}</strong><br>
+                                    {% trans "Backup has been restored successfully." %}
+                                </div>
+                            </div>
+
+                            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                <i class="fas fa-wifi"></i>
+                                <div>
+                                    <strong>{% trans "Connection Error" %}</strong><br>
+                                    {% trans "Could not connect to server. Please refresh this page and try again." %}
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" ng-disabled="goBackDisable" ng-click="goBack()" class="btn-secondary">
+                                    <i class="fas fa-arrow-left"></i>
+                                    {% trans "Go Back" %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

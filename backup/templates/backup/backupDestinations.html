@@ -1,0 +1,654 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'backup/backup.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Backup Destinations - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        .modern-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+            border-radius: 20px;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 1.5rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-primary, #fff);
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover, #f8f9ff);
+            border-color: var(--accent-color, #5b5fcf);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--accent-shadow-light, rgba(91, 95, 207, 0.2));
+        }
+        
+        .btn-danger {
+            background: var(--danger-color, #ef4444);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.825rem;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-hover, #dc2626);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--danger-shadow, rgba(239, 68, 68, 0.4));
+        }
+        
+        .promo-banner {
+            background: linear-gradient(135deg, var(--accent-color, #5b5fcf) 0%, var(--accent-light, #8187ff) 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px var(--accent-shadow, rgba(91, 95, 207, 0.3));
+        }
+        
+        .promo-text {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .promo-link {
+            background: var(--bg-primary, white);
+            color: var(--accent-color, #5b5fcf);
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .promo-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-md, 0 4px 12px rgba(0,0,0,0.2));
+        }
+        
+        .main-card {
+            background: var(--bg-primary, white);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05)), var(--shadow-lg, 0 10px 40px rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .destination-type-selector {
+            background: var(--bg-hover, #f8f9ff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .destination-tabs {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .tab-button {
+            padding: 0.75rem 2rem;
+            background: var(--bg-primary, #fff);
+            border: 2px solid var(--border-color, #e8e9ff);
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary, #64748b);
+        }
+        
+        .tab-button.active {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            border-color: var(--accent-color, #5b5fcf);
+        }
+        
+        .tab-button:hover:not(.active) {
+            border-color: var(--accent-color, #5b5fcf);
+            color: var(--accent-color, #5b5fcf);
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 10px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: var(--bg-primary, #fff);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px var(--accent-shadow-light, rgba(91, 95, 207, 0.1));
+        }
+        
+        .destination-table {
+            width: 100%;
+            background: var(--bg-primary, white);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color, #e8e9ff);
+            margin-top: 2rem;
+        }
+        
+        .destination-table thead {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+        }
+        
+        .destination-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .destination-table td {
+            padding: 1rem;
+            color: var(--text-secondary, #64748b);
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+        }
+        
+        .destination-table tbody tr:hover {
+            background: var(--bg-hover, #f8f9ff);
+        }
+        
+        .destination-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color, #e8e9ff);
+            border-top-color: var(--accent-color, #5b5fcf);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 1rem;
+        }
+        
+        .info-badge {
+            background: var(--accent-light, #e0e7ff);
+            color: var(--accent-color, #5b5fcf);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            font-family: monospace;
+        }
+        
+        .port-badge {
+            background: var(--border-light, #f3f4f6);
+            color: var(--text-primary, #1e293b);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .destination-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color, #5b5fcf);
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .promo-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .destination-tabs {
+                flex-direction: column;
+            }
+            
+            .tab-button {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <div class="modern-container" ng-controller="backupDestinations" ng-init="destinationType='local'">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-cloud-upload-alt"></i>
+                {% trans "Backup Destinations" %}
+            </h1>
+            <p class="page-subtitle">{% trans "Configure local and remote destinations for your backups" %}</p>
+            <div class="header-actions">
+                <a href="https://cyberpanel.net/KnowledgeBase/home/add-destination-scheduled-local-sftp-remote-backups/" 
+                   target="_blank" 
+                   class="btn-secondary">
+                    <i class="fas fa-book"></i>
+                    {% trans "Remote Backup Guide" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Promo Banner -->
+        <div class="promo-banner">
+            <span class="promo-text">
+                <i class="fas fa-shield-alt" style="margin-right: 0.5rem;"></i>
+                {% trans "Configure automatic backups to our secure servers in 60 seconds" %}
+            </span>
+            <a href="/backup/OneClickBackups" class="promo-link">
+                <i class="fas fa-rocket"></i>
+                {% trans "Set-up now" %}
+            </a>
+        </div>
+
+
+        <!-- Main Configuration Card -->
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-cog"></i>
+                    {% trans "Configure Backup Destination" %}
+                    <span ng-hide="cyberpanelLoading" class="loading-spinner"></span>
+                </h2>
+            </div>
+            <div class="card-body">
+                <form action="/" method="post">
+                    <!-- Destination Type Selector -->
+                    <div class="destination-type-selector">
+                        <div class="destination-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-check-square" style="margin-right: 0.5rem;"></i>
+                                {% trans "Select Destination Type" %}
+                            </label>
+                            <div class="destination-tabs">
+                                <button type="button" 
+                                        class="tab-button" 
+                                        ng-class="{'active': destinationType === 'local'}" 
+                                        ng-click="destinationType = 'local'; fetchDetails()">
+                                    <i class="fas fa-hdd" style="margin-right: 0.5rem;"></i>
+                                    {% trans "Local Storage" %}
+                                </button>
+                                <button type="button" 
+                                        class="tab-button" 
+                                        ng-class="{'active': destinationType === 'SFTP'}" 
+                                        ng-click="destinationType = 'SFTP'; fetchDetails()">
+                                    <i class="fas fa-network-wired" style="margin-right: 0.5rem;"></i>
+                                    {% trans "SFTP Server" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SFTP Configuration -->
+                    <div ng-hide="sftpHide" class="form-section">
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 1.5rem;">
+                            <i class="fas fa-network-wired" style="color: var(--accent-color, #5b5fcf); margin-right: 0.5rem;"></i>
+                            {% trans "SFTP Server Configuration" %}
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Name" %}</label>
+                                    <input type="text" class="form-control" ng-model="name" placeholder="My SFTP Backup" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "IP Address" %}</label>
+                                    <input type="text" class="form-control" ng-model="IPAddress" placeholder="192.168.1.100" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Username" %}</label>
+                                    <input type="text" class="form-control" ng-model="userName" placeholder="backup_user" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Password" %}</label>
+                                    <input type="password" class="form-control" ng-model="password" placeholder="••••••••" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "SSH Port" %}</label>
+                                    <input type="text" class="form-control" ng-model="backupSSHPort" 
+                                           placeholder="{% trans "Default: 22" %}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Remote Path" %}</label>
+                                    <input type="text" class="form-control" ng-model="path" 
+                                           placeholder="/home/backups" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button type="button" ng-click="addDestination('SFTP')" class="btn-primary">
+                                <i class="fas fa-plus-circle"></i>
+                                {% trans "Add SFTP Destination" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Local Configuration -->
+                    <div ng-hide="localHide" class="form-section">
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 1.5rem;">
+                            <i class="fas fa-hdd" style="color: var(--accent-color, #5b5fcf); margin-right: 0.5rem;"></i>
+                            {% trans "Local Storage Configuration" %}
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Name" %}</label>
+                                    <input type="text" class="form-control" ng-model="name" 
+                                           placeholder="Local Backup Storage" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Local Path" %}</label>
+                                    <input type="text" class="form-control" ng-model="localPath" 
+                                           placeholder="/backup/local" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button type="button" ng-click="addDestination('local')" class="btn-primary">
+                                <i class="fas fa-plus-circle"></i>
+                                {% trans "Add Local Destination" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SFTP Destinations Table -->
+        <div ng-hide="sftpHide" class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-list"></i>
+                    {% trans "Configured SFTP Destinations" %}
+                </h2>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="table-responsive">
+                    <table class="destination-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Server IP" %}</th>
+                                <th>{% trans "Username" %}</th>
+                                <th>{% trans "Path" %}</th>
+                                <th>{% trans "Port" %}</th>
+                                <th style="text-align: center;">{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="record in records track by $index">
+                                <td>
+                                    <strong ng-bind="record.name"></strong>
+                                </td>
+                                <td>
+                                    <span class="info-badge" ng-bind="record.ip"></span>
+                                </td>
+                                <td>
+                                    <i class="fas fa-user" style="color: var(--text-secondary, #64748b); margin-right: 0.5rem;"></i>
+                                    <span ng-bind="record.username"></span>
+                                </td>
+                                <td>
+                                    <i class="fas fa-folder" style="color: var(--text-secondary, #64748b); margin-right: 0.5rem;"></i>
+                                    <span ng-bind="record.path"></span>
+                                </td>
+                                <td>
+                                    <span class="port-badge" ng-bind="record.port"></span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <button type="button" 
+                                            ng-click="removeDestination('SFTP', record.name)" 
+                                            class="btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                        {% trans "Delete" %}
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Local Destinations Table -->
+        <div ng-hide="localHide" class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-list"></i>
+                    {% trans "Configured Local Destinations" %}
+                </h2>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="table-responsive">
+                    <table class="destination-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Storage Path" %}</th>
+                                <th style="text-align: center;">{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="record in records track by $index">
+                                <td>
+                                    <strong ng-bind="record.name"></strong>
+                                </td>
+                                <td>
+                                    <i class="fas fa-folder-open" style="color: var(--accent-color, #5b5fcf); margin-right: 0.5rem;"></i>
+                                    <span style="font-family: monospace; background: var(--border-light, #f3f4f6); padding: 0.25rem 0.5rem; border-radius: 4px;" 
+                                          ng-bind="record.path"></span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <button type="button" 
+                                            ng-click="removeDestination('local', record.name)" 
+                                            class="btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                        {% trans "Delete" %}
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize destination type to ensure proper display
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var scope = angular.element(document.querySelector('[ng-controller="backupDestinations"]')).scope();
+                if (scope && !scope.destinationType) {
+                    scope.$apply(function() {
+                        scope.destinationType = 'local';
+                        scope.fetchDetails();
+                    });
+                }
+            }, 100);
+        });
+    </script>
+
+{% endblock %}

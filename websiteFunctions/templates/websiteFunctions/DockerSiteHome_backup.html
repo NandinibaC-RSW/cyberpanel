@@ -1,0 +1,1720 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Docker Sites - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        :root {
+            --primary-color: #5b5fcf;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --dark-color: #34495e;
+            --light-color: #ecf0f1;
+            --border-color: #e0e0e0;
+            --box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            --box-shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+            --transition: all 0.25s ease;
+        }
+
+        .info-box {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .info-box:hover {
+            box-shadow: var(--box-shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .info-box h4 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            color: var(--dark-color);
+            font-weight: 600;
+            border-bottom: 2px solid #f5f5f5;
+            padding-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .progress {
+            margin-bottom: 15px;
+            height: 12px;
+            background-color: #f5f5f5;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            line-height: 12px;
+            font-size: 10px;
+            transition: width 0.8s ease;
+        }
+
+        .progress-bar.high {
+            background-color: var(--danger-color);
+        }
+
+        /* Resource usage colors */
+        .progress-bar[aria-valuenow^="8"],
+        .progress-bar[aria-valuenow^="9"] {
+            background-color: var(--danger-color);
+        }
+
+        .progress-bar[aria-valuenow^="7"] {
+            background-color: var(--warning-color);
+        }
+
+        .label {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .label-success {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .label-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .label-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: #f9f9f9;
+        }
+
+        .table {
+            margin-bottom: 0;
+            background-color: white;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table > thead > tr > th {
+            border-bottom: 2px solid #ddd;
+            font-weight: 600;
+            color: var(--dark-color);
+            padding: 12px 8px;
+            text-align: left;
+        }
+
+        .table > tbody > tr > td {
+            vertical-align: middle;
+            padding: 12px 8px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .table-responsive {
+            border: none;
+            margin-bottom: 0;
+            overflow-x: auto;
+        }
+
+        /* Container card */
+        .container-card {
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--border-color);
+            background: white;
+        }
+
+        .container-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .container-body {
+            padding: 20px;
+        }
+
+        /* Button Group Styles */
+        .btn-group {
+            display: flex;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .btn {
+            border: none;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: var(--transition);
+            margin: 0 2px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn i {
+            position: relative;
+            top: 0;
+            margin-right: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        /* Button Colors */
+        .btn-success {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+            color: white;
+        }
+
+        /* Metric cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .metric-card h5 {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .metric-card .value {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        /* Status indicators */
+        .status-running,
+        .status-stopped {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-running {
+            background-color: var(--secondary-color);
+        }
+
+        .status-stopped {
+            background-color: var(--danger-color);
+        }
+        
+        /* Workflow status badge */
+        .workflow-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .workflow-status.active {
+            background: #e3fcef;
+            color: #00a854;
+        }
+        
+        .workflow-status.error {
+            background: #fff1f0;
+            color: #f5222d;
+        }
+
+        /* Log textarea */
+        textarea.logs {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            background-color: #f8f9fa;
+            color: #333;
+            height: 300px;
+        }
+
+        /* Code styling */
+        code {
+            padding: 2px 5px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            font-family: monospace;
+            color: #333;
+            font-size: 90%;
+        }
+
+        /* Responsive design */
+        .container-fluid {
+            width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -15px;
+            margin-left: -15px;
+        }
+
+        .col-md-6 {
+            position: relative;
+            width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .col-md-6 {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+        }
+
+        /* Custom n8n container */
+        .n8n-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-left: 4px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: var(--box-shadow);
+        }
+
+        /* Modal styling */
+        .modal-content {
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #f5f5f5;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #f5f5f5;
+            padding: 15px 20px;
+        }
+
+        /* Icon fixes */
+        .fa {
+            font-family: 'FontAwesome' !important;
+            display: inline-block;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .btn .fa {
+            position: relative;
+            top: 1px;
+            margin-right: 5px;
+        }
+
+        /* Container header icon styling */
+        .container-header h3 .fa-cube {
+            color: var(--dark-color);
+            margin-right: 8px;
+        }
+
+        /* Add additional icon paths for backward compatibility */
+        .fa-network-wired:before {
+            content: "\f0ec"; /* use sync/exchange icon instead */
+        }
+
+        .fa-file-text:before {
+            content: "\f15c"; /* use file-text-o icon instead */
+        }
+
+        .fa-database:before {
+            content: "\f1c0"; /* use database icon */
+        }
+
+        .fa-area-chart:before {
+            content: "\f1fe"; /* use area-chart icon */
+        }
+
+        .page-title {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title h2 {
+            font-size: 24px;
+            margin: 0;
+            color: var(--dark-color);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-title h2 i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        .page-title p {
+            color: #777;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+
+        .create-btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .create-btn:hover {
+            background-color: #2980b9;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--box-shadow-hover);
+            text-decoration: none;
+        }
+
+        .create-btn i {
+            margin-right: 6px;
+        }
+
+        /* Fix disabled state for buttons */
+        .btn[disabled], 
+        .btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Fix for loading spinner */
+        .loading-spinner {
+            margin-right: 6px;
+            display: inline-block;
+        }
+
+        .icon-fixes .fa {
+            font: normal normal normal 14px/1 FontAwesome;
+            display: inline-block;
+            font-size: inherit;
+            text-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            margin-right: 5px;
+        }
+
+        /* Icon overrides for compatibility */
+        .fa-file-text-o:before {
+            content: "\f15c";
+        }
+
+        .fa-bar-chart:before {
+            content: "\f080";
+        }
+
+        .fa-exchange:before {
+            content: "\f0ec";
+        }
+
+        .fa-hdd-o:before {
+            content: "\f0a0";
+        }
+
+        .fa-code:before {
+            content: "\f121";
+        }
+
+        .fa-server:before {
+            content: "\f233";
+        }
+
+        .fa-cubes:before {
+            content: "\f1b3";
+        }
+
+        .fa-cube:before {
+            content: "\f1b2";
+        }
+
+        /* Fix status indicators with explicit colors */
+        .status-running {
+            background-color: #2ecc71;
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-stopped {
+            background-color: #e74c3c;
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        /* Improve container card header to ensure consistent spacing */
+        .container-header h3 {
+            margin: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+
+        .container-header h3 .fa {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        /* Replace specific icon declarations for compatibility */
+        .fa-bar-chart:before {
+            content: "\f080"; /* fa-bar-chart */
+        }
+
+        .fa-exchange:before {
+            content: "\f0ec"; /* fa-exchange */
+        }
+
+        .fa-hdd-o:before {
+            content: "\f0a0"; /* fa-hdd-o */
+        }
+
+        .fa-code:before {
+            content: "\f121"; /* fa-code */
+        }
+
+        .fa-file-text-o:before {
+            content: "\f15c"; /* fa-file-text-o */
+        }
+
+        .fa-info-circle:before {
+            content: "\f05a"; /* fa-info-circle */
+        }
+
+        .fa-warning:before {
+            content: "\f071"; /* fa-warning/exclamation-triangle */
+        }
+
+        .fa-exclamation-triangle:before {
+            content: "\f071"; /* fa-exclamation-triangle */
+        }
+
+        .fa-server:before {
+            content: "\f233"; /* fa-server */
+        }
+
+        .fa-plus:before {
+            content: "\f067"; /* fa-plus */
+        }
+
+        .fa-save:before {
+            content: "\f0c7"; /* fa-save/floppy-o */
+        }
+
+        .fa-times:before {
+            content: "\f00d"; /* fa-times */
+        }
+
+        /* Ensure proper icon rendering */
+        .fa-play:before { content: "\f04b"; }
+        .fa-refresh:before { content: "\f021"; }
+        .fa-stop:before { content: "\f04d"; }
+        .fa-cog:before { content: "\f013"; }
+        .fa-external-link:before { content: "\f08e"; }
+        .fa-cube:before { content: "\f1b2"; }
+        .fa-spinner:before { content: "\f110"; }
+        .fa-plus-circle:before { content: "\f055"; }
+        .fa-bar-chart-o:before { content: "\f080"; }
+        .fa-exchange:before { content: "\f0ec"; }
+        .fa-hdd-o:before { content: "\f0a0"; }
+        .fa-list:before { content: "\f03a"; }
+        .fa-file-text-o:before { content: "\f15c"; }
+        .fa-info-circle:before { content: "\f05a"; }
+        .fa-warning:before { content: "\f071"; }
+        .fa-times:before { content: "\f00d"; }
+        .fa-save:before { content: "\f0c7"; }
+        .fa-plus:before { content: "\f067"; }
+        .fa-trash:before { content: "\f1f8"; }
+        .fa-file:before { content: "\f15b"; }
+        .fa-user:before { content: "\f007"; }
+        .fa-question-circle:before { content: "\f059"; }
+        
+        /* Add proper styling for icon containers */
+        button i.fa, 
+        a i.fa, 
+        h3 i.fa, 
+        h4 i.fa {
+            margin-right: 5px;
+        }
+        
+        /* Status indicators with explicit styling */
+        .status-running {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+            background-color: #2ecc71 !important;
+        }
+
+        .status-stopped {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+            background-color: #e74c3c !important;
+        }
+
+        /* Ensure proper rendering of button icons */
+        .btn i.fa {
+            position: relative;
+            margin-right: 5px;
+            top: 0;
+        }
+        
+        /* Action buttons with consistent styling */
+        .btn-group .btn {
+            margin: 0 2px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Fix for icon in title */
+        .page-title h2 i.fa {
+            margin-right: 10px;
+        }
+        
+        /* Improve container header styling */
+        .container-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Remove redundant icon declarations */
+
+        /* Improved Font Awesome Icon Styling */
+        .fa {
+            display: inline-block;
+            margin-right: 8px !important;
+            position: relative;
+            top: 0;
+            line-height: 1;
+        }
+
+        .btn .fa {
+            font-size: 14px;
+            margin-right: 8px !important;
+            position: relative;
+            top: 0;
+            vertical-align: middle;
+        }
+
+        .title-hero .fa {
+            margin-left: 8px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .page-title h2 .fa {
+            color: var(--primary-color);
+            margin-right: 12px !important;
+            font-size: 24px;
+            vertical-align: middle;
+        }
+
+        .create-btn .fa {
+            font-size: 16px;
+            margin-right: 10px !important;
+            position: relative;
+            top: 0;
+            vertical-align: middle;
+        }
+
+        /* Action Button Icons */
+        .btn-group .btn .fa {
+            margin-right: 6px !important;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        /* Container Status Icons */
+        .status-icon .fa {
+            margin-right: 6px !important;
+            font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .fa-running {
+            color: var(--secondary-color);
+        }
+
+        .fa-stopped {
+            color: var(--danger-color);
+        }
+
+        /* Fix icon spacing */
+        .fa {
+            display: inline-block;
+            margin-right: 8px !important;
+            position: relative;
+            top: 0;
+            line-height: 1;
+        }
+
+        .btn .fa {
+            font-size: 14px;
+            margin-right: 8px !important;
+            position: relative;
+            top: 0;
+            vertical-align: middle;
+        }
+
+        .page-title h2 .fa {
+            color: var(--primary-color);
+            margin-right: 12px !important;
+            font-size: 24px;
+            vertical-align: middle;
+        }
+
+        .create-btn .fa {
+            font-size: 16px;
+            margin-right: 10px !important;
+            position: relative;
+            top: 0;
+            vertical-align: middle;
+        }
+
+        /* Container header icons */
+        .container-header h3 .fa {
+            margin-right: 12px !important;
+            font-size: 18px;
+            vertical-align: middle;
+        }
+
+        /* Info box header icons */
+        .info-box h4 .fa {
+            margin-right: 8px !important;
+            vertical-align: middle;
+        }
+
+        /* Ensure text and icons are properly aligned in buttons */
+        .btn {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Fix specific icon placements */
+        .container-header h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-title h2 {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Simple, direct icon spacing fix */
+        i.fa {
+            margin-right: 10px;
+        }
+
+        /* Remove all the complex icon positioning that might be causing conflicts */
+        .fa {
+            position: static;
+            top: auto;
+            vertical-align: baseline;
+            display: inline-block;
+        }
+
+        /* Simple button styling */
+        .btn i.fa {
+            margin-right: 8px;
+        }
+
+        /* Container status fix */
+        .workflow-status {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 10px;
+        }
+
+        .workflow-status i.fa {
+            margin-right: 5px;
+        }
+
+        /* Container header fix */
+        .container-header h3 {
+            display: flex;
+            align-items: center;
+        }
+
+        .container-header h3 > i.fa {
+            margin-right: 10px;
+        }
+
+        /* Remove any complex flexbox or positioning that might interfere */
+        .btn {
+            display: inline-block;
+        }
+
+        .btn span {
+            display: inline-block;
+        }
+
+        /* Fix button icon spacing once and for all */
+        .btn {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+        }
+
+        .btn i.fa {
+            margin-right: 0;  /* Remove margin since we're using gap */
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        /* Ensure consistent button spacing in button groups */
+        .btn-group .btn {
+            margin: 0 2px;
+        }
+
+        /* Fix action button spacing */
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+
+        /* Override any other styles that might affect button icons */
+        button i.fa,
+        a.btn i.fa {
+            margin: 0 !important;  /* Remove any other margins */
+            position: static !important;  /* Prevent positioning issues */
+        }
+
+        /* Keep the rest of the icon spacing rules */
+        i.fa:not(.btn i.fa) {
+            margin-right: 10px;
+        }
+
+        /* Version badge styling */
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 2px 8px;
+            margin: 0 8px;
+            font-size: 12px;
+            color: #495057;
+        }
+
+        .version-badge i {
+            margin-right: 4px;
+            color: #6c757d;
+        }
+
+        .update-available {
+            display: inline-flex;
+            align-items: center;
+            background: #fff3cd;
+            color: #856404;
+            border-radius: 4px;
+            padding: 2px 8px;
+            margin-left: 8px;
+            font-size: 12px;
+            border: 1px solid #ffeeba;
+        }
+
+        .update-available i {
+            margin-right: 4px;
+            color: #856404;
+        }
+
+        /* Ensure proper spacing in container header */
+        .container-header h3 {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+    </style>
+
+    <script>
+        // Define controller in the CyberCP module
+        angular.module('CyberCP').controller('ListDockersitecontainer', function($scope, $http, $window, $location) {
+            $scope.ContainerList = [];
+            $scope.conatinerview = false;
+            $scope.cyberpanelLoading = true;
+            
+            // Function to extract n8n version from environment variables
+            $scope.getN8nVersion = function(container) {
+                console.log('getN8nVersion called with:', container);
+                
+                if (!container) {
+                    console.log('Container is null/undefined');
+                    return 'unknown';
+                }
+                
+                if (!container.environment) {
+                    console.log('No environment in container');
+                    return 'unknown';
+                }
+                
+                if (!Array.isArray(container.environment)) {
+                    console.log('Environment is not an array:', container.environment);
+                    return 'unknown';
+                }
+                
+                console.log('Searching through environment:', container.environment);
+                
+                var version = container.environment.find(function(env) {
+                    return typeof env === 'string' && env.startsWith('N8N_VERSION=');
+                });
+                
+                if (version) {
+                    var versionNumber = version.split('=')[1];
+                    console.log('Found version:', versionNumber);
+                    return versionNumber;
+                }
+                
+                console.log('No N8N_VERSION found in environment');
+                return 'unknown';
+            };
+
+            // Function to check if updates are available
+            $scope.checkN8nUpdates = function(currentVersion) {
+                // This is a placeholder. You'll need to implement the actual version check
+                // For now, we'll assume an update is available if version is not 'latest'
+                return currentVersion !== 'latest';
+            };
+            
+            // Add custom icon rendering for container actions
+            $scope.renderIcon = function(iconName) {
+                return '<i class="fa fa-' + iconName + '" aria-hidden="true"></i>';
+            };
+            
+            // Handle container actions
+            $scope.handleAction = function(action, container) {
+                switch(action) {
+                    case 'start':
+                        if (typeof $scope.startContainer === 'function') {
+                            $scope.startContainer(container.id, container.name);
+                        }
+                        break;
+                    case 'stop':
+                        if (typeof $scope.stopContainer === 'function') {
+                            $scope.stopContainer(container.id, container.name);
+                        }
+                        break;
+                    case 'restart':
+                        if (typeof $scope.restartContainer === 'function') {
+                            $scope.restartContainer(container.id, container.name);
+                        }
+                        break;
+                    case 'update':
+                        if (typeof $scope.updateContainer === 'function') {
+                            $scope.updateContainer(container.id, container.name);
+                        }
+                        break;
+                }
+            };
+        });
+
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+            
+            // Add smooth fade-in animation to containers
+            $('.container-card, .n8n-container, .info-box').css('opacity', 0).animate({opacity: 1}, 500);
+            
+            // Add animated loading indicators
+            $(document).on('click', '.btn', function() {
+                const originalText = $(this).html();
+                const button = $(this);
+                
+                if (!button.hasClass('loading') && !button.hasClass('no-loading')) {
+                    button.addClass('loading');
+                    button.html('<i class="fa fa-spinner fa-spin"></i> <span>Loading...</span>');
+                    
+                    // Reset button after a timeout (for demo purposes)
+                    setTimeout(function() {
+                        button.html(originalText);
+                        button.removeClass('loading');
+                    }, 1000);
+                }
+            });
+        });
+    </script>
+
+
+    <div class="container icon-fixes" ng-controller="ListDockersitecontainer">
+
+        <div class="page-title">
+            <div>
+                <h2 id="domainNamePage">
+                    <i class="fa fa-cube" aria-hidden="true"></i> {% trans "Containers" %} 
+                    <span class="loading-spinner" ng-hide="cyberpanelLoading">
+                        <img src="{% static 'images/loading.gif' %}" alt="Loading">
+                    </span>
+                </h2>
+                <p>{% trans "Manage containers on server" %}</p>
+            </div>
+            <a class="create-btn btn btn-primary" href="{% url "CreateDockersite" %}">
+                <i class="fa fa-plus-circle" aria-hidden="true"></i> {% trans "Create Container" %}
+            </a>
+        </div>
+
+        <div class="panel" ng-hide="true">
+            <div class="panel-body">
+                <h3 class="content-box-header">
+                    {% trans "Containers" %} {{ dockerSite.SiteName }}<img id="imageLoading"
+                                                                           src="/static/images/loading.gif"
+                                                                           style="display: none;">
+                </h3>
+                <span style="display: none" id="sitename">{{ dockerSite.SiteName }}</span>
+                <div class="example-box-wrapper">
+                    <div ng-repeat="web in ContainerList track by $index" ng-init="Lunchcontainer(web.id)"></div>
+                </div>
+
+                <div id="listFail" class="alert alert-danger">
+                    <p>{% trans "Error message:" %} {$ errorMessage $}</p>
+                </div>
+
+                <div class="row text-center">
+
+                    <div class="col-sm-4 col-sm-offset-8">
+
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination">
+
+
+                                {% for items in pagination %}
+
+                                    <li ng-click="getFurtherContainersFromDB({{ forloop.counter }})" id="webPages">
+                                        <a href="">{{ forloop.counter }}</a></li>
+
+                                {% endfor %}
+
+                            </ul>
+                        </nav>
+
+
+                    </div>
+
+
+                </div>
+
+                {% if showUnlistedContainer %}
+                    <h3 class="title-hero">
+                        {% trans "Unlisted Containers" %}
+                        <i class="fa fa-question-circle" aria-hidden="true" title="{% trans "Containers listed below were either not created through panel or were not saved to database properly" %}"></i>
+                    </h3>
+
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for container in unlistedContainers %}
+                                <tr>
+                                    <td>{{ container.name }}</td>
+                                    <td>
+                                        <span class="status-icon">
+                                            <i class="fa fa-{% if container.status == 'running' %}check-circle fa-running{% else %}times-circle fa-stopped{% endif %}" aria-hidden="true"></i>
+                                            {{ container.status }}
+                                        </span>
+                                    </td>
+                                    <td class="action-buttons">
+                                        <button class="btn btn-danger" ng-click="delContainer('{{ container.name }}', true)" title="Delete">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="btn btn-info" ng-click="showLog('{{ container.name }}')" title="View Logs">
+                                            <i class="fa fa-file-text" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="btn btn-primary" ng-click="assignContainer('{{ container.name }}')" title="Assign">
+                                            <i class="fa fa-user" aria-hidden="true"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                {% endif %}
+
+                <div id="logs" class="modal fade" role="dialog">
+                    <div class="modal-dialog">
+
+                        <!-- Modal content-->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Container logs</h4>
+                            </div>
+                            <div class="modal-body">
+                                <textarea name="logs" class="form-control" id="" cols="30"
+                                          rows="10">{$ logs $}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" ng-click="showLog('', true)">Refresh
+                                </button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div id="assign" class="modal fade" role="dialog">
+                    <div class="modal-dialog">
+
+                        <!-- Modal content-->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Assign Container to user</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form action="/" class="form-horizontal">
+                                    <div ng-hide="installationDetailsForm" class="form-group">
+                                        <label class="col-sm-3 control-label">{% trans "Select Owner" %}</label>
+                                        <div class="col-sm-6">
+                                            <select ng-model="dockerOwner" class="form-control">
+                                                {% for user in adminNames %}
+                                                    <option>{{ user }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" ng-click="submitAssignContainer()">
+                                    Submit
+                                </button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div ng-hide="conatinerview">
+            <div>
+
+                <div ng-show="ContainerList.length > 0">
+                    <div ng-repeat="web in ContainerList">
+                        <!-- n8n Container Section -->
+                        <div ng-if="web.environment && (web.environment | filter:'n8n').length > 0" class="container-card">
+                            <div class="container-header">
+                                <h3>
+                                    <i class="fa fa-cube"></i>
+                                    n8n Container: {$ web.name $}
+                                    <span class="version-badge">
+                                        <span style="display: none;">Debug - Environment: {$ web.environment | json $}</span>
+                                        <i class="fa fa-tag"></i> 
+                                        <span ng-bind="'v' + getN8nVersion(web)"></span>
+                                    </span>
+                                    <span class="workflow-status" ng-class="{'active': web.status === 'running', 'error': web.status !== 'running'}">
+                                        <i class="fa" ng-class="{'fa-check-circle': web.status === 'running', 'fa-times-circle': web.status !== 'running'}"></i>
+                                        {$ web.status $}
+                                    </span>
+                                </h3>
+                                <div class="btn-group">
+                                    <button class="btn btn-success" ng-click="handleAction('start', web)" ng-if="web.status !== 'running'">
+                                        <i class="fa fa-play"></i><span>Start</span>
+                                    </button>
+                                    <button class="btn btn-warning" ng-click="handleAction('restart', web)" ng-if="web.status === 'running'">
+                                        <i class="fa fa-refresh"></i><span>Restart</span>
+                                    </button>
+                                    <button class="btn btn-danger" ng-click="handleAction('stop', web)" ng-if="web.status === 'running'">
+                                        <i class="fa fa-stop"></i><span>Stop</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="container-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="info-box">
+                                            <h4>
+                                                <i class="fa fa-bar-chart-o" aria-hidden="true"></i>
+                                                <span>Resource Usage</span>
+                                            </h4>
+                                            <div class="metrics-grid">
+                                                <div class="metric-card">
+                                                    <h5>Memory Usage</h5>
+                                                    <div class="value">{$ web.memoryUsage $}</div>
+                                                    <div class="progress mt-2">
+                                                        <div class="progress-bar" role="progressbar" 
+                                                            ng-style="{'width': web.memoryUsagePercent + '%'}" 
+                                                            aria-valuenow="{$ web.memoryUsagePercent $}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="metric-card">
+                                                    <h5>CPU Usage</h5>
+                                                    <div class="value">{$ web.cpuUsagePercent | number:1 $}%</div>
+                                                    <div class="progress mt-2">
+                                                        <div class="progress-bar" role="progressbar" 
+                                                            ng-style="{'width': web.cpuUsagePercent + '%'}" 
+                                                            aria-valuenow="{$ web.cpuUsagePercent $}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="metric-card">
+                                                    <h5>Container Uptime</h5>
+                                                    <div class="value">{$ web.uptime $}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="info-box">
+                                            <h4><i class="fa fa-exchange"></i> <span>Network & Ports</span></h4>
+                                            <div ng-if="web.ports" class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Container Port</th>
+                                                            <th>Host Binding</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr ng-repeat="(containerPort, hostBindings) in web.ports">
+                                                            <td><code>{$ containerPort $}</code></td>
+                                                            <td>
+                                                                <span ng-repeat="binding in hostBindings" class="label label-info">
+                                                                    {$ binding.HostIp || '0.0.0.0' $}:{$ binding.HostPort $}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div ng-if="!web.ports" class="text-muted">
+                                                <p>No ports exposed</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="info-box">
+                                            <h4><i class="fa fa-hdd-o"></i> <span>Volumes</span></h4>
+                                            <div ng-if="web.volumes && web.volumes.length > 0" class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Source</th>
+                                                            <th>Destination</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr ng-repeat="volume in web.volumes">
+                                                            <td><code>{$ volume.Source $}</code></td>
+                                                            <td><code>{$ volume.Destination $}</code></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div ng-if="!web.volumes || web.volumes.length === 0" class="text-muted">
+                                                <p>No volumes mounted</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="info-box">
+                                            <h4><i class="fa fa-list"></i> <span>Environment Variables</span></h4>
+                                            <div ng-if="web.environment && web.environment.length > 0" class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Variable</th>
+                                                            <th>Value</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr ng-repeat="env in web.environment">
+                                                            <td><code>{$ env.split('=')[0] $}</code></td>
+                                                            <td>
+                                                                <code ng-if="env.split('=')[1] === '********'">{$ env.split('=')[1] $}</code>
+                                                                <code ng-if="env.split('=')[1] !== '********'">{$ env.split('=')[1] $}</code>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-box">
+                                    <h4>
+                                        <i class="fa fa-file-text-o"></i> <span>{% trans "Logs" %}</span>
+                                        <button class="btn btn-sm btn-primary pull-right" ng-click="getcontainerlog(web.id)">
+                                            <i class="fa fa-refresh"></i> <span>Refresh</span>
+                                        </button>
+                                    </h4>
+                                    <textarea class="logs" readonly>{$ web.logs $}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Regular Container Section -->
+                        <div ng-if="!web.environment || (web.environment | filter:'n8n').length === 0" class="container-card">
+                            <div class="container-header">
+                                <h3>
+                                    <i class="fa fa-cube"></i> <span>{% trans "Container: " %} {$ web.name $}</span>
+                                    <span class="workflow-status" ng-class="{'active': web.status === 'running', 'error': web.status !== 'running'}">
+                                        <span ng-if="web.status === 'running'" class="status-running"></span>
+                                        <span ng-if="web.status !== 'running'" class="status-stopped"></span>
+                                        {$ web.status $}
+                                    </span>
+                                </h3>
+                                <div class="btn-group">
+                                    <button class="btn btn-success" ng-click="handleAction('start', web)" ng-if="web.status !== 'running'">
+                                        <i class="fa fa-play"></i><span>Start</span>
+                                    </button>
+                                    <button class="btn btn-warning" ng-click="handleAction('restart', web)" ng-if="web.status === 'running'">
+                                        <i class="fa fa-refresh"></i><span>Restart</span>
+                                    </button>
+                                    <button class="btn btn-danger" ng-click="handleAction('stop', web)" ng-if="web.status === 'running'">
+                                        <i class="fa fa-stop"></i><span>Stop</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="container-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="info-box">
+                                            <h4><i class="fa fa-info-circle"></i> <span>Basic Information</span></h4>
+                                            <table class="table">
+                                                <tbody>
+                                                    <tr>
+                                                        <td width="40%"><strong>Container ID:</strong></td>
+                                                        <td><code>{$ web.id $}</code></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Created:</strong></td>
+                                                        <td>{$ web.created | date:'medium' $}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Uptime:</strong></td>
+                                                        <td>{$ web.uptime $}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div class="info-box">
+                                            <h4><i class="fa fa-bar-chart-o"></i> <span>Resource Usage</span></h4>
+                                            <div class="mb-3">
+                                                <label class="mb-2">Memory Usage: {$ web.memoryUsage $}</label>
+                                                <div class="progress">
+                                                    <div class="progress-bar" role="progressbar" 
+                                                        ng-style="{'width': web.memoryUsagePercent + '%'}" 
+                                                        aria-valuenow="{$ web.memoryUsagePercent $}" 
+                                                        aria-valuemin="0" 
+                                                        aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="mb-2">CPU Usage: {$ web.cpuUsagePercent | number:1 $}%</label>
+                                                <div class="progress">
+                                                    <div class="progress-bar" role="progressbar" 
+                                                        ng-style="{'width': web.cpuUsagePercent + '%'}" 
+                                                        aria-valuenow="{$ web.cpuUsagePercent $}" 
+                                                        aria-valuemin="0" 
+                                                        aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="info-box">
+                                            <h4><i class="fa fa-exchange"></i> <span>Network & Ports</span></h4>
+                                            <div ng-if="web.ports" class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Container Port</th>
+                                                            <th>Host Binding</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr ng-repeat="(containerPort, hostBindings) in web.ports">
+                                                            <td><code>{$ containerPort $}</code></td>
+                                                            <td>
+                                                                <span ng-repeat="binding in hostBindings" class="label label-info">
+                                                                    {$ binding.HostIp || '0.0.0.0' $}:{$ binding.HostPort $}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div ng-if="!web.ports" class="text-muted">
+                                                <p>No ports exposed</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="info-box">
+                                            <h4><i class="fa fa-hdd-o"></i> <span>Volumes</span></h4>
+                                            <div ng-if="web.volumes && web.volumes.length > 0" class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Source</th>
+                                                            <th>Destination</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr ng-repeat="volume in web.volumes">
+                                                            <td><code>{$ volume.Source $}</code></td>
+                                                            <td><code>{$ volume.Destination $}</code></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div ng-if="!web.volumes || web.volumes.length === 0" class="text-muted">
+                                                <p>No volumes mounted</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="info-box">
+                                            <h4><i class="fa fa-list"></i> <span>Environment Variables</span></h4>
+                                            <div ng-if="web.environment && web.environment.length > 0" class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Variable</th>
+                                                            <th>Value</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr ng-repeat="env in web.environment">
+                                                            <td><code>{$ env.split('=')[0] $}</code></td>
+                                                            <td>
+                                                                <code ng-if="env.split('=')[1] === '********'">{$ env.split('=')[1] $}</code>
+                                                                <code ng-if="env.split('=')[1] !== '********'">{$ env.split('=')[1] $}</code>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-box">
+                                    <h4>
+                                        <i class="fa fa-file-text-o"></i> <span>{% trans "Logs" %}</span>
+                                        <button class="btn btn-sm btn-primary pull-right" ng-click="getcontainerlog(web.id)">
+                                            <i class="fa fa-refresh"></i> <span>Refresh</span>
+                                        </button>
+                                    </h4>
+                                    <textarea class="logs" readonly>{$ web.logs $}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settings" class="modal fade" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">
+                                    <i class="fa fa-cog"></i> Container Settings
+                                    <img id="containerSettingLoading" src="/static/images/loading.gif"
+                                         style="display: none;">
+                                </h4>
+                            </div>
+                            <div class="modal-body">
+                                <form name="containerSettingsForm" action="/" class="form-horizontal">
+                                    <div class="info-box">
+                                        <h4><i class="fa fa-cog"></i> Resource Settings</h4>
+                                        <div class="form-group">
+                                            <label class="col-sm-4 control-label">{% trans "Memory limit (MB)" %}</label>
+                                            <div class="col-sm-8">
+                                                <div class="input-group">
+                                                    <input name="memory" type="number" class="form-control"
+                                                        ng-model="web.memoryLimit" required>
+                                                    <span class="input-group-addon">MB</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-sm-4 control-label">Start on reboot</label>
+                                            <div class="col-sm-8">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input ng-model="web.startOnReboot" type="checkbox">
+                                                        Automatically start container when server reboots
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-box">
+                                        <h4><i class="fa fa-warning"></i> Advanced Settings</h4>
+                                        <div class="alert alert-warning">
+                                            <i class="fa fa-warning"></i> Editing environment variables or volumes will recreate the container. Data outside mounted volumes may be lost.
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <div class="col-sm-12">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input ng-model="envConfirmation" type="checkbox">
+                                                        <strong>I understand and want to edit advanced settings</strong>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-box" ng-class="{'disabled': !envConfirmation}">
+                                        <h4><i class="fa fa-list"></i> Environment Variables</h4>
+                                        
+                                        <div ng-repeat="env in envList track by $index" class="form-group">
+                                            <div class="col-sm-5">
+                                                <input name="envname_$index" ng-disabled="!envConfirmation" type="text"
+                                                    class="form-control" ng-model="envList[$index].name"
+                                                    placeholder="Variable name" required>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <input name="envvalue_$index" ng-disabled="!envConfirmation" type="text"
+                                                    class="form-control" ng-model="envList[$index].value"
+                                                    placeholder="Value" required>
+                                            </div>
+                                            <div class="col-sm-1" ng-if="envList.length > 1">
+                                                <button class="btn btn-sm btn-danger" ng-disabled="!envConfirmation" 
+                                                        ng-click="envList.splice($index, 1)">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <div class="col-sm-12">
+                                                <button type="button" ng-disabled="!envConfirmation" class="btn btn-sm btn-info"
+                                                        ng-click="addEnvField()">
+                                                    <i class="fa fa-plus"></i> Add Environment Variable
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-box" ng-class="{'disabled': !envConfirmation}">
+                                        <h4><i class="fa fa-hdd-o"></i> Volume Mappings</h4>
+                                        
+                                        <div ng-repeat="volume in volList track by $index" class="form-group">
+                                            <div class="col-sm-5">
+                                                <input type="text" ng-disabled="!envConfirmation"
+                                                    class="form-control"
+                                                    ng-model="volList[$index].dest" placeholder="Container Path"
+                                                    required>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <input type="text" ng-disabled="!envConfirmation"
+                                                    class="form-control"
+                                                    ng-model="volList[$index].src" placeholder="Host Path" required>
+                                            </div>
+                                            <div class="col-sm-1" ng-if="volList.length > 1">
+                                                <button class="btn btn-sm btn-danger" ng-disabled="!envConfirmation" 
+                                                        ng-click="volList.splice($index, 1)">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <div class="col-sm-12">
+                                                <button type="button" ng-disabled="!envConfirmation" class="btn btn-sm btn-info"
+                                                        ng-click="addVolField()">
+                                                    <i class="fa fa-plus"></i> Add Volume Mapping
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" ng-disabled="savingSettings" class="btn btn-primary"
+                                        ng-click="saveSettings()">
+                                    <i class="fa fa-save"></i> Save Changes
+                                </button>
+                                <button type="button" ng-disabled="savingSettings" class="btn btn-default"
+                                        data-dismiss="modal">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="processes" class="modal fade" role="dialog">
+                    <div class="modal-dialog" style="width: 96%;">
+
+                        <!-- Modal content-->
+                        <div class="modal-content panel-body">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title content-box=header">Container Processes</h4>
+                            </div>
+                            <div class="modal-body">
+
+                                <table cellpadding="0" cellspacing="0" border="0" class="table table-striped"
+                                       id="datatable-example">
+                                    <thead>
+                                    <tr>
+                                        <th ng-repeat="item in topHead track by $index">{$ item $}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    <tr ng-repeat="process in topProcesses track by $index">
+                                        <th ng-repeat="item in process track by $index">{$ item $}</th>
+                                    </tr>
+
+                                    </tbody>
+                                </table>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" ng-disabled="savingSettings" class="btn btn-primary"
+                                        ng-click="showTop()">
+                                    Refresh
+                                </button>
+                                <button type="button" ng-disabled="savingSettings" class="btn btn-default"
+                                        data-dismiss="modal">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    </div>
+
+
+{% endblock %}

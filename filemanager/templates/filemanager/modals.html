@@ -1,0 +1,470 @@
+{% load i18n %}
+
+<!-- Upload Modal -->
+<div class="modal fade upload-modal" id="uploadBox" tabindex="-1" role="dialog" aria-labelledby="uploadBox" aria-hidden="true" nv-file-drop="" uploader="uploader" filters="queueLimit, customFilter">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    {% trans "Upload Files" %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="my-drop-zone" nv-file-over="" uploader="uploader">
+                    <div class="text-center">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #5856d6; margin-bottom: 15px;"></i>
+                        <h4>{% trans "Drop files here or click to browse" %}</h4>
+                        <p class="text-muted">{% trans "Maximum file size: 2GB" %}</p>
+                    </div>
+                </div>
+                
+                <div class="form-group mt-3">
+                    <label class="fm-btn primary" style="cursor: pointer; display: inline-block;">
+                        <i class="fas fa-folder-open"></i>
+                        {% trans "Browse Files" %}
+                        <input type="file" nv-file-select="" uploader="uploader" multiple style="display: none;">
+                    </label>
+                </div>
+                
+                <div ng-show="uploader.queue.length > 0">
+                    <h5 class="mt-4">{% trans "Upload Queue" %} ({$ uploader.queue.length $})</h5>
+                    <table class="table upload-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Size" %}</th>
+                                <th>{% trans "Progress" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in uploader.queue">
+                                <td><strong>{$ item.file.name $}</strong></td>
+                                <td nowrap>{$ item.file.size/1024/1024|number:2 $} MB</td>
+                                <td>
+                                    <div class="upload-progress">
+                                        <div class="progress-bar" ng-style="{ 'width': item.progress + '%' }"></div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span ng-show="item.isSuccess" style="color: #4ade80;"><i class="fas fa-check-circle"></i></span>
+                                    <span ng-show="item.isCancel" style="color: #fbbf24;"><i class="fas fa-ban"></i></span>
+                                    <span ng-show="item.isError" style="color: #ff6b6b;"><i class="fas fa-exclamation-circle"></i></span>
+                                </td>
+                                <td nowrap>
+                                    <button type="button" class="fm-btn" style="padding: 6px 12px; font-size: 12px;" ng-click="item.upload()" ng-disabled="item.isReady || item.isUploading || item.isSuccess">
+                                        <i class="fas fa-upload"></i>
+                                    </button>
+                                    <button type="button" class="fm-btn" style="padding: 6px 12px; font-size: 12px;" ng-click="item.cancel()" ng-disabled="!item.isUploading">
+                                        <i class="fas fa-pause"></i>
+                                    </button>
+                                    <button type="button" class="fm-btn danger" style="padding: 6px 12px; font-size: 12px;" ng-click="item.remove()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-3">
+                        <div class="mb-2">
+                            <small>{% trans "Total Progress:" %}</small>
+                        </div>
+                        <div class="upload-progress" style="height: 10px;">
+                            <div class="progress-bar" ng-style="{ 'width': uploader.progress + '%' }"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <button type="button" class="fm-btn primary" ng-click="uploader.uploadAll()" ng-disabled="!uploader.getNotUploadedItems().length">
+                            <i class="fas fa-cloud-upload-alt"></i> {% trans "Upload All" %}
+                        </button>
+                        <button type="button" class="fm-btn" ng-click="uploader.cancelAll()" ng-disabled="!uploader.isUploading">
+                            <i class="fas fa-pause"></i> {% trans "Cancel All" %}
+                        </button>
+                        <button type="button" class="fm-btn danger" ng-click="uploader.clearQueue()" ng-disabled="!uploader.queue.length">
+                            <i class="fas fa-trash"></i> {% trans "Clear Queue" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Folder Modal -->
+<div class="modal fade" id="showCreateFolder" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-folder-plus"></i>
+                    {% trans "Create New Folder" %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>{% trans "Folder Name" %}</label>
+                    <input ng-model="newFolderName" ng-keypress="createFolderEnter($event)" type="text" class="form-control" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;">
+                    <small class="form-text text-muted">{% trans "Folder will be created in current directory" %}</small>
+                </div>
+                
+                <div ng-hide="errorMessageFolder" class="alert alert-danger" role="alert" style="border-radius: 12px;">
+                    <i class="fas fa-exclamation-circle"></i> {$ error_message $}
+                </div>
+                <div ng-hide="createSuccess" class="alert alert-success" role="alert" style="border-radius: 12px;">
+                    <i class="fas fa-check-circle"></i> {% trans "Folder successfully created" %}
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="createNewFolder()" class="fm-btn primary">
+                    <i class="fas fa-folder-plus"></i> {% trans "Create Folder" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create File Modal -->
+<div class="modal fade" id="showCreateFile" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-plus"></i>
+                    {% trans "Create New File" %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>{% trans "File Name" %}</label>
+                    <input ng-model="newFileName" ng-keypress="createFileEnter($event)" type="text" class="form-control" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;">
+                    <small class="form-text text-muted">{% trans "File will be created in current directory" %}</small>
+                </div>
+                
+                <div ng-hide="errorMessageFile" class="alert alert-danger" role="alert" style="border-radius: 12px;">
+                    <i class="fas fa-exclamation-circle"></i> {$ error_message $}
+                </div>
+                <div ng-hide="createSuccess" class="alert alert-success" role="alert" style="border-radius: 12px;">
+                    <i class="fas fa-check-circle"></i> {% trans "File successfully created" %}
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="createNewFile()" class="fm-btn primary">
+                    <i class="fas fa-file-plus"></i> {% trans "Create File" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="showDelete" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #ff6b6b; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {% trans "Confirm Deletion" %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>{% trans "Are you sure you want to delete the selected items?" %}</strong></p>
+                <p class="text-muted">{% trans "This action cannot be undone." %}</p>
+                
+                <div class="custom-control custom-checkbox mt-3">
+                    <input type="checkbox" ng-model="skipTrash" class="custom-control-input" id="skipTrash">
+                    <label class="custom-control-label" for="skipTrash">
+                        {% trans "Skip trash and permanently delete" %}
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="deleteFolderOrFile()" class="fm-btn danger">
+                    <i class="fas fa-trash"></i> {% trans "Delete" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="modal fade" id="showRename" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i>
+                    {% trans "Rename" %} {$ fileToRename $}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>{% trans "New Name" %}</label>
+                    <input ng-model="newFileName" ng-keypress="renameEnter($event)" type="text" class="form-control" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;">
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="renameFile()" class="fm-btn primary">
+                    <i class="fas fa-check"></i> {% trans "Rename" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move Modal -->
+<div class="modal fade" id="showMove" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-arrows-alt"></i>
+                    {% trans "Move Files" %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>{% trans "Selected Items" %}</label>
+                    <textarea ng-model="listOfFiles" class="form-control" rows="3" readonly style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Move to" %}</label>
+                    <input ng-model="pathToMoveTo" type="text" class="form-control" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;">
+                    <small class="form-text text-muted">{% trans "Enter destination path" %}</small>
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="startMoving()" class="fm-btn primary">
+                    <i class="fas fa-arrows-alt"></i> {% trans "Move" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Copy Modal -->
+<div class="modal fade" id="showCopy" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-copy"></i>
+                    {% trans "Copy Files" %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>{% trans "Selected Items" %}</label>
+                    <textarea ng-model="listOfFiles" class="form-control" rows="3" readonly style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Copy to" %}</label>
+                    <input ng-model="pathToCopyTo" type="text" class="form-control" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;">
+                    <small class="form-text text-muted">{% trans "Enter destination path" %}</small>
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="startCopying()" class="fm-btn primary">
+                    <i class="fas fa-copy"></i> {% trans "Copy" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compress Modal -->
+<div class="modal fade" id="showCompression" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-archive"></i>
+                    {% trans "Compress Files" %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>{% trans "Files to Compress" %}</label>
+                    <textarea ng-model="listOfFiles" class="form-control" rows="3" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Archive Name" %}</label>
+                    <input ng-model="compressedFileName" type="text" class="form-control" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;">
+                    <small class="form-text text-muted">{% trans "Enter without extension" %}</small>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Compression Type" %}</label>
+                    <select ng-model="compressionType" class="form-control" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;">
+                        <option value="zip">ZIP</option>
+                        <option value="tar.gz">TAR.GZ</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="startCompression()" class="fm-btn primary">
+                    <i class="fas fa-file-archive"></i> {% trans "Compress" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Extract Modal -->
+<div class="modal fade" id="showExtraction" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-export"></i>
+                    {% trans "Extract" %} {$ fileToBeExtracted $}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>{% trans "Extract to" %}</label>
+                    <input ng-model="extractionLocation" type="text" class="form-control" style="border-radius: 12px; border: 2px solid #f3f1ff; padding: 12px;">
+                    <small class="form-text text-muted">{% trans "Enter . to extract in current directory" %}</small>
+                </div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="startExtraction()" class="fm-btn primary">
+                    <i class="fas fa-file-export"></i> {% trans "Extract" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Editor Modal -->
+<div class="modal fade" id="showHTMLEditor" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-code"></i>
+                    {% trans "Code Editor" %} - {$ fileInEditor $}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div id="htmlEditorContent" style="height: 500px; font-size: 14px;"></div>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <div ng-hide="errorMessageEditor" class="alert alert-danger" role="alert" style="margin: 0; margin-right: auto;">
+                    <i class="fas fa-exclamation-circle"></i> {$ error_message $}
+                </div>
+                <div ng-hide="saveSuccess" class="alert alert-success" role="alert" style="margin: 0; margin-right: auto;">
+                    <i class="fas fa-check-circle"></i> {% trans "File saved successfully" %}
+                </div>
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Close" %}</button>
+                <button type="button" ng-click="putFileContents()" class="fm-btn primary">
+                    <i class="fas fa-save"></i> {% trans "Save Changes" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Permissions Modal -->
+<div class="modal fade" id="showPermissions" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background: #5856d6; color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-lock"></i>
+                    {% trans "Change Permissions" %} - {$ permissionsPath $}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" style="color: white;">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered text-center">
+                    <thead>
+                        <tr style="background: #f8f9ff;">
+                            <th>{% trans "Mode" %}</th>
+                            <th>{% trans "User" %}</th>
+                            <th>{% trans "Group" %}</th>
+                            <th>{% trans "World" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>{% trans "Read" %}</strong></td>
+                            <td><input ng-model="userRead" ng-click="updateReadPermissions('userRead')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                            <td><input ng-model="groupRead" ng-click="updateReadPermissions('groupRead')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                            <td><input ng-model="worldRead" ng-click="updateReadPermissions('worldRead')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>{% trans "Write" %}</strong></td>
+                            <td><input ng-model="userWrite" ng-click="updateWritePermissions('userWrite')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                            <td><input ng-model="groupWrite" ng-click="updateWritePermissions('groupWrite')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                            <td><input ng-model="worldWrite" ng-click="updateWritePermissions('worldWrite')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>{% trans "Execute" %}</strong></td>
+                            <td><input ng-model="userExecute" ng-click="updateExecutePermissions('userExecute')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                            <td><input ng-model="groupExecute" ng-click="updateExecutePermissions('groupExecute')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                            <td><input ng-model="worldExecute" ng-click="updateExecutePermissions('worldExecute')" type="checkbox" style="width: 20px; height: 20px;"></td>
+                        </tr>
+                        <tr style="background: #f8f9ff;">
+                            <td><strong>{% trans "Octal" %}</strong></td>
+                            <td><input ng-model="userPermissions" type="number" class="form-control" readonly style="text-align: center;"></td>
+                            <td><input ng-model="groupPermissions" type="number" class="form-control" readonly style="text-align: center;"></td>
+                            <td><input ng-model="wordlPermissions" type="number" class="form-control" readonly style="text-align: center;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer" style="border: none;">
+                <button type="button" class="fm-btn" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" ng-click="changePermissions(0)" class="fm-btn primary">
+                    <i class="fas fa-lock"></i> {% trans "Change Permissions" %}
+                </button>
+                <button type="button" ng-click="changePermissionsRecursively()" class="fm-btn primary">
+                    <i class="fas fa-sync"></i> {% trans "Change Recursively" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,618 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Optimize MySQL - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    :root {
+        /* Light mode variables */
+        --bg-primary: #f8f9ff;
+        --bg-secondary: #ffffff;
+        --bg-card: #ffffff;
+        --bg-hover: #f8f9ff;
+        --bg-gradient-primary: linear-gradient(135deg, #f8f9ff 0%, #f0f1ff 100%);
+        --bg-gradient-warning: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        --bg-gradient-info: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --text-accent: #5b5fcf;
+        --text-warning: #92400e;
+        --text-warning-dark: #78350f;
+        --text-info: #475569;
+        --border-color: #e8e9ff;
+        --border-light: #cbd5e1;
+        --border-warning: #fcd34d;
+        --shadow-color: rgba(0,0,0,0.05);
+        --shadow-color-md: rgba(0,0,0,0.08);
+        --shadow-color-lg: rgba(0,0,0,0.1);
+        --shadow-color-xl: rgba(0,0,0,0.12);
+        --shadow-warning: rgba(252, 211, 77, 0.3);
+        --shadow-accent: rgba(91, 95, 207, 0.4);
+        --shadow-success: rgba(16, 185, 129, 0.4);
+        --shadow-danger: rgba(239, 68, 68, 0.4);
+        --shadow-info: rgba(59, 130, 246, 0.4);
+        --accent-color: #5b5fcf;
+        --accent-hover: #4547a9;
+        --success-color: #10b981;
+        --success-hover: #059669;
+        --danger-color: #ef4444;
+        --danger-hover: #dc2626;
+        --info-color: #3b82f6;
+        --info-hover: #2563eb;
+        --warning-color: #f59e0b;
+        --editor-bg: #1e293b;
+        --editor-header-bg: #334155;
+        --editor-text: #e2e8f0;
+        --editor-readonly-bg: #1a202c;
+        --editor-readonly-text: #94a3b8;
+        --bg-radial-overlay: rgba(91, 95, 207, 0.1);
+    }
+    
+    [data-theme="dark"] {
+        /* Dark mode variables */
+        --bg-primary: #0f0f23;
+        --bg-secondary: #1a1a3e;
+        --bg-card: #1e1e42;
+        --bg-hover: #252550;
+        --bg-gradient-primary: linear-gradient(135deg, #16162e 0%, #1a1a3e 100%);
+        --bg-gradient-warning: linear-gradient(135deg, #78350f 0%, #451a03 100%);
+        --bg-gradient-info: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        --text-primary: #e4e4e7;
+        --text-secondary: #9ca3af;
+        --text-muted: #6b7280;
+        --text-accent: #7c7ff3;
+        --text-warning: #fbbf24;
+        --text-warning-dark: #fbbf24;
+        --text-info: #cbd5e1;
+        --border-color: #2a2a5e;
+        --border-light: #374151;
+        --border-warning: #92400e;
+        --shadow-color: rgba(0,0,0,0.3);
+        --shadow-color-md: rgba(0,0,0,0.4);
+        --shadow-color-lg: rgba(0,0,0,0.5);
+        --shadow-color-xl: rgba(0,0,0,0.6);
+        --shadow-warning: rgba(120, 53, 15, 0.5);
+        --shadow-accent: rgba(124, 127, 243, 0.4);
+        --shadow-success: rgba(52, 211, 153, 0.4);
+        --shadow-danger: rgba(248, 113, 113, 0.4);
+        --shadow-info: rgba(96, 165, 250, 0.4);
+        --accent-color: #7c7ff3;
+        --accent-hover: #6b6ee8;
+        --success-color: #34d399;
+        --success-hover: #10b981;
+        --danger-color: #f87171;
+        --danger-hover: #ef4444;
+        --info-color: #60a5fa;
+        --info-hover: #3b82f6;
+        --warning-color: #fbbf24;
+        --editor-bg: #0f172a;
+        --editor-header-bg: #1e293b;
+        --editor-text: #e4e4e7;
+        --editor-readonly-bg: #111827;
+        --editor-readonly-text: #6b7280;
+        --bg-radial-overlay: rgba(124, 127, 243, 0.1);
+    }
+    
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: var(--bg-gradient-primary);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 30% 70%, var(--bg-radial-overlay) 0%, transparent 50%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .mysql-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-color-lg);
+    }
+    
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color);
+        color: var(--bg-secondary);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--shadow-accent);
+        color: var(--bg-secondary);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-accent);
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--accent-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--shadow-accent);
+    }
+    
+    .btn-success {
+        background: var(--success-color);
+        color: var(--bg-secondary);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-success:hover {
+        background: var(--success-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--shadow-success);
+    }
+    
+    .btn-danger {
+        background: var(--danger-color);
+        color: var(--bg-secondary);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-danger:hover {
+        background: var(--danger-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--shadow-danger);
+    }
+    
+    .btn-info {
+        background: var(--info-color);
+        color: var(--bg-secondary);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-info:hover {
+        background: var(--info-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--shadow-info);
+    }
+    
+    .ram-info-card {
+        background: var(--bg-gradient-warning);
+        border: 1px solid var(--border-warning);
+        border-radius: 12px;
+        padding: 1.25rem 2rem;
+        margin-bottom: 2rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 8px var(--shadow-warning);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .ram-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-secondary);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px var(--shadow-color-lg);
+    }
+    
+    .ram-label {
+        font-size: 0.875rem;
+        color: var(--text-warning);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0;
+    }
+    
+    .ram-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-warning-dark);
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        justify-content: center;
+    }
+    
+    .main-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-color), 0 10px 40px var(--shadow-color-md);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card-header {
+        background: var(--bg-gradient-primary);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .config-editor {
+        background: var(--editor-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px var(--shadow-color-lg);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .editor-header {
+        background: var(--editor-header-bg);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .editor-title {
+        color: var(--editor-text);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .editor-status {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .editor-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .editor-dot.red {
+        background: var(--danger-color);
+    }
+    
+    .editor-dot.yellow {
+        background: var(--warning-color);
+    }
+    
+    .editor-dot.green {
+        background: var(--success-color);
+    }
+    
+    .editor-textarea {
+        width: 100%;
+        min-height: 500px;
+        background: var(--editor-bg);
+        color: var(--editor-text);
+        border: none;
+        padding: 1.5rem;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        resize: vertical;
+    }
+    
+    .editor-textarea:focus {
+        outline: none;
+        background: var(--editor-readonly-bg);
+    }
+    
+    .editor-textarea.readonly {
+        background: var(--editor-readonly-bg);
+        color: var(--editor-readonly-text);
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-color);
+        border-top-color: var(--accent-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+    
+    .recommendation-info {
+        background: var(--bg-gradient-info);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .recommendation-info i {
+        color: var(--info-color);
+        font-size: 1.25rem;
+        margin-top: 0.125rem;
+    }
+    
+    .recommendation-info p {
+        margin: 0;
+        color: var(--text-info);
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+    
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-buttons button {
+            width: 100%;
+        }
+        
+        .ram-info-card {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .editor-textarea {
+            min-height: 300px;
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="OptimizeMysql">
+    <div class="page-header">
+        <h1 class="page-title">
+            <div class="mysql-icon">
+                <i class="fas fa-database" style="color: #5b5fcf; font-size: 1.75rem;"></i>
+            </div>
+            {% trans "Optimize MySQL" %}
+        </h1>
+        <p class="page-subtitle">{% trans "Generate optimized MySQL configurations based on your server resources" %}</p>
+        <div class="header-actions">
+            <div class="ram-info-card">
+                <div class="ram-icon">
+                    <i class="fas fa-memory" style="color: #f59e0b; font-size: 1.5rem;"></i>
+                </div>
+                <div>
+                    <p class="ram-label">{% trans "Detected RAM" %}</p>
+                    <p class="ram-value" id="detectedRam">{{ ramInGB }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button ng-click="generateRecommendations()" type="button" class="btn-success">
+            <i class="fas fa-magic"></i>
+            {% trans "Generate Recommendations" %}
+        </button>
+        <button ng-click="applyMySQLChanges()" type="button" class="btn-danger">
+            <i class="fas fa-save"></i>
+            {% trans "Apply Changes" %}
+        </button>
+        <button ng-click="restartMySQL()" type="button" class="btn-info">
+            <i class="fas fa-sync-alt"></i>
+            {% trans "Restart MySQL" %}
+        </button>
+    </div>
+
+    <!-- Recommendation Info -->
+    <div class="recommendation-info">
+        <i class="fas fa-info-circle"></i>
+        <p>{% trans "Generate recommendations based on your server's RAM to optimize MySQL performance. Review the suggested configuration carefully before applying changes. Always backup your current configuration before making modifications." %}</p>
+    </div>
+
+    <!-- Configuration Editor -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-file-code"></i>
+                {% trans "Configuration Editor" %}
+                <span ng-hide="cyberPanelLoading" class="loading-spinner"></span>
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="config-editor">
+                        <div class="editor-header">
+                            <h3 class="editor-title">
+                                <i class="fas fa-file-alt"></i>
+                                {% trans "Current my.cnf" %}
+                            </h3>
+                            <div class="editor-status">
+                                <div class="editor-dot red"></div>
+                                <div class="editor-dot yellow"></div>
+                                <div class="editor-dot green"></div>
+                            </div>
+                        </div>
+                        <textarea class="editor-textarea readonly" readonly>{{ conf }}</textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="config-editor">
+                        <div class="editor-header">
+                            <h3 class="editor-title">
+                                <i class="fas fa-lightbulb"></i>
+                                {% trans "Suggested Configuration" %}
+                            </h3>
+                            <div class="editor-status">
+                                <div class="editor-dot red"></div>
+                                <div class="editor-dot yellow"></div>
+                                <div class="editor-dot green"></div>
+                            </div>
+                        </div>
+                        <textarea class="editor-textarea" 
+                                  ng-model="suggestedContent"
+                                  placeholder="{% trans 'Click Generate Recommendations to generate optimized configuration...' %}"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

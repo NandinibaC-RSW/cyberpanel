@@ -1,0 +1,883 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "List Email Accounts - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        .modern-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .page-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .main-card {
+            background: var(--bg-secondary, white);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.9375rem;
+            letter-spacing: 0.3px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            color: var(--text-dark, #2f3640);
+            background-color: var(--bg-secondary, white);
+            background: var(--bg-secondary, white);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        /* Specific styling for select elements to fix Windows visibility issues */
+        select.form-control {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: var(--bg-secondary, white);
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b5fcf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px;
+            padding-right: 40px;
+            color: var(--text-dark, #2f3640) !important;
+            font-size: 0.9375rem !important;
+            line-height: 1.5;
+            height: auto;
+            min-height: 42px;
+        }
+        
+        /* Ensure option text is visible */
+        select.form-control option {
+            color: var(--text-dark, #2f3640);
+            background-color: var(--bg-secondary, white);
+            padding: 8px;
+            font-size: 0.9375rem;
+        }
+        
+        /* Fix for Windows high contrast mode */
+        @media screen and (-ms-high-contrast: active) {
+            select.form-control {
+                border: 2px solid var(--border-color, #e8e9ff);
+            }
+            select.form-control option {
+                background: var(--bg-secondary, white);
+                color: var(--text-inverse, black);
+            }
+        }
+        
+        /* Specific focus styles for select */
+        select.form-control:focus {
+            background-color: var(--bg-secondary, white);
+            color: var(--text-dark, #2f3640);
+        }
+        
+        /* Additional Windows-specific fixes */
+        @supports (-ms-ime-align: auto) {
+            /* Edge/IE specific styles */
+            select.form-control {
+                color: var(--text-dark, #2f3640) !important;
+                background-color: white !important;
+            }
+        }
+        
+        /* Fix for Firefox on Windows */
+        select.form-control {
+            color: var(--text-dark, #2f3640) !important;
+            text-shadow: none;
+        }
+        
+        /* Ensure selected option is always visible */
+        select.form-control::-ms-value {
+            color: var(--text-dark, #2f3640);
+            background-color: var(--bg-secondary, white);
+        }
+        
+        /* Fix for Chrome on Windows */
+        select.form-control:not(:focus):not(:hover) {
+            color: var(--text-dark, #2f3640) !important;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: var(--bg-secondary, white);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+            color: var(--bg-secondary, white);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary, white);
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover, #f8f9ff);
+            border-color: var(--accent-color, #5b5fcf);
+            color: var(--accent-color, #5b5fcf);
+        }
+        
+        .btn-danger {
+            background: var(--bg-secondary, white);
+            color: var(--danger-color, #ef4444);
+            border: 1px solid var(--danger-bg-light, #fee2e2);
+            padding: 0.625rem 1.125rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 0.9375rem;
+            letter-spacing: 0.3px;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-color, #ef4444);
+            color: var(--bg-secondary, white);
+            transform: translateY(-1px);
+        }
+        
+        .btn-action {
+            background: var(--bg-secondary, white);
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.625rem 1.125rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 0.9375rem;
+            letter-spacing: 0.3px;
+        }
+        
+        .btn-action:hover {
+            background: var(--accent-color, #5b5fcf);
+            color: var(--bg-secondary, white);
+            transform: translateY(-1px);
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-danger {
+            background: var(--danger-bg-light, #fee2e2);
+            color: var(--danger-text, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .alert-warning {
+            background: var(--warning-bg, #fef3c7);
+            color: var(--warning-text, #92400e);
+            border: 1px solid var(--warning-border, #fde68a);
+        }
+        
+        .disabled-notice {
+            background: var(--warning-bg, #fef3c7);
+            border: 1px solid var(--warning-border, #fde68a);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .disabled-notice h3 {
+            color: var(--warning-text, #92400e);
+            margin-bottom: 1rem;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color, #e8e9ff);
+            border-top-color: var(--accent-color, #5b5fcf);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        .info-card {
+            background: var(--bg-hover, #f8f9ff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-card h4 {
+            color: var(--text-primary, #1e293b);
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .config-table {
+            width: 100%;
+            background: var(--bg-secondary, white);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color, #e8e9ff);
+            margin-bottom: 1rem;
+        }
+        
+        .config-table th {
+            background: var(--accent-color, #5b5fcf);
+            color: var(--bg-secondary, white);
+            padding: 0.875rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9375rem;
+        }
+        
+        .config-table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+            font-size: 0.9375rem;
+            color: var(--text-dark, #2f3640);
+            line-height: 1.5;
+        }
+        
+        .config-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .email-table {
+            width: 100%;
+            background: var(--bg-secondary, white);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .email-table thead {
+            background: var(--bg-hover, #f8f9ff);
+        }
+        
+        .email-table th {
+            padding: 1.25rem 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.9375rem;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            border-bottom: 2px solid var(--border-color, #e8e9ff);
+        }
+        
+        .email-table td {
+            padding: 1.25rem 1rem;
+            color: var(--text-dark, #2f3640);
+            font-size: 0.9375rem;
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+            line-height: 1.5;
+        }
+        
+        .email-table tbody tr:hover {
+            background: var(--bg-hover, #f8f9ff);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .email-icon {
+            color: var(--accent-color, #5b5fcf);
+            margin-right: 0.5rem;
+        }
+        
+        .email-address {
+            font-size: 0.9375rem;
+            color: var(--text-primary, #1e293b);
+        }
+        
+        .disk-usage-badge {
+            padding: 0.375rem 0.875rem;
+            background: var(--bg-gradient, #f0f1ff);
+            color: var(--accent-color, #5b5fcf);
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .email-to-delete {
+            color: var(--danger-color, #ef4444);
+            font-weight: 600;
+        }
+        
+        /* Modern Modal Styles */
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 40px var(--shadow-medium, rgba(0,0,0,0.1));
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+            padding: 1rem 1.5rem;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .modal-title {
+            color: var(--text-primary, #1e293b);
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+        
+        .modal-title i {
+            color: var(--accent-color, #5b5fcf);
+            margin-right: 0.5rem;
+        }
+        
+        .modal-header .close {
+            opacity: 0.5;
+            font-size: 1.5rem;
+            color: var(--text-secondary, #64748b);
+            padding: 0;
+            background: none;
+            border: none;
+            margin-top: -0.25rem;
+        }
+        
+        .modal-header .close:hover {
+            opacity: 1;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border-color, #e8e9ff);
+            padding: 1rem 1.5rem;
+            background: var(--bg-hover, #f8f9ff);
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .modal .form-horizontal .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .modal .form-horizontal .control-label {
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.9375rem;
+            padding-top: 0.75rem;
+            text-align: right;
+            letter-spacing: 0.3px;
+        }
+        
+        .modal .form-control {
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            line-height: 1.5;
+        }
+        
+        .modal .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        .modal .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: var(--bg-secondary, white);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .modal .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+        }
+        
+        .modal .btn-default {
+            background: var(--bg-secondary, white);
+            color: var(--text-secondary, #64748b);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .modal .btn-default:hover {
+            background: var(--bg-hover, #f8f9ff);
+            color: var(--accent-color, #5b5fcf);
+            border-color: var(--accent-color, #5b5fcf);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+
+    <div class="modern-container" ng-controller="listEmails">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-envelope-open-text"></i>
+                {% trans "List Email Accounts" %}
+            </h1>
+            <p class="page-subtitle">{% trans "Manage email accounts, change passwords, and configure mail clients" %}</p>
+            <div class="header-actions">
+                <a href="{% url 'createEmailAccount' %}" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i>
+                    {% trans "Create Email" %}
+                </a>
+                <a target="_blank" rel="noopener" href="https://cyberpanel.net/KnowledgeBase/home/email-debugger-cyberpanel/" class="btn-secondary">
+                    <i class="fas fa-bug"></i>
+                    {% trans "Debug Email Issues" %}
+                </a>
+            </div>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-list"></i>
+                    {% trans "Email Accounts" %}
+                    <span ng-show="cyberpanelLoading" class="loading-spinner"></span>
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if not status %}
+                    <div class="disabled-notice">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3" style="color: var(--warning-color, #ffa000);"></i>
+                        <h3>{% trans "Postfix is disabled" %}</h3>
+                        <p class="mb-3">{% trans "You need to enable Postfix to manage email accounts" %}</p>
+                        <a href="{% url 'managePostfix' %}" class="btn-primary">
+                            <i class="fas fa-power-off"></i>
+                            {% trans "Enable Postfix Now" %}
+                        </a>
+                    </div>
+                {% else %}
+                    <form action="/" method="post">
+                        <div class="form-section">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">{% trans "Select Domain" %}</label>
+                                        <select ng-change="populateCurrentRecords()" ng-model="selectedDomain" class="form-control" aria-label="{% trans 'Select Domain' %}">
+                                            <option value="">{% trans "Choose a domain..." %}</option>
+                                            {% for items in websiteList %}
+                                                <option value="{{ items }}">{{ items }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-hide="emailsAccounts">
+                            <!-- SSL Warning -->
+                            <div ng-hide="mailConfigured==1" class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div>
+                                    <p style="margin: 0;">{% trans "SSL for email is not configured properly. You may get self-signed errors in mail clients like Outlook and Thunderbird." %}</p>
+                                    <a href="https://community.cyberpanel.net/t/6-self-signed-ssl-error-on-outlook-thunderbird/207" target="_blank" rel="noopener" style="color: var(--danger-text, #991b1b); text-decoration: underline;">{% trans "Learn more" %}</a>
+                                </div>
+                            </div>
+                            <button type="button" ng-hide="mailConfigured==1" ng-click='fixMailSSL()' class="btn-primary mb-4">
+                                <i class="fas fa-wrench"></i>
+                                {% trans "Fix SSL Now" %}
+                            </button>
+
+                            <div class="row">
+                                <!-- Mail Configuration Details -->
+                                <div class="col-md-4">
+                                    <div class="info-card">
+                                        <h4><i class="fas fa-cog"></i> {% trans "Mail Client Configuration" %}</h4>
+                                        
+                                        <table class="config-table">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="2">{% trans "POP3 Settings" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>{% trans "Server" %}</td>
+                                                    <td><strong>{$ serverHostname $}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Port" %}</td>
+                                                    <td>110 / 995 (SSL)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Security" %}</td>
+                                                    <td>STARTTLS</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <table class="config-table">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="2">{% trans "IMAP Settings" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>{% trans "Server" %}</td>
+                                                    <td><strong>{$ serverHostname $}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Port" %}</td>
+                                                    <td>143 / 993 (SSL)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Security" %}</td>
+                                                    <td>STARTTLS</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <table class="config-table">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="2">{% trans "SMTP Settings" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>{% trans "Server" %}</td>
+                                                    <td><strong>{$ serverHostname $}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Port" %}</td>
+                                                    <td>25 / 587 / 465 (SSL)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Security" %}</td>
+                                                    <td>STARTTLS</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <table class="config-table">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="2">{% trans "Sieve Settings" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>{% trans "Server" %}</td>
+                                                    <td><strong>{$ serverHostname $}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Port" %}</td>
+                                                    <td>4190</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Security" %}</td>
+                                                    <td>None (Plain)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{% trans "Purpose" %}</td>
+                                                    <td>Email Filtering</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Email Accounts List -->
+                                <div class="col-md-8">
+                                    <table class="email-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{% trans "Email Address" %}</th>
+                                                <th>{% trans "Disk Usage" %}</th>
+                                                <th style="text-align: right;">{% trans "Actions" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr ng-repeat="record in records track by $index">
+                                                <td>
+                                                    <i class="fas fa-user-circle email-icon"></i>
+                                                    <strong class="email-address" ng-bind="record.email"></strong>
+                                                </td>
+                                                <td>
+                                                    <span class="disk-usage-badge">
+                                                        {{ record.DiskUsage }}
+                                                    </span>
+                                                </td>
+                                                <td style="text-align: right;">
+                                                    <div class="action-buttons">
+                                                        <a data-toggle="modal" data-target="#settings"
+                                                           ng-click="changePasswordInitial(record.email)"
+                                                           class="btn-action"
+                                                           href="#"
+                                                           title="">
+                                                            <i class="fas fa-key"></i>
+                                                            <span>{% trans 'Change Password' %}</span>
+                                                        </a>
+                                                        <a ng-click="confirmDeleteEmail(record.email)"
+                                                           class="btn-danger" 
+                                                           href="#"
+                                                           title=""
+                                                           data-toggle="modal" 
+                                                           data-target="#deleteConfirmModal">
+                                                            <i class="fas fa-trash"></i>
+                                                            <span>{% trans 'Delete' %}</span>
+                                                        </a>
+                                                        
+                                                        <!--- Modal --->
+                                                        <div id="settings" class="modal fade" role="dialog">
+                                                            <div class="modal-dialog">
+                                                                <!-- Modal content-->
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                        <h4 class="modal-title">Change Password
+                                                                            <img ng-hide="cyberpanelLoading" src="{% static 'images/loading.gif' %}" alt="Loading...">
+                                                                        </h4>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        <form name="containerSettingsForm" action="/" class="form-horizontal">
+                                                                            <div ng-hide="installationDetailsForm" class="form-group">
+                                                                                <label class="col-sm-3 control-label">{% trans "Email" %}</label>
+                                                                                <div class="col-sm-6">
+                                                                                    <input name="name" type="text" class="form-control" ng-model="email" readonly aria-label="Email address">
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <hr>
+
+                                                                            <div ng-hide="installationDetailsForm" class="form-group">
+                                                                                <label class="col-sm-3 control-label">{% trans "Password" %}</label>
+                                                                                <div class="col-sm-6">
+                                                                                    <input type="password" class="form-control" ng-model="$parent.password" aria-label="Password">
+                                                                                </div>
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" ng-disabled="savingSettings"
+                                                                                class="btn btn-primary"
+                                                                                ng-click="changePassword()"
+                                                                                data-dismiss="modal">
+                                                                            Save
+                                                                        </button>
+                                                                        <button type="button" ng-disabled="savingSettings"
+                                                                                class="btn btn-default" data-dismiss="modal">
+                                                                            Close
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <!--- Modal End--->
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteConfirmModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">
+                            <i class="fas fa-exclamation-triangle" style="color: var(--danger-color, #ef4444);"></i>
+                            {% trans "Confirm Email Deletion" %}
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>
+                                <strong>{% trans "Warning: This action cannot be undone!" %}</strong>
+                                <p style="margin: 0.5rem 0 0 0;">{% trans "This will permanently delete the email account and all associated data including emails, folders, and settings." %}</p>
+                            </div>
+                        </div>
+                        <p><strong>{% trans "Email to delete:" %}</strong> <span class="email-to-delete">{$ emailToDelete $}</span></p>
+                        <p>{% trans "Are you sure you want to continue?" %}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" 
+                                class="btn btn-danger" 
+                                ng-click="deleteEmailAccountFinal(emailToDelete)"
+                                data-dismiss="modal">
+                            <i class="fas fa-trash"></i>
+                            {% trans "Yes, Delete Email" %}
+                        </button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            <i class="fas fa-times"></i>
+                            {% trans "Cancel" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

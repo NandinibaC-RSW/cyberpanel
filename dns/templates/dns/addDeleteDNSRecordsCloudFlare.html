@@ -1,0 +1,958 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "CloudFlare DNS Records - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        .modern-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 0;
+        }
+        
+        .docs-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary, #fff);
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 8px;
+            color: #5b5fcf;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        
+        .docs-link:hover {
+            background: #5b5fcf;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.3);
+        }
+        
+        .main-card {
+            background: var(--bg-primary, white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05)), var(--shadow-lg, 0 10px 40px rgba(0,0,0,0.08));
+            border: 1px solid var(--border-primary, #e8e9ff);
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-secondary, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .modern-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-primary, #e8e9ff);
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+        
+        .modern-tab {
+            position: relative;
+            padding: 1rem 2rem;
+            color: var(--text-secondary, #64748b);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .modern-tab:hover {
+            color: #5b5fcf;
+        }
+        
+        .modern-tab.active {
+            color: #5b5fcf;
+        }
+        
+        .modern-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #5b5fcf;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: var(--bg-primary, #fff);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #5b5fcf;
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        .btn-primary {
+            background: #5b5fcf;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            background: #4547a9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-primary, #fff);
+            color: #5b5fcf;
+            border: 1px solid var(--border-primary, #e8e9ff);
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-secondary, #f8f9ff);
+            border-color: #5b5fcf;
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-success {
+            background: var(--success-light, #d1fae5);
+            color: var(--success-text, #065f46);
+            border: 1px solid var(--success-border, #a7f3d0);
+        }
+        
+        .alert-danger {
+            background: var(--danger-light, #fee2e2);
+            color: var(--danger-text, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .alert-warning {
+            background: var(--warning-light, #fef3c7);
+            color: var(--warning-text, #92400e);
+            border: 1px solid var(--warning-border, #fde68a);
+        }
+        
+        .disabled-notice {
+            background: var(--warning-light, #fef3c7);
+            border: 1px solid var(--warning-border, #fde68a);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .disabled-notice h3 {
+            color: var(--warning-text, #92400e);
+            margin-bottom: 1rem;
+        }
+        
+        .record-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary, #f8f9ff);
+            border-radius: 8px;
+        }
+        
+        .record-tab {
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary, white);
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-secondary, #64748b);
+        }
+        
+        .record-tab:hover {
+            background: var(--bg-hover, #f0f1ff);
+            color: #5b5fcf;
+            border-color: #5b5fcf;
+        }
+        
+        .record-tab.active {
+            background: #5b5fcf;
+            color: white;
+            border-color: #5b5fcf;
+        }
+        
+        .record-form {
+            display: none;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .record-form.active {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        
+        .record-form .form-group {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 0;
+        }
+        
+        .record-form .btn-primary {
+            flex: 0 0 auto;
+            height: fit-content;
+        }
+        
+        .records-table {
+            width: 100%;
+            background: var(--bg-primary, white);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-primary, #e8e9ff);
+            margin-top: 2rem;
+        }
+        
+        .records-table thead {
+            background: var(--bg-secondary, #f8f9ff);
+        }
+        
+        .records-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        }
+        
+        .records-table td {
+            padding: 1rem;
+            color: var(--text-secondary, #64748b);
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+        }
+        
+        .records-table tbody tr:hover {
+            background: var(--bg-secondary, #f8f9ff);
+        }
+        
+        .delete-icon {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-icon:hover {
+            transform: scale(1.2);
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e8e9ff;
+            border-top-color: #5b5fcf;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .proxy-toggle {
+            appearance: none;
+            width: 48px;
+            height: 24px;
+            background: #e8e9ff;
+            border-radius: 24px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .proxy-toggle:checked {
+            background: #5b5fcf;
+        }
+        
+        .proxy-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: var(--bg-primary, white);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .proxy-toggle:checked::after {
+            left: 26px;
+        }
+        
+        .proxy-toggle:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+
+    <div class="modern-container" ng-controller="addModifyDNSRecordsCloudFlare">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-globe"></i>
+                {% trans "CloudFlare DNS Management" %}
+                <a target="_blank" href="https://cyberpanel.net/KnowledgeBase/home/manage-dns-in-cyberpanel/" class="docs-link">
+                    <i class="fas fa-book"></i>
+                    {% trans "DNS Docs" %}
+                </a>
+            </h1>
+            <p class="page-subtitle">{% trans "Manage DNS records for your domains through CloudFlare integration" %}</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-cloud"></i>
+                    {% trans "CloudFlare DNS Records" %}
+                    <span ng-show="recordsLoading" class="loading-spinner"></span>
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if not status %}
+                    <div class="disabled-notice">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3" style="color: #ffa000;"></i>
+                        <h3>{% trans "PowerDNS is disabled" %}</h3>
+                        <p class="mb-3">{% trans "You need to enable PowerDNS to manage DNS records" %}</p>
+                        <a href="{% url 'managePowerDNS' %}" class="btn-primary">
+                            <i class="fas fa-power-off"></i>
+                            {% trans "Enable PowerDNS Now" %}
+                        </a>
+                    </div>
+                {% else %}
+                    {% if not CloudFlare %}
+                        <div class="form-section">
+                            <h3 class="mb-4" style="color: var(--text-primary, #1e293b); font-weight: 600;">
+                                <i class="fas fa-cog"></i>
+                                {% trans "CloudFlare Configuration" %}
+                            </h3>
+                            
+                            <form action="/" method="post">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "CloudFlare Email" %}</label>
+                                            <input name="cfEmail" type="email" class="form-control" ng-model="cfEmail" 
+                                                   placeholder="your@email.com" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "API Token" %}</label>
+                                            <input name="cfToken" type="text" class="form-control" ng-model="cfToken" 
+                                                   placeholder="Enter your CloudFlare API token" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Sync Local Records to CloudFlare" %}</label>
+                                            <select ng-model="cfSync" class="form-control">
+                                                <option value="Enable">{% trans "Enable" %}</option>
+                                                <option value="Disable">{% trans "Disable" %}</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <button type="button" ng-click="saveCFConfigs()" class="btn-primary">
+                                            <i class="fas fa-save"></i>
+                                            {% trans "Save Configuration" %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="modern-tabs">
+                            <button class="modern-tab active" onclick="switchTab(this, 'manage-dns')">
+                                <i class="fas fa-globe"></i>
+                                {% trans "Manage DNS" %}
+                            </button>
+                            <button class="modern-tab" onclick="switchTab(this, 'api-settings')">
+                                <i class="fas fa-cogs"></i>
+                                {% trans "API Settings" %}
+                            </button>
+                        </div>
+                        
+                        <div id="manage-dns" class="tab-content active">
+                            <div class="form-section">
+                                <div class="row mb-4">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Select Domain" %}</label>
+                                            <select ng-change="fetchRecords()" ng-model="selectedZone" class="form-control">
+                                                <option value="">{% trans "Choose a domain..." %}</option>
+                                                {% for items in domainsList %}
+                                                    <option value="{{ items }}">{{ items }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4" ng-hide="addRecordsBox">
+                                        <button type="button" ng-click="syncCF()" class="btn-primary w-100" style="margin-top: 30px;">
+                                            <i class="fas fa-sync"></i>
+                                            {% trans "Sync to CloudFlare" %}
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div ng-hide="addRecordsBox">
+                                    <h4 class="mb-3" style="color: var(--text-primary, #1e293b); font-weight: 600;">
+                                        <i class="fas fa-plus-circle"></i>
+                                        {% trans "Add DNS Record" %}
+                                    </h4>
+                                    
+                                    <div class="record-tabs">
+                                        <button class="record-tab active" id="aRecord" ng-click="fetchRecordsTabs('aRecord')">A</button>
+                                        <button class="record-tab" id="aaaaRecord" ng-click="fetchRecordsTabs('aaaaRecord')">AAAA</button>
+                                        <button class="record-tab" id="cNameRecord" ng-click="fetchRecordsTabs('cNameRecord')">CNAME</button>
+                                        <button class="record-tab" id="mxRecord" ng-click="fetchRecordsTabs('mxRecord')">MX</button>
+                                        <button class="record-tab" id="txtRecord" ng-click="fetchRecordsTabs('txtRecord')">TXT</button>
+                                        <button class="record-tab" id="spfRecord" ng-click="fetchRecordsTabs('spfRecord')">SPF</button>
+                                        <button class="record-tab" id="nsRecord" ng-click="fetchRecordsTabs('nsRecord')">NS</button>
+                                        <button class="record-tab" id="soaRecord" ng-click="fetchRecordsTabs('soaRecord')">SOA</button>
+                                        <button class="record-tab" id="srvRecord" ng-click="fetchRecordsTabs('srvRecord')">SRV</button>
+                                        <button class="record-tab" id="caaRecord" ng-click="fetchRecordsTabs('caaRecord')">CAA</button>
+                                    </div>
+                                    
+                                    <!-- A Record -->
+                                    <div class="record-form aRecord active">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordName" placeholder="@" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "IP Address" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentA" placeholder="192.168.1.1" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('A')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- AAAA Record -->
+                                    <div class="record-form aaaaRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordName" placeholder="@" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "IPv6 Address" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentAAAA" placeholder="2001:db8::1" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('AAAA')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- CNAME Record -->
+                                    <div class="record-form cNameRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordName" placeholder="www" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Target Domain" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentCNAME" placeholder="example.com" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('CNAME')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- MX Record -->
+                                    <div class="record-form mxRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordName" placeholder="@" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Priority" %}</label>
+                                            <input type="number" class="form-control" ng-model="priority" placeholder="10" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Mail Server" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentMX" placeholder="mail.example.com" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('MX')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- TXT Record -->
+                                    <div class="record-form txtRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordName" placeholder="@" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group" style="flex: 2;">
+                                            <label class="form-label">{% trans "Text Value" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentTXT" placeholder="v=spf1 include:_spf.example.com ~all" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('TXT')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- SPF Record -->
+                                    <div class="record-form spfRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordName" placeholder="@" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group" style="flex: 2;">
+                                            <label class="form-label">{% trans "SPF Policy" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentSPF" placeholder="v=spf1 include:_spf.example.com ~all" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('SPF')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- NS Record -->
+                                    <div class="record-form nsRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="selectedZone" disabled>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name Server" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentNS" placeholder="ns1.example.com" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('NS')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- SOA Record -->
+                                    <div class="record-form soaRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="selectedZone" disabled>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group" style="flex: 2;">
+                                            <label class="form-label">{% trans "SOA Value" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentSOA" placeholder="ns1.example.com. admin.example.com. 2023010101 3600 1800 604800 86400" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('SOA')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- SRV Record -->
+                                    <div class="record-form srvRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordName" placeholder="_service._tcp" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Priority" %}</label>
+                                            <input type="number" class="form-control" ng-model="priority" placeholder="10" required>
+                                        </div>
+                                        <div class="form-group" style="flex: 2;">
+                                            <label class="form-label">{% trans "Content" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentSRV" placeholder="0 5060 sipserver.example.com" required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('SRV')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- CAA Record -->
+                                    <div class="record-form caaRecord">
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "Name" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordName" placeholder="@" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">{% trans "TTL" %}</label>
+                                            <input type="number" class="form-control" ng-model="ttl" placeholder="3600" required>
+                                        </div>
+                                        <div class="form-group" style="flex: 2;">
+                                            <label class="form-label">{% trans "CAA Value" %}</label>
+                                            <input type="text" class="form-control" ng-model="recordContentCAA" placeholder='0 issue "letsencrypt.org"' required>
+                                        </div>
+                                        <button type="button" ng-click="addDNSRecord('CAA')" class="btn-primary">
+                                            <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                        </button>
+                                    </div>
+
+
+                                    
+                                    <!-- DNS Records Table -->
+
+                                    <div ng-hide="currentRecords" style="margin-top: 3rem;">
+                                        <h4 class="mb-3" style="color: var(--text-primary, #1e293b); font-weight: 600;">
+                                            <i class="fas fa-list"></i>
+                                            {% trans "DNS Records" %}
+                                        </h4>
+                                        
+                                        <table class="records-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans "Name" %}</th>
+                                                    <th>{% trans "Type" %}</th>
+                                                    <th>{% trans "TTL" %}</th>
+                                                    <th>{% trans "Value" %}</th>
+                                                    <th>{% trans "Priority" %}</th>
+                                                    <th>{% trans "Proxy" %}</th>
+                                                    <th style="text-align: center;">{% trans "Actions" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="record in records track by $index">
+                                                    <td ng-bind="record.name"></td>
+                                                    <td>
+                                                        <span style="padding: 0.25rem 0.75rem; background: var(--bg-hover, #f0f1ff); color: #5b5fcf; border-radius: 4px; font-weight: 500; font-size: 0.75rem;">
+                                                            {{ record.type }}
+                                                        </span>
+                                                    </td>
+                                                    <td ng-bind="record.ttl"></td>
+                                                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" ng-bind="record.content" title="{{ record.content }}"></td>
+                                                    <td ng-bind="record.priority || '-'"></td>
+                                                    <td>
+                                                        <input class="proxy-toggle" 
+                                                               ng-click="enableProxy(record.name, record.proxy)" 
+                                                               ng-disabled="!record.proxiable" 
+                                                               ng-checked="record.proxy" 
+                                                               type="checkbox">
+                                                    </td>
+                                                    <td style="text-align: center;">
+                                                        <i class="fas fa-trash delete-icon" 
+                                                           style="color: #ef4444;" 
+                                                           ng-click="deleteRecord(record.id)"
+                                                           title="{% trans 'Delete Record' %}"></i>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    
+                                    <!-- DNS Records Table -->
+
+
+                                </div>
+                                
+                                <!-- Alert Messages -->
+                                <div style="margin-top: 2rem;">
+                                    <div ng-hide="canNotFetchRecords" class="alert alert-danger">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        {% trans "Cannot fetch records. Error message:" %} {$ errorMessage $}
+                                    </div>
+
+                                    <div ng-hide="couldNotAddRecord" class="alert alert-danger">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        {% trans "Cannot add record. Error message:" %} {$ errorMessage $}
+                                    </div>
+
+                                    <div ng-hide="recordsFetched" class="alert alert-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        {% trans "Records successfully fetched for" %} <strong>{$ domainFeteched $}</strong>
+                                    </div>
+
+                                    <div ng-hide="recordDeleted" class="alert alert-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        {% trans "Record Successfully Deleted" %}
+                                    </div>
+
+                                    <div ng-hide="couldNotDeleteRecords" class="alert alert-danger">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        {% trans "Cannot delete record. Error message:" %} {$ errorMessage $}
+                                    </div>
+
+                                    <div ng-hide="recordAdded" class="alert alert-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        {% trans "Record Successfully Added" %}
+                                    </div>
+
+                                    <div ng-hide="couldNotConnect" class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {% trans "Could not connect to server. Please refresh this page." %}
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                        
+                        <div id="api-settings" class="tab-content">
+                            <div class="form-section">
+                                <h4 class="mb-4" style="color: var(--text-primary, #1e293b); font-weight: 600;">
+                                    <i class="fas fa-key"></i>
+                                    {% trans "CloudFlare API Configuration" %}
+                                </h4>
+                                
+                                <form action="/" method="post">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <label class="form-label">{% trans "CloudFlare Email" %}</label>
+                                                <input ng-init="cfEmail='{{ cfEmail }}'" name="cfEmail" type="email" 
+                                                       class="form-control" ng-model="cfEmail" 
+                                                       placeholder="your@email.com" required>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label class="form-label">{% trans "API Token" %}</label>
+                                                <input ng-init="cfToken='{{ cfToken }}'" name="cfToken" type="text" 
+                                                       class="form-control" ng-model="cfToken" 
+                                                       placeholder="Enter your CloudFlare API token" required>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label class="form-label">{% trans "Sync Local Records to CloudFlare" %}</label>
+                                                <select ng-model="cfSync" class="form-control">
+                                                    <option value="Enable">{% trans "Enable" %}</option>
+                                                    <option value="Disable">{% trans "Disable" %}</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <button type="button" ng-click="saveCFConfigs()" class="btn-primary">
+                                                <i class="fas fa-save"></i>
+                                                {% trans "Save Configuration" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tab, contentId) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.modern-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.remove('active');
+            });
+            
+            // Add active class to clicked tab
+            tab.classList.add('active');
+            
+            // Show corresponding content
+            document.getElementById(contentId).classList.add('active');
+        }
+        
+        // Handle record type tabs
+        document.addEventListener('DOMContentLoaded', function() {
+            const recordTabs = document.querySelectorAll('.record-tab');
+            const recordForms = document.querySelectorAll('.record-form');
+            
+            recordTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const recordType = this.id;
+                    
+                    // Remove active class from all tabs and forms
+                    recordTabs.forEach(t => t.classList.remove('active'));
+                    recordForms.forEach(f => f.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding form
+                    this.classList.add('active');
+                    const form = document.querySelector('.' + recordType);
+                    if (form) {
+                        form.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+
+
+{% endblock %}

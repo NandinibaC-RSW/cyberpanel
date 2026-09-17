@@ -1,0 +1,191 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "SSL Functions - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* SSL Index Page Specific Styles */
+    .ssl-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .ssl-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .ssl-section {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    .ssl-description {
+        color: var(--text-muted, #8893a7);
+        font-size: 14px;
+        margin-bottom: 25px;
+        line-height: 1.5;
+    }
+    
+    .function-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .function-card {
+        background: var(--bg-light, #fafbff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        display: block;
+    }
+    
+    .function-card:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 6px 20px rgba(91,95,207,0.2);
+        transform: translateY(-3px);
+        text-decoration: none;
+    }
+    
+    .function-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 15px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .function-card:hover .function-icon {
+        background: var(--accent-hover, #4b4fbf);
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.3));
+    }
+    
+    .function-icon i {
+        font-size: 24px;
+        color: var(--bg-secondary, white);
+    }
+    
+    .function-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .function-desc {
+        font-size: 13px;
+        color: var(--text-muted, #8893a7);
+        line-height: 1.5;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .ssl-wrapper {
+            padding: 15px;
+        }
+        
+        .ssl-section {
+            padding: 20px;
+        }
+        
+        .function-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ssl-wrapper">
+    <div class="ssl-container">
+        <!-- Header Section -->
+        <div class="ssl-section">
+            <h2 class="section-title">SSL FUNCTIONS</h2>
+            <p class="ssl-description">{% trans "Issue Let's Encrypt SSLs for websites and hostname." %}</p>
+        </div>
+
+        <!-- Functions Grid -->
+        <div class="ssl-section">
+            <h3 class="section-title">AVAILABLE FUNCTIONS</h3>
+            
+            <div class="function-grid">
+                {% if manageSSL or admin %}
+                <a href="{% url 'manageSSL' %}" class="function-card">
+                    <div class="function-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4 class="function-title">{% trans "Manage SSL" %}</h4>
+                    <p class="function-desc">{% trans "Issue and manage SSL certificates for your websites" %}</p>
+                </a>
+                {% endif %}
+
+                {% if hostnameSSL or admin %}
+                <a href="{% url 'sslForHostName' %}" class="function-card">
+                    <div class="function-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <h4 class="function-title">{% trans "Hostname SSL" %}</h4>
+                    <p class="function-desc">{% trans "Secure your server hostname with SSL certificate" %}</p>
+                </a>
+                {% endif %}
+
+                {% if mailServerSSL or admin %}
+                <a href="{% url 'sslForMailServer' %}" class="function-card">
+                    <div class="function-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h4 class="function-title">{% trans "MailServer SSL" %}</h4>
+                    <p class="function-desc">{% trans "Enable SSL for mail server (Postfix/Dovecot)" %}</p>
+                </a>
+                {% endif %}
+
+                {% if admin %}
+                <a href="{% url 'v2ManageSSL' %}" class="function-card">
+                    <div class="function-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h4 class="function-title">{% trans "SSL v2" %}</h4>
+                    <p class="function-desc">{% trans "Advanced SSL management with DNS automation" %}</p>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

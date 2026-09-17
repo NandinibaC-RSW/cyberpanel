@@ -1,0 +1,439 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "ModSecurity Rules - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    .modern-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .rules-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .page-subtitle {
+        font-size: 1.125rem;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+    
+    .docs-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .docs-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    /* Rules Editor Panel */
+    .rules-panel {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .panel-header {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .panel-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .panel-icon {
+        width: 32px;
+        height: 32px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .panel-content {
+        padding: 2rem;
+        background: var(--bg-primary, white);
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: var(--bg-secondary, #f0f9ff);
+        border: 1px solid var(--border-color-light, #bae6fd);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .info-icon {
+        color: var(--accent-primary, #0284c7);
+        font-size: 1.25rem;
+    }
+    
+    .info-text {
+        color: var(--text-secondary, #075985);
+        font-size: 0.875rem;
+    }
+    
+    /* Rules Textarea */
+    .rules-textarea {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 0.875rem;
+        background: #1e293b;
+        color: var(--text-primary, #5b5fcf);
+        resize: vertical;
+        min-height: 400px;
+        transition: all 0.3s ease;
+    }
+    
+    .rules-textarea:focus {
+        outline: none;
+        border-color: var(--accent-primary, #5b5fcf);
+        box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+    }
+    
+    /* Install Panel */
+    .install-panel {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+        text-align: center;
+        padding: 3rem;
+    }
+    
+    .install-icon {
+        font-size: 4rem;
+        color: var(--accent-primary, #5b5fcf);
+        margin-bottom: 1.5rem;
+    }
+    
+    .install-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+    }
+    
+    .install-subtitle {
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 2rem;
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    .btn-install {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 1rem 3rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 1.125rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-install:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    /* Alerts */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: fadeInUp 0.3s ease-out;
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #e8e6ff);
+        color: var(--success-text, #5856d6);
+        border: 1px solid var(--success-border, #d4d4ff);
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #fee2e2);
+        color: var(--danger-text, #991b1b);
+        border: 1px solid var(--danger-border, #fecaca);
+    }
+    
+    .alert-icon {
+        font-size: 1.25rem;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-color-light, #f3f3f3);
+        border-top: 2px solid var(--accent-primary, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Button Group */
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modern-container {
+            padding: 1rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .panel-content {
+            padding: 1rem;
+        }
+        
+        .rules-textarea {
+            min-height: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<div class="modern-container" ng-controller="modSecRules">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="page-title">
+                <div class="rules-icon">
+                    <i class="fas fa-file-code fa-2x"></i>
+                </div>
+                {% trans "ModSecurity Rules" %}
+            </div>
+            <p class="page-subtitle">
+                {% trans "Configure custom ModSecurity rules to protect your websites from specific threats and vulnerabilities." %}
+            </p>
+            <a href="https://community.cyberpanel.net/t/4-mod-security-rules-packages/133" target="_blank" class="docs-link">
+                <i class="fas fa-book"></i>
+                {% trans "ModSecurity Documentation" %}
+            </a>
+        </div>
+    </div>
+    
+    {% if modSecInstalled == 1 %}
+        <!-- Rules Editor Panel -->
+        <div class="rules-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <div class="panel-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    {% trans "Edit Rules" %}
+                </div>
+                <div ng-show="modsecLoading" class="loading-spinner"></div>
+            </div>
+            
+            <div class="panel-content">
+                <div class="info-box">
+                    <i class="fas fa-info-circle info-icon"></i>
+                    <span class="info-text">
+                        {% trans "Add your custom ModSecurity rules below. Each rule should be on a new line. Changes are applied immediately after saving." %}
+                    </span>
+                </div>
+                
+                <form>
+                    <div class="form-group">
+                        <textarea ng-model="currentModSecRules" class="rules-textarea" placeholder="# Add your ModSecurity rules here..."></textarea>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="button" ng-click="saveModSecRules()" class="btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% trans "Save Rules" %}
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Status Messages -->
+                <div ng-hide="rulesSaved" class="alert alert-success">
+                    <i class="fas fa-check-circle alert-icon"></i>
+                    <span>{% trans "ModSecurity rules have been saved successfully." %}</span>
+                </div>
+                
+                <div ng-hide="couldNotConnect" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                    <span>{% trans "Could not connect. Please refresh this page." %}</span>
+                </div>
+                
+                <div ng-hide="couldNotSave" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                    <span>{% trans "Could not save rules. Error message:" %} {$ errorMessage $}</span>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- Installation Panel -->
+        <div class="install-panel">
+            <i class="fas fa-shield-alt install-icon"></i>
+            <h2 class="install-title">{% trans "ModSecurity Not Installed" %}</h2>
+            <p class="install-subtitle">
+                {% trans "Install ModSecurity to start creating custom rules for enhanced web application protection." %}
+            </p>
+            <a href="{% url 'modSecurity' %}" class="btn-install">
+                <i class="fas fa-download"></i>
+                {% trans "Install ModSecurity" %}
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+
+{% endblock %}

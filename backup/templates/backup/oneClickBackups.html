@@ -1,0 +1,891 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'backup/backup.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "One-click Backups - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        body {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .modern-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            border-radius: 20px;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 1.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            border: none;
+            padding: 0.875rem 2.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1.125rem;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(91, 95, 207, 0.4);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #fff;
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.875rem 2.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1.125rem;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover, #f8f9ff);
+            border-color: var(--accent-color, #5b5fcf);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.2);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--accent-color, #5b5fcf);
+            border: 2px solid var(--accent-color, #5b5fcf);
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+        
+        .btn-outline:hover {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+        }
+        
+        .main-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .section-header {
+            margin: 3rem 0 2rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color, #5b5fcf) 0%, var(--accent-light, #8187ff) 100%);
+            border-radius: 2px;
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-success {
+            background: var(--success-bg, #d1fae5);
+            color: var(--success-text, #065f46);
+            border: 1px solid var(--success-border, #a7f3d0);
+        }
+        
+        .alert-danger {
+            background: var(--danger-bg, #fee2e2);
+            color: var(--danger-text, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .alert-info {
+            background: var(--info-bg, #dbeafe);
+            color: var(--info-text, #1e40af);
+            border: 1px solid var(--info-border, #bfdbfe);
+        }
+        
+        .fetch-plans-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, var(--accent-color, #5b5fcf) 0%, var(--accent-light, #8187ff) 100%);
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .fetch-plans-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+        
+        .fetch-plans-btn {
+            background: white;
+            color: var(--accent-color, #5b5fcf);
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.125rem;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .fetch-plans-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        
+        .verification-card {
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 1rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .data-table thead {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        }
+        
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .data-table td {
+            padding: 1.125rem;
+            color: var(--text-secondary, #475569);
+            font-size: 1.125rem;
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+            font-weight: 400;
+        }
+        
+        .data-table tbody tr:hover {
+            background: var(--bg-hover, #f8f9ff);
+        }
+        
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-badge.active {
+            background: var(--success-bg, #d1fae5);
+            color: var(--success-text, #065f46);
+        }
+        
+        .status-badge.inactive {
+            background: var(--danger-bg, #fee2e2);
+            color: var(--danger-text, #991b1b);
+        }
+        
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .plan-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            border: 2px solid var(--border-color, #e8e9ff);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-color: var(--accent-color, #5b5fcf);
+        }
+        
+        .plan-card.featured {
+            border-color: var(--accent-color, #5b5fcf);
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-secondary, #fff) 100%);
+        }
+        
+        .plan-card.featured::before {
+            content: 'POPULAR';
+            position: absolute;
+            top: 20px;
+            right: -30px;
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            padding: 0.25rem 3rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transform: rotate(45deg);
+            letter-spacing: 0.1em;
+        }
+        
+        .plan-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-storage {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-color, #5b5fcf);
+            margin-bottom: 1rem;
+        }
+        
+        .price-container {
+            background: var(--bg-hover, #f8f9ff);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .price-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            line-height: 1;
+        }
+        
+        .price-currency {
+            font-size: 1.5rem;
+            color: var(--text-secondary, #64748b);
+        }
+        
+        .price-period {
+            font-size: 1rem;
+            color: var(--text-secondary, #64748b);
+            font-weight: 500;
+        }
+        
+        .plan-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+        
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .action-buttons .btn-primary,
+        .action-buttons .btn-secondary {
+            padding: 0.5rem 1rem;
+            font-size: 0.9375rem;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .plan-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn-primary,
+            .action-buttons .btn-secondary {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <div class="modern-container">
+
+        <!-- Page header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-cloud-upload-alt"></i>
+                {% trans "One-click Backups" %}
+            </h1>
+            <p class="page-subtitle">{% trans "Secure, automated backup solutions to protect your valuable data" %}</p>
+            <div class="header-actions">
+                <a href="https://youtu.be/mLjMg8Anq70" target="_blank" class="btn-secondary">
+                    <i class="fas fa-play-circle"></i>
+                    {% trans "Watch Tutorial" %}
+                </a>
+            </div>
+        </div>
+
+        <div ng-controller="backupPlanNowOneClick">
+            <!-- Fetch Plans Button -->
+            <div class="fetch-plans-section" ng-hide="showVerification || showSubscriptionsTable">
+                <button type="button" class="fetch-plans-btn" ng-click="showEmailVerification()">
+                    <i class="fas fa-sync-alt"></i>
+                    {% trans "Fetch existing backup plans if any" %}
+                </button>
+            </div>
+
+            <!-- Email Verification Section -->
+            <div class="main-card verification-card" ng-show="showVerification">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-envelope-open-text"></i>
+                        {% trans "Verify Your Email" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Email Address" %}</label>
+                        <input type="email" 
+                               class="form-control" 
+                               ng-model="verificationEmail" 
+                               placeholder="{% trans 'Enter your email address' %}">
+                    </div>
+
+                    <div class="form-group" ng-show="verificationCodeSent">
+                        <label class="form-label">{% trans "Verification Code" %}</label>
+                        <input type="text" 
+                               class="form-control" 
+                               ng-model="verificationCode" 
+                               placeholder="{% trans 'Enter verification code' %}">
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button type="button" 
+                                ng-click="sendVerificationCode()" 
+                                ng-hide="verificationCodeSent" 
+                                class="btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                            {% trans "Send Verification Code" %}
+                        </button>
+                        <button type="button" 
+                                ng-click="verifyCode()" 
+                                ng-show="verificationCodeSent" 
+                                class="btn-primary">
+                            <i class="fas fa-check-circle"></i>
+                            {% trans "Verify Code" %}
+                        </button>
+                        <button type="button" 
+                                ng-click="cancelVerification()" 
+                                class="btn-secondary" style="margin-left: 1rem;">
+                            <i class="fas fa-times"></i>
+                            {% trans "Cancel" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Subscriptions -->
+            <div class="main-card" ng-show="showSubscriptionsTable">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-credit-card"></i>
+                        {% trans "Your Active Subscriptions" %}
+                    </h2>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Subscription ID" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Amount" %}</th>
+                                <th>{% trans "Billing Interval" %}</th>
+                                <th>{% trans "Next Billing Date" %}</th>
+                                <th>{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="sub in subscriptions">
+                                <td><code style="background: var(--border-light, #f3f4f6); padding: 0.25rem 0.5rem; border-radius: 4px;">{$ sub.subscription_id $}</code></td>
+                                <td>
+                                    <span class="status-badge" 
+                                          ng-class="{'active': sub.status === 'active', 'inactive': sub.status !== 'active'}">
+                                        <i class="fas fa-circle" style="font-size: 0.625rem;"></i>
+                                        {$ sub.status $}
+                                    </span>
+                                </td>
+                                <td><strong>${$ sub.amount $}</strong></td>
+                                <td>{$ sub.interval $}</td>
+                                <td>{$ sub.current_period_end | date:'medium' $}</td>
+                                <td>
+                                    <button class="btn-primary" style="padding: 0.625rem 1.25rem; font-size: 1rem;"
+                                            ng-click="ReconfigureSubscription(sub)">
+                                        <i class="fas fa-cog"></i>
+                                        {% trans "Configure Server" %}
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Status Messages -->
+            {% if status == 1 %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>{% trans "Success!" %}</strong> {% trans "You have successfully purchased a backup plan." %}
+                </div>
+            {% elif status == 0 %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>{% trans "Error!" %}</strong> {% trans "Your purchase was not successful." %} {{ message }}
+                </div>
+            {% elif status == 4 %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ message }}
+                </div>
+            {% endif %}
+
+            <!-- Your Backup Plans Section -->
+            {% if bPlans %}
+            <div class="main-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-database"></i>
+                        {% trans "Your Backup Plans" %}
+                    </h2>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Account" %}</th>
+                                <th>{% trans "Plan Name" %}</th>
+                                <th>{% trans "Subscription" %}</th>
+                                <th>{% trans "Billing Cycle" %}</th>
+                                <th>{% trans "Purchase Date" %}</th>
+                                <th>{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plan in bPlans %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-user-circle" style="color: var(--accent-color, #5b5fcf); margin-right: 0.5rem;"></i>
+                                        {{ plan.sftpUser }}
+                                    </td>
+                                    <td><strong>{{ plan.planName }}</strong></td>
+                                    <td>{{ plan.subscription }}</td>
+                                    <td>
+                                        <span style="background: var(--accent-bg, #e0e7ff); color: var(--accent-color, #5b5fcf); padding: 0.375rem 1rem; border-radius: 20px; font-size: 1rem; font-weight: 500;">
+                                            {% if plan.months == '1' %}
+                                                ${{ plan.price }}/month
+                                            {% else %}
+                                                ${{ plan.price }}/year
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ plan.date }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            {% if plan.state == 1 %}
+                                                <a href="{% url 'ManageOCBackups' %}?id={{ plan.id }}" 
+                                                   class="btn-primary">
+                                                    <i class="fas fa-clock"></i>
+                                                    {% trans "Schedule Backups" %}
+                                                </a>
+                                                <a href="{% url 'RestoreOCBackups' %}?id={{ plan.id }}" 
+                                                   class="btn-secondary">
+                                                    <i class="fas fa-undo"></i>
+                                                    {% trans "Restore Backups" %}
+                                                </a>
+                                            {% else %}
+                                                <button type="button"
+                                                        ng-click="DeployAccount('{{ plan.id }}')"
+                                                        class="btn-primary">
+                                                    <i class="fas fa-rocket"></i>
+                                                    {% trans "Deploy Account" %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Available Backup Plans Section -->
+            <div class="section-header">
+                <h2 class="section-title">{% trans "Available Backup Plans" %}</h2>
+            </div>
+            
+            <div class="plan-grid">
+                <!-- 100GB Plan -->
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <div class="plan-storage">100GB</div>
+                    </div>
+                    <div class="price-container">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.0.monthlyPrice }}</span>
+                        <span class="price-period">/month</span>
+                    </div>
+                    <div class="price-container" style="background: var(--accent-bg, #e0e7ff);">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.0.yearlyPrice }}</span>
+                        <span class="price-period">/year</span>
+                    </div>
+                    <div class="plan-actions">
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.0.name }}', '{{ plans.0.monthlyPrice }}', '{{ plans.0.yearlyPrice }}', 12)" 
+                                class="btn-outline btn-block">
+                            <i class="fas fa-shopping-cart"></i>
+                            {% trans "Yearly via Card" %}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 500GB Plan -->
+                <div class="plan-card featured">
+                    <div class="plan-header">
+                        <div class="plan-storage">500GB</div>
+                    </div>
+                    <div class="price-container">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.1.monthlyPrice }}</span>
+                        <span class="price-period">/month</span>
+                    </div>
+                    <div class="price-container" style="background: var(--accent-bg, #e0e7ff);">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.1.yearlyPrice }}</span>
+                        <span class="price-period">/year</span>
+                    </div>
+                    <div class="plan-actions">
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.1.name }}', '{{ plans.1.monthlyPrice }}', '{{ plans.1.yearlyPrice }}', 1)" 
+                                class="btn-outline btn-block">
+                            <i class="fas fa-calendar-alt"></i>
+                            {% trans "Monthly via Card" %}
+                        </button>
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.1.name }}', '{{ plans.1.monthlyPrice }}', '{{ plans.1.yearlyPrice }}', 12)" 
+                                class="btn-primary btn-block">
+                            <i class="fas fa-shopping-cart"></i>
+                            {% trans "Yearly via Card" %}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 1TB Plan -->
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <div class="plan-storage">1TB</div>
+                    </div>
+                    <div class="price-container">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.2.monthlyPrice }}</span>
+                        <span class="price-period">/month</span>
+                    </div>
+                    <div class="price-container" style="background: var(--accent-bg, #e0e7ff);">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.2.yearlyPrice }}</span>
+                        <span class="price-period">/year</span>
+                    </div>
+                    <div class="plan-actions">
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.2.name }}', '{{ plans.2.monthlyPrice }}', '{{ plans.2.yearlyPrice }}', 1)" 
+                                class="btn-outline btn-block">
+                            <i class="fas fa-calendar-alt"></i>
+                            {% trans "Monthly via Card" %}
+                        </button>
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.2.name }}', '{{ plans.2.monthlyPrice }}', '{{ plans.2.yearlyPrice }}', 12)" 
+                                class="btn-primary btn-block">
+                            <i class="fas fa-shopping-cart"></i>
+                            {% trans "Yearly via Card" %}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 2TB Plan -->
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <div class="plan-storage">2TB</div>
+                    </div>
+                    <div class="price-container">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.3.monthlyPrice }}</span>
+                        <span class="price-period">/month</span>
+                    </div>
+                    <div class="price-container" style="background: var(--accent-bg, #e0e7ff);">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.3.yearlyPrice }}</span>
+                        <span class="price-period">/year</span>
+                    </div>
+                    <div class="plan-actions">
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.3.name }}', '{{ plans.3.monthlyPrice }}', '{{ plans.3.yearlyPrice }}', 1)" 
+                                class="btn-outline btn-block">
+                            <i class="fas fa-calendar-alt"></i>
+                            {% trans "Monthly via Card" %}
+                        </button>
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.3.name }}', '{{ plans.3.monthlyPrice }}', '{{ plans.3.yearlyPrice }}', 12)" 
+                                class="btn-primary btn-block">
+                            <i class="fas fa-shopping-cart"></i>
+                            {% trans "Yearly via Card" %}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 3TB Plan -->
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <div class="plan-storage">3TB</div>
+                    </div>
+                    <div class="price-container">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.4.monthlyPrice }}</span>
+                        <span class="price-period">/month</span>
+                    </div>
+                    <div class="price-container" style="background: var(--accent-bg, #e0e7ff);">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{{ plans.4.yearlyPrice }}</span>
+                        <span class="price-period">/year</span>
+                    </div>
+                    <div class="plan-actions">
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.4.name }}', '{{ plans.4.monthlyPrice }}', '{{ plans.4.yearlyPrice }}', 1)" 
+                                class="btn-outline btn-block">
+                            <i class="fas fa-calendar-alt"></i>
+                            {% trans "Monthly via Card" %}
+                        </button>
+                        <button type="button"
+                                ng-click="BuyNowBackupP('{{ plans.4.name }}', '{{ plans.4.monthlyPrice }}', '{{ plans.4.yearlyPrice }}', 12)" 
+                                class="btn-primary btn-block">
+                            <i class="fas fa-shopping-cart"></i>
+                            {% trans "Yearly via Card" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

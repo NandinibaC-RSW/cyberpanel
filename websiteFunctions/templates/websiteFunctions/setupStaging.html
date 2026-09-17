@@ -1,0 +1,463 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Set up Staging Environment - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        /* Ultra-Modern CyberPanel Design System */
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #5558e3;
+            --primary-light: #eef2ff;
+            --secondary-color: #8b5cf6;
+            --accent-color: #ec4899;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-gradient-alt: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --bg-gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            
+            --bg-light: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-hover: #f1f5f9;
+            --border-color: #e2e8f0;
+            --border-light: #f1f5f9;
+            
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+            
+            --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Container Styling */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        
+        /* Page Title Section */
+        #page-title {
+            background: var(--bg-gradient);
+            color: white;
+            padding: 40px;
+            border-radius: var(--radius-xl);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #page-title::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+        
+        #page-title h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        #page-title p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            line-height: 1.6;
+        }
+        
+        /* Main Panel */
+        .panel {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .panel-body {
+            padding: 0;
+        }
+        
+        /* Content Box Header */
+        .title-hero {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-light) 100%);
+            padding: 25px 30px;
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .title-hero img {
+            width: 24px;
+            height: 24px;
+        }
+        
+        /* Form Wrapper */
+        .example-box-wrapper {
+            padding: 30px;
+        }
+        
+        /* Form Styling */
+        .form-horizontal {
+            background: var(--bg-light);
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            transition: var(--transition-base);
+        }
+        
+        .form-group:hover {
+            transform: translateX(5px);
+        }
+        
+        .control-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            font-size: 15px;
+            transition: var(--transition-base);
+            background: white;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            outline: none;
+        }
+        
+        /* Enhanced Buttons */
+        .btn {
+            padding: 14px 32px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            transition: var(--transition-base);
+            border: none;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-lg {
+            padding: 16px 40px;
+            font-size: 16px;
+        }
+        
+        .btn-block {
+            width: 100%;
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #e0e7ff 0%, #cdd4f9 100%);
+            border: 1px solid #c7d2fe;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 25px;
+            color: var(--primary-color);
+            font-size: 14px;
+            line-height: 1.6;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .info-box i {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        /* Progress Section */
+        .progress {
+            height: 12px;
+            border-radius: var(--radius-full);
+            background: var(--border-color);
+            overflow: hidden;
+            margin-top: 15px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            background: var(--bg-gradient);
+            transition: width 0.4s ease;
+            height: 100%;
+            border-radius: var(--radius-full);
+            background-size: 20px 20px;
+            animation: progress-bar-stripes 1s linear infinite;
+        }
+        
+        @keyframes progress-bar-stripes {
+            from { background-position: 0 0; }
+            to { background-position: 20px 0; }
+        }
+        
+        /* Alerts */
+        .alert {
+            border-radius: var(--radius-lg);
+            border: none;
+            padding: 18px 24px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        
+        /* Loading Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        img[src*="loading.gif"] {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            #page-title {
+                padding: 25px;
+            }
+            
+            #page-title h2 {
+                font-size: 24px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .form-horizontal {
+                padding: 20px;
+            }
+            
+            .control-label {
+                margin-bottom: 10px;
+            }
+            
+            .btn-lg {
+                padding: 12px 28px;
+                font-size: 14px;
+            }
+        }
+    </style>
+
+    <div class="container" ng-controller="cloneWebsite">
+        
+        <div id="page-title">
+            <h2>
+                <i class="fas fa-clone" style="margin-right: 10px;"></i>
+                {% trans "Set up Staging Environment" %}
+            </h2>
+            <p>{% trans "Set up staging environment for" %} {{ domainName }}. {% trans "Any domain that you choose here will be created as child-domain for this master site." %}</p>
+        </div>
+
+        <div class="panel">
+            <div class="panel-body">
+                <h3 class="title-hero">
+                    <i class="fas fa-server" style="color: var(--primary-color);"></i>
+                    {% trans "Create Staging Site for" %} <span id="domainName">{{ domainName }}</span>
+                    <img ng-hide="cyberpanelLoading" src="{% static 'images/loading.gif' %}">
+                </h3>
+                <div class="example-box-wrapper">
+
+                    <div class="info-box">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>{% trans "Important:" %}</strong> {% trans "The domain you enter below will be created as a child-domain to" %} {{ domainName }}. 
+                            {% trans "This staging site will be an exact copy of your production site, allowing you to test changes safely." %}
+                        </div>
+                    </div>
+
+                    <form name="websiteCreationForm" action="/" id="createPackages"
+                          class="form-horizontal bordered-row">
+
+                        <div ng-hide="installationDetailsForm" class="form-group">
+                            <label class="col-sm-3 control-label">
+                                <i class="fas fa-globe"></i>
+                                {% trans "Staging Domain" %}
+                            </label>
+                            <div class="col-sm-6">
+                                <input ng-keypress="cloneEnter($event)" 
+                                       type="text" 
+                                       class="form-control" 
+                                       ng-model="domain" 
+                                       placeholder="staging.{{ domainName }}" 
+                                       required>
+                                <small class="form-text text-muted" style="margin-top: 8px; color: var(--text-secondary);">
+                                    <i class="fas fa-info-circle"></i>
+                                    {% trans "Enter a subdomain or a completely different domain for your staging site" %}
+                                </small>
+                            </div>
+                        </div>
+
+                        <div ng-hide="installationDetailsForm" class="form-group">
+                            <label class="col-sm-3 control-label"></label>
+                            <div class="col-sm-6">
+                                <button type="button" ng-click="startCloning()"
+                                        class="btn btn-primary btn-lg btn-block">
+                                    <i class="fas fa-clone"></i>
+                                    {% trans "Start Cloning" %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div ng-hide="installationProgress" class="form-group" style="margin-top: 30px;">
+                            <label class="col-sm-2 control-label"></label>
+                            <div class="col-sm-8">
+
+                                <div class="alert alert-success text-center">
+                                    <h2>{$ currentStatus $}</h2>
+                                </div>
+
+                                <div class="progress">
+                                    <div id="installProgress" class="progress-bar" role="progressbar" aria-valuenow="70"
+                                         aria-valuemin="0" aria-valuemax="100" style="width:0%">
+                                        <span class="sr-only">70% Complete</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div ng-hide="installationProgress" class="form-group" style="margin-top: 30px;">
+                            <label class="col-sm-3 control-label"></label>
+                            <div class="col-sm-6">
+                                <button type="button" ng-disabled="goBackDisable" ng-click="goBack()"
+                                        class="btn btn-primary btn-lg">
+                                    <i class="fas fa-arrow-left"></i>
+                                    {% trans "Go Back" %}
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

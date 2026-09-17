@@ -1,0 +1,406 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'firewall/firewall.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Imunify 360 - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Imunify Specific Styles */
+    .imunify-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .imunify-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e8e9ff;
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2f3640;
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-header .icon {
+        width: 48px;
+        height: 48px;
+        background: #5856d6;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .page-header p {
+        font-size: 15px;
+        color: #64748b;
+        margin: 0;
+    }
+    
+    /* Content Sections */
+    .content-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e8e9ff;
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2f3640;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5856d6;
+        border-radius: 2px;
+    }
+    
+    .section-description {
+        font-size: 14px;
+        color: #64748b;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    
+    /* Access Button */
+    .access-btn {
+        background: #5856d6;
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .access-btn:hover {
+        background: #4644c0;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(88,86,214,0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .access-btn i {
+        font-size: 18px;
+    }
+    
+    /* Documentation Link */
+    .docs-link {
+        background: #f8f9ff;
+        color: #5856d6;
+        border: 1px solid #e8e9ff;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        margin-left: 15px;
+    }
+    
+    .docs-link:hover {
+        background: #5856d6;
+        color: white;
+        border-color: #5856d6;
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+    
+    /* Alert Box */
+    .info-alert {
+        background: #f0f4ff;
+        border: 1px solid #d4e0ff;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .info-alert-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .info-alert-icon {
+        width: 40px;
+        height: 40px;
+        background: #5856d6;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    
+    .info-alert-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2f3640;
+        margin: 0;
+    }
+    
+    .info-alert-content {
+        margin-left: 52px;
+    }
+    
+    .info-alert-content p {
+        font-size: 14px;
+        color: #64748b;
+        line-height: 1.6;
+        margin: 10px 0;
+    }
+    
+    .info-alert-content code {
+        background: white;
+        border: 1px solid #e8e9ff;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 13px;
+        color: #5856d6;
+    }
+    
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2f3640;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #e8e9ff;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #2f3640;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5856d6;
+        box-shadow: 0 0 0 3px rgba(88,86,214,0.1);
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        background: #f8f9ff;
+    }
+    
+    /* Loading Spinner */
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #e8e9ff;
+        border-top-color: #5856d6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Submit Button */
+    .submit-btn {
+        background: #5856d6;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .submit-btn:hover {
+        background: #4644c0;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .submit-btn:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .imunify-wrapper {
+            padding: 15px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .docs-link {
+            margin-left: 0;
+            margin-top: 10px;
+        }
+        
+        .content-section {
+            padding: 20px;
+        }
+        
+        .info-alert-content {
+            margin-left: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="imunify-wrapper">
+    <div class="imunify-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <div class="icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                {% trans "Imunify 360" %}
+                <a href="https://cyberpanel.net/KnowledgeBase/home/install-and-use-imunify-on-cyberpanel/" target="_blank" class="docs-link">
+                    <i class="fas fa-book"></i>
+                    {% trans "Documentation" %}
+                </a>
+            </h1>
+            <p>{% trans "Advanced security solution for web servers" %}</p>
+        </div>
+
+        <!-- Access Section -->
+        <div class="content-section">
+            <h2 class="section-title">{% trans "Access Imunify 360" %}</h2>
+            <p class="section-description">
+                {% trans "Imunify is now integrated via their new API. You can manage Imunify by clicking below. You can use your server root credentials to access Imunify. Login details for Imunify360 is your server root and its password." %}
+            </p>
+            <a href="/imunify" target="_blank" class="access-btn">
+                <i class="fas fa-external-link-alt"></i>
+                {% trans "Access Now" %}
+            </a>
+        </div>
+
+        <!-- Reinstall Section -->
+        <div class="content-section" ng-controller="installImunify">
+            <h2 class="section-title">
+                {% trans "Imunify360 Not working?" %}
+                <span ng-hide="installDockerStatus" class="loading-spinner"></span>
+            </h2>
+            <p class="section-description">
+                {% trans "If for some reason Imunify360 is not working, you can re-install it using the form below." %}
+            </p>
+
+            <!-- Info Alert -->
+            <div class="info-alert">
+                <div class="info-alert-header">
+                    <div class="info-alert-icon">
+                        <i class="fas fa-info"></i>
+                    </div>
+                    <h4 class="info-alert-title">{% trans "We will run following commands again:" %}</h4>
+                </div>
+                <div class="info-alert-content">
+                    <p><code>mkdir /usr/local/CyberCP/public/imunify</code></p>
+                    <p><code>wget https://repo.imunify360.cloudlinux.com/defence360/i360deploy.sh -O i360deploy.sh</code></p>
+                    <p><code>bash i360deploy.sh --key YOUR_KEY --yes</code></p>
+                    <p>
+                        {% trans "If you can still not access Imunify360 after re-installation, just run the above commands on your server terminal, make sure to replace" %} <code>YOUR_KEY</code> {% trans "with your Imunify360 Key." %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Installation Output -->
+            <div ng-hide="installBoxGen" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label class="form-label">{% trans "Installation Output" %}</label>
+                    <textarea ng-model="requestData" rows="10" class="form-control" readonly>{{ requestData }}</textarea>
+                </div>
+            </div>
+
+            <!-- Reinstall Form -->
+            <form style="margin-top: 20px;">
+                <div ng-hide="dockerInstallBTN" class="form-group">
+                    <label class="form-label">{% trans "Imunify Key" %}</label>
+                    <input name="key" type="text" class="form-control" ng-model="key" placeholder="{% trans 'Enter your Imunify360 license key' %}" required>
+                </div>
+
+                <div ng-hide="dockerInstallBTN || installationDetailsForm">
+                    <button type="button" class="submit-btn" ng-click="submitinstallImunify()">
+                        <i class="fas fa-download"></i>
+                        {% trans "Re-Install Now" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

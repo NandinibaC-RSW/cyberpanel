@@ -1,0 +1,685 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Configure Default Nameservers - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern Configure Default Nameservers Styles */
+    .default-ns-config {
+        background: transparent;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    
+    .default-ns-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    /* Header Section */
+    .default-ns-header {
+        margin-bottom: 40px;
+        text-align: center;
+    }
+    
+    .default-ns-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .default-ns-title i {
+        color: var(--accent-color, #5b5fcf);
+        font-size: 36px;
+    }
+    
+    .default-ns-subtitle {
+        font-size: 16px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.6;
+        max-width: 700px;
+        margin: 0 auto 20px;
+    }
+    
+    .docs-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: var(--bg-hover, #f8f9ff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .docs-link:hover {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.2));
+    }
+    
+    /* PowerDNS Disabled State */
+    .powerdns-disabled {
+        background: var(--warning-bg, #fff8e1);
+        border: 1px solid var(--warning-border, #ffe082);
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .powerdns-disabled i {
+        font-size: 48px;
+        color: var(--warning-color, #ffa000);
+        margin-bottom: 20px;
+    }
+    
+    .powerdns-disabled h3 {
+        font-size: 20px;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 20px;
+    }
+    
+    .enable-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .enable-btn:hover {
+        background: var(--accent-hover, #4a4fc4);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.3));
+        color: white;
+    }
+    
+    /* Info Section */
+    .info-section {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .info-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-secondary, white);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: var(--accent-color, #5b5fcf);
+        font-size: 24px;
+        box-shadow: 0 2px 8px var(--shadow-light, rgba(0,0,0,0.05));
+    }
+    
+    .info-content {
+        flex: 1;
+    }
+    
+    .info-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 4px;
+    }
+    
+    .info-text {
+        font-size: 14px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.6;
+    }
+    
+    /* Main Configuration Card */
+    .config-card {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-secondary, #fff) 100%);
+        padding: 30px;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .card-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 28px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    /* Nameserver Grid */
+    .nameservers-grid {
+        padding: 30px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+    }
+    
+    /* Nameserver Card */
+    .nameserver-card {
+        background: var(--bg-primary, #fafbff);
+        border: 2px solid var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .nameserver-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--accent-color, #5b5fcf);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .nameserver-card:hover::before,
+    .nameserver-card:focus-within::before {
+        transform: scaleX(1);
+    }
+    
+    .nameserver-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px var(--shadow-color, rgba(0,0,0,0.08));
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .nameserver-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .nameserver-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--bg-secondary, white);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-color, #5b5fcf);
+        font-size: 20px;
+        box-shadow: 0 2px 8px var(--shadow-light, rgba(0,0,0,0.05));
+    }
+    
+    .nameserver-info {
+        flex: 1;
+    }
+    
+    .nameserver-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted, #94a3b8);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    
+    .nameserver-order {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+    }
+    
+    .nameserver-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 15px;
+        color: var(--text-primary, #1e293b);
+        background: var(--bg-secondary, white);
+        transition: all 0.2s ease;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .nameserver-input:hover {
+        border-color: var(--border-hover, #c7c9ff);
+    }
+    
+    .nameserver-input:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-focus, rgba(91,95,207,0.1));
+    }
+    
+    .nameserver-hint {
+        font-size: 12px;
+        color: var(--text-muted, #94a3b8);
+        margin-top: 8px;
+        font-style: italic;
+    }
+    
+    /* Required indicator */
+    .required-indicator {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        background: var(--danger-color, #ef4444);
+        border-radius: 50%;
+        margin-left: 4px;
+        vertical-align: super;
+    }
+    
+    /* Optional badge */
+    .optional-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: var(--accent-bg, #e0e7ff);
+        color: var(--accent-color, #5b5fcf);
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-left: 8px;
+    }
+    
+    /* Visual Preview */
+    .preview-section {
+        background: var(--bg-hover, #f8f9ff);
+        border-top: 1px solid var(--border-color, #e8e9ff);
+        padding: 30px;
+    }
+    
+    .preview-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .preview-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+    }
+    
+    .preview-item {
+        background: var(--bg-secondary, white);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .preview-item i {
+        color: var(--accent-color, #5b5fcf);
+        font-size: 16px;
+    }
+    
+    .preview-item span {
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        color: var(--text-primary, #1e293b);
+        font-weight: 600;
+    }
+    
+    /* Form Actions */
+    .form-actions {
+        padding: 30px;
+        background: var(--bg-primary, #fafbff);
+        text-align: center;
+        border-top: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .btn-save {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 32px;
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-save:hover {
+        background: var(--accent-hover, #4a4fc4);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px var(--accent-shadow, rgba(91,95,207,0.3));
+    }
+    
+    .btn-save:disabled {
+        background: var(--bg-disabled, #cbd5e1);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Loading State */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Success Animation */
+    @keyframes successPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .success-animation {
+        animation: successPulse 0.5s ease-out;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .default-ns-header {
+            text-align: left;
+        }
+        
+        .default-ns-title {
+            font-size: 24px;
+            justify-content: flex-start;
+        }
+        
+        .nameservers-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-section {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .preview-list {
+            flex-direction: column;
+        }
+        
+        .preview-item {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="default-ns-config" ng-controller="configureDefaultNameservers">
+    <div class="default-ns-container">
+        <div class="default-ns-header">
+            <h1 class="default-ns-title">
+                <i class="fas fa-cog"></i>
+                {% trans "Configure Default Nameservers" %}
+            </h1>
+            <p class="default-ns-subtitle">
+                {% trans "Set up default nameservers that will be automatically assigned to all new DNS zones created on this server" %}
+            </p>
+            <a href="https://cyberpanel.net/KnowledgeBase/home/manage-dns-in-cyberpanel/" target="_blank" class="docs-link">
+                <i class="fas fa-book"></i>
+                {% trans "DNS Documentation" %}
+            </a>
+        </div>
+
+        {% if not status %}
+        <div class="powerdns-disabled">
+            <i class="fas fa-exclamation-circle"></i>
+            <h3>{% trans "PowerDNS is disabled" %}</h3>
+            <p style="margin-bottom: 24px; color: var(--text-secondary, #64748b);">
+                {% trans "You need to enable PowerDNS to configure default nameservers" %}
+            </p>
+            <a href="{% url 'managePowerDNS' %}" class="enable-btn">
+                <i class="fas fa-power-off"></i>
+                {% trans "Enable PowerDNS" %}
+            </a>
+        </div>
+        {% else %}
+
+        <!-- Info Section -->
+        <div class="info-section">
+            <div class="info-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-title">{% trans "About Default Nameservers" %}</div>
+                <div class="info-text">
+                    {% trans "These nameservers will be automatically assigned to every new DNS zone created. You should have at least two nameservers for redundancy, but can configure up to four for additional reliability." %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Configuration Card -->
+        <div class="config-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    {% trans "Nameserver Configuration" %}
+                    <span ng-hide="cyberPanelLoading" class="loading-spinner"></span>
+                </h2>
+            </div>
+
+            <form class="config-form">
+                <div class="nameservers-grid">
+                    <!-- First Nameserver -->
+                    <div class="nameserver-card">
+                        <div class="nameserver-header">
+                            <div class="nameserver-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <div class="nameserver-info">
+                                <div class="nameserver-label">{% trans "Required" %}</div>
+                                <div class="nameserver-order">{% trans "Primary Nameserver" %}</div>
+                            </div>
+                        </div>
+                        <input type="text" class="nameserver-input" 
+                               ng-model="firstNS" 
+                               ng-init="firstNS='{{ firstNS }}'"
+                               placeholder="ns1.example.com" 
+                               required>
+                        <div class="nameserver-hint">{% trans "Main nameserver for DNS resolution" %}</div>
+                    </div>
+
+                    <!-- Second Nameserver -->
+                    <div class="nameserver-card">
+                        <div class="nameserver-header">
+                            <div class="nameserver-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <div class="nameserver-info">
+                                <div class="nameserver-label">{% trans "Required" %}</div>
+                                <div class="nameserver-order">{% trans "Secondary Nameserver" %}</div>
+                            </div>
+                        </div>
+                        <input type="text" class="nameserver-input" 
+                               ng-model="secondNS" 
+                               ng-init="secondNS='{{ secondNS }}'"
+                               placeholder="ns2.example.com" 
+                               required>
+                        <div class="nameserver-hint">{% trans "Backup nameserver for redundancy" %}</div>
+                    </div>
+
+                    <!-- Third Nameserver -->
+                    <div class="nameserver-card">
+                        <div class="nameserver-header">
+                            <div class="nameserver-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <div class="nameserver-info">
+                                <div class="nameserver-label">
+                                    {% trans "Optional" %}
+                                    <span class="optional-badge">{% trans "Extra" %}</span>
+                                </div>
+                                <div class="nameserver-order">{% trans "Third Nameserver" %}</div>
+                            </div>
+                        </div>
+                        <input type="text" class="nameserver-input" 
+                               ng-model="thirdNS" 
+                               ng-init="thirdNS='{{ thirdNS }}'"
+                               placeholder="ns3.example.com (optional)">
+                        <div class="nameserver-hint">{% trans "Additional nameserver for extra reliability" %}</div>
+                    </div>
+
+                    <!-- Fourth Nameserver -->
+                    <div class="nameserver-card">
+                        <div class="nameserver-header">
+                            <div class="nameserver-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <div class="nameserver-info">
+                                <div class="nameserver-label">
+                                    {% trans "Optional" %}
+                                    <span class="optional-badge">{% trans "Extra" %}</span>
+                                </div>
+                                <div class="nameserver-order">{% trans "Fourth Nameserver" %}</div>
+                            </div>
+                        </div>
+                        <input type="text" class="nameserver-input" 
+                               ng-model="forthNS" 
+                               ng-init="forthNS='{{ forthNS }}'"
+                               placeholder="ns4.example.com (optional)">
+                        <div class="nameserver-hint">{% trans "Maximum redundancy configuration" %}</div>
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="preview-section" ng-show="firstNS || secondNS || thirdNS || forthNS">
+                    <div class="preview-title">{% trans "Current Configuration" %}</div>
+                    <div class="preview-list">
+                        <div class="preview-item" ng-show="firstNS">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{$ firstNS $}</span>
+                        </div>
+                        <div class="preview-item" ng-show="secondNS">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{$ secondNS $}</span>
+                        </div>
+                        <div class="preview-item" ng-show="thirdNS">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{$ thirdNS $}</span>
+                        </div>
+                        <div class="preview-item" ng-show="forthNS">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{$ forthNS $}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" ng-click="saveNSConfigurations()" class="btn-save" 
+                            ng-disabled="!firstNS || !secondNS">
+                        <i class="fas fa-save"></i>
+                        {% trans "Save Configuration" %}
+                        <span ng-hide="cyberPanelLoading" class="loading-spinner"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script>
+// Enhance the form with visual feedback
+$(document).ready(function() {
+    // Initialize loading state
+    var scope = angular.element($('[ng-controller="configureDefaultNameservers"]')).scope();
+    if (scope) {
+        scope.$apply(function() {
+            scope.cyberPanelLoading = true;
+        });
+        
+        // Override save function to add visual feedback
+        var originalSave = scope.saveNSConfigurations;
+        scope.saveNSConfigurations = function() {
+            // Add animation to cards
+            $('.nameserver-card').addClass('success-animation');
+            
+            // Call original function
+            if (originalSave) {
+                originalSave.call(scope);
+            }
+            
+            // Remove animation after completion
+            setTimeout(function() {
+                $('.nameserver-card').removeClass('success-animation');
+            }, 500);
+        };
+    }
+    
+    // Add visual feedback for filled inputs
+    $('.nameserver-input').on('input', function() {
+        var $card = $(this).closest('.nameserver-card');
+        if ($(this).val()) {
+            $card.css('border-color', 'var(--accent-color, #5b5fcf)');
+        } else {
+            $card.css('border-color', 'var(--border-color, #e8e9ff)');
+        }
+    });
+});
+</script>
+{% endblock %}

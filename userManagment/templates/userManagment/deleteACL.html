@@ -1,0 +1,277 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'userManagment/userManagment.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Delete ACL - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern page styles matching new design */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    /* Card styles */
+    .content-card {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    /* Form styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-secondary, white);
+        transition: all 0.2s ease;
+    }
+    
+    .form-select:hover {
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        box-shadow: 0 4px 12px rgba(220,53,69,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-warning {
+        background: #ff9800;
+        color: white;
+    }
+    
+    .btn-warning:hover {
+        background: #f57c00;
+        box-shadow: 0 4px 12px rgba(255,152,0,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 25px;
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .alert-info {
+        background: var(--info-bg, #e3f2fd);
+        border: 1px solid var(--info-border, #bbdefb);
+        color: var(--info-text, #1565c0);
+    }
+    
+    .alert-warning {
+        background: var(--warning-bg, #fff3e0);
+        border: 1px solid var(--warning-border, #ffe0b2);
+        color: var(--warning-text, #ef6c00);
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        color: var(--success-text, #2e7d32);
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #ffebee);
+        border: 1px solid var(--danger-border, #ffcdd2);
+        color: var(--danger-text, #c62828);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Response message styles */
+    .response-message {
+        margin-top: 20px;
+        padding: 16px 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .content-card {
+            padding: 20px;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="page-wrapper" ng-controller="deleteACTCTRL">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{% trans "Delete ACL" %}</h1>
+            <p class="page-subtitle">{% trans "Remove Access Control Lists from your CyberPanel installation" %}</p>
+        </div>
+
+        <div class="content-card">
+            <h2 class="card-title">
+                {% trans "Select ACL to Delete" %}
+                <span ng-hide="aclLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>{% trans "Warning: Deleting an ACL will remove all permissions associated with it. Users assigned to this ACL will lose their access rights." %}</span>
+            </div>
+
+            <form>
+                <div class="form-group">
+                    <label for="aclToBeDeleted" class="form-label">{% trans "Available ACLs" %}</label>
+                    <select ng-model="aclToBeDeleted" id="aclToBeDeleted" class="form-select">
+                        <option value="">-- {% trans "Select an ACL" %} --</option>
+                        {% for items in aclNames %}
+                            <option value="{{ items }}">{{ items }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" ng-click="deleteACLFunc()" ng-show="deleteACLButton" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i>
+                        {% trans "Delete ACL" %}
+                    </button>
+                    <button type="button" ng-click="deleteACLFinal()" ng-hide="deleteACLButton" class="btn btn-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {% trans "Confirm Deletion" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

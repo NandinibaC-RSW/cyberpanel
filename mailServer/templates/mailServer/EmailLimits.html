@@ -1,0 +1,390 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Email Limits - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        .modern-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 0;
+        }
+        
+        .docs-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary, #fff);
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 8px;
+            color: #5b5fcf;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            margin-left: 1rem;
+        }
+        
+        .docs-link:hover {
+            background: #5b5fcf;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.3);
+        }
+        
+        .main-card {
+            background: var(--bg-primary, white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05)), var(--shadow-lg, 0 10px 40px rgba(0,0,0,0.08));
+            border: 1px solid var(--border-primary, #e8e9ff);
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-secondary, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: var(--bg-primary, #fff);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #5b5fcf;
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        .btn-primary {
+            background: #5b5fcf;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            background: #4547a9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-success {
+            background: var(--success-light, #d1fae5);
+            color: var(--success-text, #065f46);
+            border: 1px solid var(--success-border, #a7f3d0);
+        }
+        
+        .alert-danger {
+            background: var(--danger-light, #fee2e2);
+            color: var(--danger-text, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .alert-info {
+            background: var(--info-light, #dbeafe);
+            color: var(--info-text, #1e40af);
+            border: 1px solid var(--info-border, #bfdbfe);
+        }
+        
+        .disabled-notice {
+            background: var(--warning-light, #fef3c7);
+            border: 1px solid var(--warning-border, #fde68a);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .disabled-notice h3 {
+            color: var(--warning-text, #92400e);
+            margin-bottom: 1rem;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-primary, #e8e9ff);
+            border-top-color: #5b5fcf;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .limits-config {
+            background: var(--bg-secondary, #f8f9ff);
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+        }
+        
+        .limits-form {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+        
+        .limits-form .form-group {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 0;
+        }
+        
+        .preview-box {
+            background: var(--accent-light, #e0e7ff);
+            border: 1px solid var(--accent-border, #c7d2fe);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            color: var(--info-dark, #3730a3);
+        }
+        
+        .preview-box i {
+            color: #5b5fcf;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+
+    <div class="modern-container" ng-controller="EmailLimitsNew">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-tachometer-alt"></i>
+                {% trans "Email Limits Configuration" %}
+                <a target="_blank" href="https://cyberpanel.net/KnowledgeBase/home/email-limits/" class="docs-link">
+                    <i class="fas fa-book"></i>
+                    {% trans "Documentation" %}
+                </a>
+            </h1>
+            <p class="page-subtitle">{% trans "Control email sending limits for your email accounts" %}</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-cog"></i>
+                    {% trans "Setup Email Limits" %}
+                    <span ng-show="forwardLoading" class="loading-spinner"></span>
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if not status %}
+                    <div class="disabled-notice">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3" style="color: #ffa000;"></i>
+                        <h3>{% trans "Postfix is disabled" %}</h3>
+                        <p class="mb-3">{% trans "You need to enable Postfix to manage email limits" %}</p>
+                        <a href="{% url 'managePostfix' %}" class="btn-primary">
+                            <i class="fas fa-power-off"></i>
+                            {% trans "Enable Postfix Now" %}
+                        </a>
+                    </div>
+                {% else %}
+                    <form action="/" method="post">
+                        <div class="form-section">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label">{% trans "Select Website" %}</label>
+                                        <select ng-change="showEmailDetails()" ng-model="emailDomain" class="form-control">
+                                            <option value="">{% trans "Choose a website..." %}</option>
+                                            {% for items in websiteList %}
+                                                <option value="{{ items }}">{{ items }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div ng-hide="emailDetails" class="form-group">
+                                        <label class="form-label">{% trans "Select Email Account" %}</label>
+                                        <select ng-change="selectForwardingEmail()" ng-model="selectedEmail" class="form-control">
+                                            <option value="">{% trans "Choose an email account..." %}</option>
+                                            <option ng-repeat="email in emails track by $index" value="{$ email.email $}">{$ email.email $}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-hide="creationBox" class="limits-config">
+                            <h3 style="color: var(--text-primary, #1e293b); font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">
+                                <i class="fas fa-sliders-h"></i>
+                                {% trans "Configure Email Limits" %}
+                            </h3>
+                            
+                            <div class="preview-box">
+                                <i class="fas fa-info-circle"></i>
+                                <span>{$ selectedEmail $} {% trans "will be able to send" %} <strong>{$ numberofEmails $}</strong> {% trans "emails every" %} <strong>{$ duration $}</strong>.</span>
+                            </div>
+
+                            <div class="limits-form">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Number of Emails" %}</label>
+                                    <input type="number" class="form-control" ng-model="numberofEmails" 
+                                           placeholder="{% trans 'e.g., 100' %}" min="1">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Duration" %}</label>
+                                    <input type="text" class="form-control" ng-model="duration" 
+                                           placeholder="{% trans 'e.g., 1h, 24h, 1d' %}" required>
+                                </div>
+
+                                <button type="button" ng-click="SaveChanges()" class="btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    {% trans "Save Changes" %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Alert Messages -->
+                        <div ng-hide="notifyBox" class="form-section">
+                            <div ng-hide="forwardError" class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {$ errorMessage $}
+                            </div>
+
+                            <div ng-hide="forwardSuccess" class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                {$ successMessage $}
+                            </div>
+                            
+                            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i>
+                                {% trans "Could not connect to server. Please refresh this page." %}
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,555 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'databases/databases.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Create New Database - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern page styles matching new design */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    /* Card styles */
+    .content-card {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    /* Form styles */
+    .form-group {
+        margin-bottom: 24px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted, #64748b);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-secondary, white);
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:hover {
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-shadow, rgba(91,95,207,0.1));
+    }
+    
+    /* Windows selectbox fixes */
+    select.form-control {
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f3640' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+        padding-right: 40px;
+        line-height: 1.5;
+        min-height: 44px;
+    }
+    
+    /* Windows-specific fixes */
+    @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+        select.form-control {
+            color: var(--text-primary, #2f3640) !important;
+            background-color: var(--bg-secondary, white) !important;
+        }
+    }
+    
+    /* Fix for Windows Edge and Chrome */
+    select.form-control::-ms-expand {
+        display: none;
+    }
+    
+    select.form-control:focus {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+    }
+    
+    /* Website selector card */
+    .website-selector-card {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    /* Database details section */
+    .dbDetails {
+        display: none;
+    }
+    
+    /* Name preview */
+    .name-preview {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: var(--accent-color, #5b5fcf);
+        font-weight: 600;
+        margin-top: 8px;
+        display: inline-block;
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* Password input group */
+    .password-group {
+        display: flex;
+        gap: 10px;
+        align-items: start;
+    }
+    
+    .password-input-wrapper {
+        flex: 1;
+    }
+    
+    .password-input {
+        display: flex;
+        gap: 0;
+        align-items: center;
+    }
+    
+    .password-input .form-control {
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .password-toggle {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-left: none;
+        padding: 10px 14px;
+        border-radius: 0 8px 8px 0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .password-toggle:hover {
+        background: var(--bg-active, #eef0ff);
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .password-toggle i {
+        color: var(--text-muted, #64748b);
+        font-size: 16px;
+    }
+    
+    /* Generated password section */
+    .generated-password-box {
+        background: var(--success-bg, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 16px;
+        display: none;
+    }
+    
+    .generated-password-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--success-text, #2e7d32);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    
+    .generated-password-value {
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        color: var(--success-dark, #1b5e20);
+        font-weight: 600;
+        word-break: break-all;
+        margin-bottom: 12px;
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--text-white, white);
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4a4fc4);
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.3));
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+        background: var(--bg-disabled, #ccc);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-secondary {
+        background: var(--bg-hover, #f8f9ff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-active, #eef0ff);
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .btn-success {
+        background: var(--success-color, #66bb6a);
+        color: var(--text-white, white);
+    }
+    
+    .btn-success:hover {
+        background: var(--success-hover, #4caf50);
+        box-shadow: 0 4px 12px var(--success-shadow, rgba(102,187,106,0.3));
+        transform: translateY(-1px);
+    }
+    
+    .btn-lg {
+        padding: 12px 24px;
+        font-size: 16px;
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #ffebee);
+        border: 1px solid var(--danger-border, #ffcdd2);
+        color: var(--danger-text, #c62828);
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        color: var(--success-text, #2e7d32);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--bg-tertiary, #f3f3f3);
+        border-top: 2px solid var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Button container */
+    .button-container {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    /* Info box */
+    .info-box {
+        background: var(--info-bg, #e3f2fd);
+        border: 1px solid var(--info-border, #bbdefb);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .info-box i {
+        color: var(--info-color, #1976d2);
+        font-size: 18px;
+    }
+    
+    .info-box-text {
+        font-size: 13px;
+        color: var(--info-text, #1565c0);
+        line-height: 1.5;
+    }
+    
+    /* Help text */
+    .help-text {
+        font-size: 12px;
+        color: var(--text-secondary, #8893a7);
+        margin-top: 6px;
+    }
+    
+    /* Hide by default */
+    .generatedPasswordDetails {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .content-card {
+            padding: 20px;
+        }
+        
+        .password-group {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="page-wrapper" ng-controller="createDatabase">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{% trans "Create Database" %}</h1>
+            <p class="page-subtitle">{% trans "Create a new MySQL database for your websites" %}</p>
+        </div>
+
+        <div class="info-box">
+            <i class="fas fa-info-circle"></i>
+            <div class="info-box-text">
+                {% trans "Each database will be prefixed with your domain name for security and organization." %}
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h2 class="card-title">
+                {% trans "Database Configuration" %}
+                <span ng-hide="createDatabaseLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <form name="createDatabaseForm">
+                <div class="website-selector-card">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Select Website" %}</label>
+                        <select id="create-database-select" ng-model="databaseWebsite" ng-change="websiteChanged()" class="form-control">
+                            <option value="">-- {% trans "Select a website" %} --</option>
+                            {% for items in websitesList %}
+                                <option>{{ items }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="dbDetails">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Database Name" %}</label>
+                        <input name="dbName" type="text" class="form-control" ng-model="dbName" 
+                               placeholder="{% trans 'Enter database name' %}" required>
+                        <div class="name-preview" ng-show="dbName">
+                            <span id="domainDatabase"></span>_{$ dbName $}
+                        </div>
+                        <div class="help-text">{% trans "Database name will be prefixed with your domain" %}</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Database User" %}</label>
+                        <input type="text" name="dbUsername" class="form-control" ng-model="dbUsername" 
+                               placeholder="{% trans 'Enter username' %}" required>
+                        <div class="name-preview" ng-show="dbUsername">
+                            <span id="domainUsername"></span>_{$ dbUsername $}
+                        </div>
+                        <div class="help-text">{% trans "Username will be prefixed with your domain" %}</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Password" %}</label>
+                        <div class="password-group">
+                            <div class="password-input-wrapper">
+                                <div class="password-input">
+                                    <input type="password" id="dbPassword" name="dbPassword" class="form-control" 
+                                           ng-model="dbPassword" placeholder="{% trans 'Enter password' %}" required>
+                                    <div class="password-toggle" onclick="togglePasswordVisibility()">
+                                        <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" ng-click="generatePassword()" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i>
+                                {% trans "Generate" %}
+                            </button>
+                        </div>
+                        <div class="help-text">{% trans "Use a strong password for security" %}</div>
+                    </div>
+
+                    <div class="generated-password-box generatedPasswordDetails">
+                        <div class="generated-password-label">{% trans "Generated Password" %}</div>
+                        <div class="generated-password-value">{$ generatedPassword $}</div>
+                        <button type="button" ng-click="usePassword()" class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i>
+                            {% trans "Use This Password" %}
+                        </button>
+                    </div>
+
+                    <div class="button-container">
+                        <button type="button" ng-click="createDatabase()" class="btn btn-primary btn-lg" 
+                                ng-disabled="!databaseWebsite || !dbName || !dbUsername || !dbPassword">
+                            <i class="fas fa-database"></i>
+                            {% trans "Create Database" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Success/Error messages will be handled by the controller -->
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script>
+// Password visibility toggle
+function togglePasswordVisibility() {
+    var passwordInput = document.getElementById('dbPassword');
+    var toggleIcon = document.getElementById('passwordToggleIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+// Enhance the controller
+$(document).ready(function() {
+    var scope = angular.element($('[ng-controller="createDatabase"]')).scope();
+    if (scope) {
+        // Add website change handler
+        scope.websiteChanged = function() {
+            if (scope.databaseWebsite) {
+                $('.dbDetails').fadeIn();
+                // Update the domain prefixes
+                var domainParts = scope.databaseWebsite.split('.');
+                var prefix = domainParts[0];
+                $('#domainDatabase').text(prefix);
+                $('#domainUsername').text(prefix);
+            } else {
+                $('.dbDetails').fadeOut();
+            }
+        };
+        
+        // Store generated password
+        scope.generatePasswordOriginal = scope.generatePassword;
+        scope.generatePassword = function() {
+            if (scope.generatePasswordOriginal) {
+                scope.generatePasswordOriginal();
+            }
+            // Show generated password box
+            $('.generatedPasswordDetails').fadeIn();
+            // Generate a random password (example)
+            var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+            var password = '';
+            for (var i = 0; i < 16; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            scope.generatedPassword = password;
+            scope.$apply();
+        };
+        
+        // Use generated password
+        scope.usePassword = function() {
+            scope.dbPassword = scope.generatedPassword;
+            $('.generatedPasswordDetails').fadeOut();
+            // Update password field to show it's filled
+            $('#dbPassword').val(scope.generatedPassword);
+        };
+    }
+});
+</script>
+{% endblock %}

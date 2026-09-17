@@ -1,0 +1,219 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Install Docker - CyberPanel" %}{% endblock %}
+{% block header_scripts %}
+<style>
+    /* Docker Install Page Specific Styles */
+    .docker-install-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .docker-install-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .docker-section {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    .docker-description {
+        color: var(--text-muted, #8893a7);
+        font-size: 14px;
+        margin-bottom: 25px;
+        line-height: 1.5;
+        text-align: center;
+        padding: 20px;
+        background: var(--bg-secondary, #fafbff);
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .docker-description h4 {
+        color: var(--text-primary, #2f3640);
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .terminal-container {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        padding: 20px;
+        margin: 25px 0;
+    }
+    
+    .terminal-output {
+        width: 100%;
+        padding: 15px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+        font-size: 13px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-primary, white);
+        resize: vertical;
+        min-height: 300px;
+    }
+    
+    .terminal-output:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-shadow-light, rgba(91,95,207,0.1));
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--accent-color, #5b5fcf);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4b4fbf);
+        border-color: var(--accent-hover, #4b4fbf);
+        box-shadow: 0 3px 8px var(--accent-shadow, rgba(91,95,207,0.3));
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+        background: var(--text-disabled, #94a3b8);
+        border-color: var(--text-disabled, #94a3b8);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .error-message {
+        background: var(--danger-light, #fef2f2);
+        border: 1px solid var(--danger-border, #fecaca);
+        color: var(--danger-text, #991b1b);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+    
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        margin-left: 8px;
+    }
+    
+    .action-section {
+        text-align: center;
+        margin-top: 25px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .docker-install-wrapper {
+            padding: 15px;
+        }
+        
+        .docker-section {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <div class="docker-install-wrapper">
+
+        <div class="docker-install-container" ng-controller="installDocker">
+            <!-- Header Section -->
+            <div class="docker-section">
+                <h2 class="section-title">
+                    INSTALL DOCKER
+                    <img ng-hide="installDockerStatus" src="{% static 'images/loading.gif' %}" class="loading-spinner">
+                </h2>
+
+                {% if conErr == 1 %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                        {% if status == 1 %}
+                            <strong>{% trans "Connection Error" %}</strong><br>
+                            {% trans "Unable to connect to docker daemon, please try restarting docker from service page" %}
+                        {% else %}
+                            <strong>{% trans "Permission Denied" %}</strong><br>
+                            {% trans "You do not have sufficient permissions to access this page" %}
+                        {% endif %}
+                    </div>
+
+                {% else %}
+                    <div class="docker-description">
+                        <h4>{% trans "Docker is currently not installed on this server. To manage containers, you must first install it." %}</h4>
+                    </div>
+
+                    <div ng-hide="installBoxGen" class="terminal-container">
+                        <textarea ng-model="requestData" rows="15" class="terminal-output">{{ requestData }}</textarea>
+                    </div>
+
+
+                    <div class="action-section">
+                        {% if status == 1 %}
+                            <button ng-hide="dockerInstallBTN" class="btn btn-primary" ng-click="installDocker()">
+                                <i class="fas fa-download"></i>
+                                {% trans "Install Docker" %}
+                            </button>
+                        {% else %}
+                            <div class="error-message">
+                                <i class="fas fa-lock" style="margin-right: 8px;"></i>
+                                {% trans "You do not have permissions to install Docker. Please contact your system administrator" %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+
+    </div>
+
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script src="{% static 'dockerManager/dockerManager.js' %}"></script>
+{% endblock %}

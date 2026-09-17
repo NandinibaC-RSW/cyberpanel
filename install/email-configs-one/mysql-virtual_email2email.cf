@@ -1,0 +1,5 @@
+user = cyberpanel
+password = SLTUIUxqhulwsh
+dbname = cyberpanel
+query = SELECT email FROM e_users WHERE email='%s'
+hosts = localhost

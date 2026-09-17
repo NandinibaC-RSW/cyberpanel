@@ -1,0 +1,406 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Delete Email Account - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        .modern-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 0;
+        }
+        
+        .main-card {
+            background: var(--bg-secondary, white);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary, #fff);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px var(--accent-shadow, rgba(91, 95, 207, 0.1));
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: var(--bg-secondary, white);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--accent-shadow-dark, rgba(91, 95, 207, 0.4));
+        }
+        
+        .btn-danger {
+            background: var(--danger-color, #ef4444);
+            color: var(--bg-secondary, white);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-hover, #dc2626);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--danger-shadow, rgba(239, 68, 68, 0.4));
+        }
+        
+        .btn-warning {
+            background: var(--warning-color, #ffa000);
+            color: var(--bg-secondary, white);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-warning:hover {
+            background: var(--warning-hover, #ff8800);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--warning-shadow, rgba(255, 160, 0, 0.4));
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-success {
+            background: var(--success-bg-light, #d1fae5);
+            color: var(--success-text, #065f46);
+            border: 1px solid var(--success-border, #a7f3d0);
+        }
+        
+        .alert-danger {
+            background: var(--danger-bg-light, #fee2e2);
+            color: var(--danger-text, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .alert-info {
+            background: var(--info-bg-light, #dbeafe);
+            color: var(--info-text, #1e40af);
+            border: 1px solid var(--info-border, #bfdbfe);
+        }
+        
+        .disabled-notice {
+            background: var(--warning-bg-light, #fef3c7);
+            border: 1px solid var(--warning-border, #fde68a);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .disabled-notice h3 {
+            color: var(--warning-text, #92400e);
+            margin-bottom: 1rem;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color, #e8e9ff);
+            border-top-color: var(--accent-color, #5b5fcf);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .delete-warning {
+            background: var(--danger-bg-light, #fef2f2);
+            border: 1px solid var(--danger-border, #fecaca);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .delete-warning h4 {
+            color: var(--danger-text, #991b1b);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .delete-warning p {
+            color: var(--danger-text-dark, #7f1d1d);
+            margin-bottom: 0;
+            font-size: 0.875rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .email-select-section {
+            background: var(--bg-hover, #f8f9ff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+
+    <div class="modern-container" ng-controller="deleteEmailAccount">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-trash-alt"></i>
+                {% trans "Delete Email Account" %}
+            </h1>
+            <p class="page-subtitle">{% trans "Select a website and email account to delete" %}</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-user-times"></i>
+                    {% trans "Remove Email Account" %}
+                    <span ng-show="emailLoading" class="loading-spinner"></span>
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if not status %}
+                    <div class="disabled-notice">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3" style="color: var(--warning-color, #ffa000);"></i>
+                        <h3>{% trans "Postfix is disabled" %}</h3>
+                        <p class="mb-3">{% trans "You need to enable Postfix to manage email accounts" %}</p>
+                        <a href="{% url 'managePostfix' %}" class="btn-primary">
+                            <i class="fas fa-power-off"></i>
+                            {% trans "Enable Postfix Now" %}
+                        </a>
+                    </div>
+                {% else %}
+                    <form action="/" method="post">
+                        <div class="form-section">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label">{% trans "Select Website" %}</label>
+                                        <select ng-change="showEmailDetails()" ng-model="emailDomain" class="form-control" aria-label="{% trans 'Select Website' %}">
+                                            <option value="">{% trans "Choose a website..." %}</option>
+                                            {% for items in websiteList %}
+                                                <option value="{{ items }}">{{ items }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-hide="emailDetails" class="email-select-section">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label">{% trans "Select Email Account" %}</label>
+                                        <select ng-model="selectedEmail" class="form-control" aria-label="{% trans 'Select Email Account' %}">
+                                            <option value="">{% trans "Choose an email account..." %}</option>
+                                            <option ng-repeat="email in emails track by $index" value="{$ email.email $}">{$ email.email $}</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div ng-show="selectedEmail" class="delete-warning">
+                                        <h4>
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            {% trans "Warning" %}
+                                        </h4>
+                                        <p>{% trans "This action will permanently delete the email account and all associated data. This cannot be undone." %}</p>
+                                    </div>
+
+                                    <button type="button" ng-click="deleteEmailAccount()" class="btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                        {% trans "Delete Email Account" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-hide="emailDetailsFinal" class="form-section">
+                            <div class="delete-warning">
+                                <h4>
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {% trans "Confirm Deletion" %}
+                                </h4>
+                                <p>{% trans "Are you absolutely sure you want to delete this email account? All emails and data will be permanently lost." %}</p>
+                            </div>
+                            <button type="button" ng-click="deleteEmailAccountFinal()" class="btn-warning">
+                                <i class="fas fa-check-circle"></i>
+                                {% trans "Yes, Delete Email Account" %}
+                            </button>
+                        </div>
+
+                        <!-- Alert Messages -->
+                        <div class="form-section">
+                            <div ng-hide="noEmails" class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans "Currently no email accounts exist for this domain." %}
+                            </div>
+
+                            <div ng-hide="canNotDelete" class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {% trans "Cannot delete email account. Error message:" %} {$ errorMessage $}
+                            </div>
+
+                            <div ng-hide="successfullyDeleted" class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                {% trans "Mailbox with username:" %} <strong>{$ deletedID $}</strong> {% trans "has been successfully deleted." %}
+                            </div>
+                            
+                            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i>
+                                {% trans "Could not connect to server. Please refresh this page." %}
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

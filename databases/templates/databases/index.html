@@ -1,0 +1,173 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Database Functions - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    /* Database Page Styles with Dark Mode Support */
+    .container {
+        background: var(--bg-primary, #f0f0ff);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    #page-title {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    #page-title h2 {
+        color: var(--text-primary, #2f3640);
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    #page-title p {
+        color: var(--text-secondary, #8893a7);
+        font-size: 16px;
+    }
+
+    .panel {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+
+    .panel-body {
+        padding: 30px;
+    }
+
+    .content-box-header {
+        color: var(--text-primary, #2f3640);
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .tile-box {
+        display: block;
+        text-decoration: none;
+        padding: 25px;
+        border-radius: 8px;
+        text-align: center;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+    .tile-box.btn-primary {
+        background: var(--accent-color, #5b5fcf) !important;
+        color: white !important;
+        border: 1px solid var(--accent-color, #5b5fcf);
+    }
+
+    .tile-box.btn-primary:hover {
+        background: var(--accent-hover, #4b4fbf) !important;
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.3));
+        transform: translateY(-2px);
+    }
+
+    .tile-box .tile-header {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: inherit;
+    }
+
+    .tile-box .tile-content-wrapper i {
+        font-size: 48px;
+        color: inherit;
+    }
+
+    .example-box-wrapper {
+        background: transparent;
+    }
+
+    .btn-min-width {
+        min-width: 250px;
+    }
+
+    @media (max-width: 768px) {
+        .btn-min-width {
+            min-width: 100%;
+        }
+    }
+</style>
+
+<div class="container">
+<div id="page-title">
+   <h2>{% trans "Database Functions" %}</h2>
+   <p>{% trans "Create, edit and delete databases on this page." %}</p>
+</div>
+
+    <div class="panel col-md-11">
+        <div class="panel-body">
+            <h3 class="content-box-header">
+            {% trans "Available Functions" %}
+            </h3>
+
+             <div class="example-box-wrapper">
+                <div class="row">
+                    <div class="col-md-3 btn-min-width">
+                                    <a href="{% url 'createDatabase' %}" title="{% trans 'Create Database' %}" class="tile-box tile-box-shortcut btn-primary">
+                                        <div class="tile-header">
+                                            {% trans "Create Database" %}
+                                        </div>
+                                        <div class="tile-content-wrapper">
+                                            <i class="fa fa-plus-square"></i>
+                                        </div>
+                                    </a>
+                    </div>
+
+
+                    <div class="col-md-3 btn-min-width">
+                                    <a href="{% url 'deleteDatabase' %}" title="{% trans 'Delete Database' %}" class="tile-box tile-box-shortcut btn-primary">
+                                        <div class="tile-header">
+                                            {% trans "Delete Database" %}
+                                        </div>
+                                        <div class="tile-content-wrapper">
+                                            <i class="fa fa-edit"></i>
+                                        </div>
+                                    </a>
+                    </div>
+
+                    <div class="col-md-3 btn-min-width">
+                                    <a href="{% url 'listDBs' %}" title="{% trans 'List Databases' %}" class="tile-box tile-box-shortcut btn-primary">
+                                        <div class="tile-header">
+                                            {% trans "List Databases" %}
+                                        </div>
+                                        <div class="tile-content-wrapper">
+                                            <i class="fa fa-list-ul"></i>
+                                        </div>
+                                    </a>
+                    </div>
+
+                    <div class="col-md-3 btn-min-width">
+                                    <a target="_blank" href="{% url 'phpMyAdmin' %}" title="{% trans 'PHPMYAdmin' %}" class="tile-box tile-box-shortcut btn-primary">
+                                        <div class="tile-header">
+                                            {% trans "PHPMYAdmin" %}
+                                        </div>
+                                        <div class="tile-content-wrapper">
+                                            <i class="fa fa-code"></i>
+                                        </div>
+                                    </a>
+                    </div>
+
+
+                </div>
+
+
+             </div>
+        </div>
+    </div>
+
+</div>
+
+
+{% endblock %}

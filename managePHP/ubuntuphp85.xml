@@ -1,0 +1,131 @@
+<?xml version="1.0" ?>
+<php>
+     <name>php85</name>
+
+     <extension>
+         <extensionName>lsphp85-common</extensionName>
+         <extensionDescription>Most of what you need.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-curl</extensionName>
+         <extensionDescription>Curl (common web tools) required for PHP</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-dbg</extensionName>
+         <extensionDescription>Debugging extension</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-dev</extensionName>
+         <extensionDescription>Development features almost always required.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-imap</extensionName>
+         <extensionDescription>Email extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-intl</extensionName>
+         <extensionDescription>Extensions for countries other than the U.S.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-json</extensionName>
+         <extensionDescription>PHP extensions for JavaScript Object Notation.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-ldap</extensionName>
+         <extensionDescription>PHP extensions for LDAP (directory access protocol)</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-modules-source</extensionName>
+         <extensionDescription>Source code for PHP modules</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-mysql</extensionName>
+         <extensionDescription>MySQL database extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-opcache</extensionName>
+         <extensionDescription>OPcache extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pgsql</extensionName>
+         <extensionDescription>PostgreSQL database extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pspell</extensionName>
+         <extensionDescription>Spell checking extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-recode</extensionName>
+         <extensionDescription>Character set conversion extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-snmp</extensionName>
+         <extensionDescription>SNMP extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-sqlite3</extensionName>
+         <extensionDescription>SQLite3 database extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-sybase</extensionName>
+         <extensionDescription>Sybase database extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-tidy</extensionName>
+         <extensionDescription>Tidy HTML extensions for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-ioncube</extensionName>
+         <extensionDescription>IonCube Loader extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-imagick</extensionName>
+         <extensionDescription>ImageMagick extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-sodium</extensionName>
+         <extensionDescription>Sodium extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+</php>

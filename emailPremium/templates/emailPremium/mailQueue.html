@@ -1,0 +1,546 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'emailPremium/emailPremium.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Mail Queue - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Mail Queue Specific Styles */
+    .mail-queue-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .mail-queue-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-header .icon {
+        width: 48px;
+        height: 48px;
+        background: #5856d6;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .page-header p {
+        font-size: 15px;
+        color: var(--text-secondary, #64748b);
+        margin: 0;
+    }
+    
+    /* Documentation Link */
+    .docs-link {
+        background: var(--bg-secondary, #f8f9ff);
+        color: #5856d6;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        margin-left: 15px;
+    }
+    
+    .docs-link:hover {
+        background: #5856d6;
+        color: white;
+        border-color: #5856d6;
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+    
+    /* Content Section */
+    .content-section {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5856d6;
+        border-radius: 2px;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+    
+    .action-btn {
+        background: #5856d6;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(88,86,214,0.2);
+    }
+    
+    .action-btn:hover {
+        background: #4644c0;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .action-btn.refresh {
+        background: #10b981;
+    }
+    
+    .action-btn.refresh:hover {
+        background: #059669;
+    }
+    
+    .action-btn.danger {
+        background: #ef4444;
+    }
+    
+    .action-btn.danger:hover {
+        background: #dc2626;
+    }
+    
+    .action-btn.warning {
+        background: #f59e0b;
+    }
+    
+    .action-btn.warning:hover {
+        background: #d97706;
+    }
+    
+    /* Queue Table */
+    .queue-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .queue-table th {
+        text-align: left;
+        padding: 15px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        border-bottom: 2px solid var(--border-primary, #e8e9ff);
+        background: var(--bg-secondary, #f8f9ff);
+    }
+    
+    .queue-table td {
+        padding: 15px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        border-bottom: 1px solid var(--border-secondary, #f0f0ff);
+    }
+    
+    .queue-table tr:hover {
+        background: var(--bg-secondary, #f8f9ff);
+    }
+    
+    .queue-table code {
+        background: var(--bg-tertiary, #f0f0ff);
+        color: #5856d6;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 13px;
+    }
+    
+    /* View Message Button */
+    .view-message-btn {
+        background: var(--bg-secondary, #f8f9ff);
+        color: #5856d6;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+    }
+    
+    .view-message-btn:hover {
+        background: #5856d6;
+        color: white;
+        border-color: #5856d6;
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+    
+    /* Modal Styles */
+    .modal-backdrop {
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(2px);
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+    
+    .modal-header {
+        background: var(--bg-secondary, #f8f9ff);
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 12px 12px 0 0;
+        padding: 20px;
+    }
+    
+    .modal-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin: 0;
+    }
+    
+    .modal-close {
+        background: transparent;
+        border: none;
+        font-size: 24px;
+        color: var(--text-secondary, #64748b);
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .modal-close:hover {
+        background: var(--border-primary, #e8e9ff);
+        color: var(--text-primary, #2f3640);
+    }
+    
+    .modal-body {
+        padding: 25px;
+    }
+    
+    .message-textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-secondary, #f8f9ff);
+        resize: vertical;
+        font-family: 'Monaco', 'Consolas', monospace;
+        line-height: 1.5;
+    }
+    
+    .message-textarea:focus {
+        outline: none;
+        border-color: #5856d6;
+        box-shadow: 0 0 0 3px rgba(88,86,214,0.1);
+        background: var(--bg-primary, white);
+    }
+    
+    .modal-footer {
+        background: var(--bg-secondary, #f8f9ff);
+        border-top: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 0 0 12px 12px;
+        padding: 15px 20px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+    
+    .modal-btn {
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .modal-btn.primary {
+        background: #5856d6;
+        color: white;
+    }
+    
+    .modal-btn.primary:hover {
+        background: #4644c0;
+        transform: translateY(-1px);
+    }
+    
+    .modal-btn.secondary {
+        background: var(--bg-primary, white);
+        color: var(--text-secondary, #64748b);
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .modal-btn.secondary:hover {
+        background: var(--bg-secondary, #f8f9ff);
+        color: var(--text-primary, #2f3640);
+    }
+    
+    /* Loading Spinner */
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid var(--border-primary, #e8e9ff);
+        border-top-color: #5856d6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-secondary, #64748b);
+    }
+    
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 36px;
+        color: var(--text-muted, #94a3b8);
+    }
+    
+    .empty-state-text {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state-subtext {
+        font-size: 14px;
+        color: var(--text-muted, #94a3b8);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .mail-queue-wrapper {
+            padding: 15px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .docs-link {
+            margin-left: 0;
+            margin-top: 10px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-buttons button {
+            width: 100%;
+        }
+        
+        .queue-table {
+            font-size: 12px;
+        }
+        
+        .queue-table th,
+        .queue-table td {
+            padding: 10px;
+        }
+        
+        .modal-dialog {
+            margin: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="mail-queue-wrapper">
+    <div class="mail-queue-container" ng-controller="mailQueue">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <div class="icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                {% trans "Mail Queue" %}
+                <a href="https://cyberpanel.net/KnowledgeBase/home/email-queue-management-in-cyberpanel/" target="_blank" class="docs-link">
+                    <i class="fas fa-book"></i>
+                    {% trans "Documentation" %}
+                </a>
+            </h1>
+            <p>{% trans "Manage your server email queue and monitor mail delivery" %}</p>
+        </div>
+
+        <!-- Queue Management -->
+        <div class="content-section">
+            <h2 class="section-title">
+                {% trans "Queue Management" %}
+                <span ng-hide="cyberpanelLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <div class="action-buttons">
+                <button ng-click="fetchMailQueue()" class="action-btn refresh">
+                    <i class="fas fa-sync-alt"></i>
+                    {% trans "Refresh" %}
+                </button>
+                <button ng-click="flushQueue()" class="action-btn warning">
+                    <i class="fas fa-broom"></i>
+                    {% trans "Flush Queue" %}
+                </button>
+                <button ng-click="delete('all')" class="action-btn danger">
+                    <i class="fas fa-trash-alt"></i>
+                    {% trans "Delete All" %}
+                </button>
+                <button ng-click="delete('deferred')" class="action-btn danger">
+                    <i class="fas fa-clock"></i>
+                    {% trans "Delete Deferred" %}
+                </button>
+            </div>
+
+            <!-- Queue Table -->
+            <div ng-if="queues.length > 0">
+                <table class="queue-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "ID" %}</th>
+                            <th>{% trans "Queue Name" %}</th>
+                            <th>{% trans "Size" %}</th>
+                            <th>{% trans "Sender" %}</th>
+                            <th>{% trans "Recipients" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="queue in queues track by $index">
+                            <td><code ng-bind="queue.queue_id"></code></td>
+                            <td ng-bind="queue.queue_name"></td>
+                            <td ng-bind="queue.message_size"></td>
+                            <td ng-bind="queue.sender"></td>
+                            <td ng-bind="queue.recipients"></td>
+                            <td>
+                                <a href="#" class="view-message-btn" data-toggle="modal" data-target="#viewMessage" ng-click="fetchMessage(queue.queue_id)">
+                                    <i class="fas fa-eye"></i>
+                                    {% trans "View Message" %}
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div ng-if="queues.length == 0" class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <div class="empty-state-text">{% trans "Mail queue is empty" %}</div>
+                <div class="empty-state-subtext">{% trans "All emails have been delivered successfully" %}</div>
+            </div>
+        </div>
+
+        <!-- View Message Modal -->
+        <div id="viewMessage" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">{% trans "Message Details" %}</h4>
+                        <button type="button" class="modal-close" data-dismiss="modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea rows="15" class="message-textarea" readonly>{$ emailMessageContent $}</textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="modal-btn secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i>
+                            {% trans "Close" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,568 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Create Sub/Addon Domain - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern page styles matching new design */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    .learn-more-link {
+        font-size: 14px;
+        color: #5b5fcf;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: var(--bg-secondary, #f8f9ff);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .learn-more-link:hover {
+        background: #eef0ff;
+        border-color: #5b5fcf;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    /* Card styles */
+    .content-card {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: var(--shadow-md, 0 2px 8px rgba(0,0,0,0.08));
+        border: 1px solid var(--border-primary, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5b5fcf;
+        border-radius: 2px;
+    }
+    
+    /* Form styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-primary, white);
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:hover {
+        border-color: #5b5fcf;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5b5fcf;
+        box-shadow: var(--shadow-sm, 0 0 0 3px rgba(91,95,207,0.1));
+    }
+    
+    /* Select dropdown styles for Windows compatibility */
+    select.form-control {
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f3640' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+        padding-right: 40px;
+        line-height: 1.5;
+        min-height: 44px;
+    }
+    
+    /* Windows-specific fixes */
+    @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+        select.form-control {
+            color: var(--text-primary, #2f3640) !important;
+            background-color: var(--bg-primary, white) !important;
+        }
+    }
+    
+    /* Fix for Windows Edge and Chrome */
+    select.form-control::-ms-expand {
+        display: none;
+    }
+    
+    select.form-control option {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-primary, white);
+        padding: 8px;
+    }
+    
+    select.form-control:focus {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-primary, white);
+    }
+    
+    /* Path input group */
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 0;
+    }
+    
+    .input-group-prefix {
+        background: var(--bg-secondary, #f8f9ff);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-right: none;
+        padding: 10px 14px;
+        border-radius: 8px 0 0 8px;
+        font-size: 13px;
+        color: var(--text-secondary, #64748b);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+        flex: 1;
+    }
+    
+    /* Checkbox styles */
+    .checkbox-group {
+        margin-bottom: 15px;
+    }
+    
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--bg-secondary, #f8f9ff);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .checkbox-wrapper:hover {
+        border-color: #5b5fcf;
+        background: #f0f1ff;
+    }
+    
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        cursor: pointer;
+        accent-color: #5b5fcf;
+    }
+    
+    .checkbox-label {
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+        flex: 1;
+    }
+    
+    .checkbox-label a {
+        color: #5b5fcf;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .checkbox-label a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: #5b5fcf;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #4a4fc4;
+        box-shadow: var(--shadow-lg, 0 4px 12px rgba(91,95,207,0.3));
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary, #f8f9ff);
+        color: #5b5fcf;
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .btn-secondary:hover {
+        background: #eef0ff;
+        border-color: #5b5fcf;
+    }
+    
+    .btn-secondary:disabled {
+        background: var(--bg-secondary, #f8f9ff);
+        color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    /* Progress section */
+    .progress-section {
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 10px;
+        padding: 25px;
+        margin-top: 20px;
+    }
+    
+    .progress-status {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .progress-bar-container {
+        background: var(--border-primary, #e8e9ff);
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    
+    .progress-bar-fill {
+        background: #5b5fcf;
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .alert-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        color: #1565c0;
+    }
+    
+    .alert-success {
+        background: #e8f5e9;
+        border: 1px solid #c8e6c9;
+        color: #2e7d32;
+    }
+    
+    .alert-danger {
+        background: #ffebee;
+        border: 1px solid #ffcdd2;
+        color: #c62828;
+    }
+    
+    .alert-warning {
+        background: #fff3e0;
+        border: 1px solid #ffe0b2;
+        color: #f57c00;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #5b5fcf;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Form row */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    /* Error message */
+    .field-error {
+        font-size: 12px;
+        color: #dc3545;
+        margin-top: 5px;
+    }
+    
+    /* Button group */
+    .button-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .button-group {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .page-title {
+            font-size: 24px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="page-wrapper" ng-controller="websitePages">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">
+                {% trans "Create Sub/Addon Domain" %}
+                <a target="_blank" href="https://cyberpanel.net/KnowledgeBase/home/create-sub-addon-domain/" class="learn-more-link">
+                    {% trans "Learn about Sub/Addon Domains" %}
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </h1>
+            <p class="page-subtitle">{% trans "Create sub-domains or addon domains for your websites" %}</p>
+        </div>
+
+        {% if defaultSite == 'NONE' %}
+            <div class="content-card">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>{% trans "You need to create a website before creating Sub/Addon domains." %}</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="content-card">
+                <h2 class="card-title">
+                    {% trans "Domain Details" %}
+                    <span ng-hide="domainLoading" class="loading-spinner"></span>
+                </h2>
+                
+                <form name="websiteCreationForm">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Domain Type" %}</label>
+                        <select ng-change="WebsiteType()" ng-model="websitetype" class="form-control">
+                            <option>Sub Domain</option>
+                            <option>Addon Domain</option>
+                        </select>
+                    </div>
+                    
+                    <span style="display: none" id="defaultSite">{{ defaultSite }}</span>
+                    
+                    <div class="form-group" ng-hide="webselection">
+                        <label class="form-label">{% trans "Select Website" %}</label>
+                        <select ng-change="WebsiteSelection()" ng-model="masterDomain" class="form-control">
+                            <option value="">-- {% trans "Select a website" %} --</option>
+                            {% for items in websiteList %}
+                                <option>{{ items }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div ng-hide="DomainCreateForm" class="form-group">
+                        <label class="form-label">{% trans "Domain Name" %}</label>
+                        <input name="dom" type="text" class="form-control" ng-model="domainNameCreate" 
+                               placeholder="{% trans "subdomain.example.com or newdomain.com" %}" required>
+                        <div ng-show="websiteCreationForm.dom.$error.pattern" class="field-error">
+                            {% trans "Invalid Domain (Note: You don't need to add 'http' or 'https')" %}
+                        </div>
+                    </div>
+                    
+                    <div ng-hide="DomainCreateForm" class="form-group">
+                        <label class="form-label">{% trans "Document Root Path" %}</label>
+                        <div class="input-group">
+                            <span class="input-group-prefix">/home/{$ masterDomain $}/</span>
+                            <input type="text" class="form-control" ng-model="docRootPath" 
+                                   placeholder="{% trans "public_html/subdomain" %}" required>
+                        </div>
+                    </div>
+                    
+                    <div ng-hide="DomainCreateForm" class="form-group">
+                        <label class="form-label">{% trans "Select PHP Version" %}</label>
+                        <select ng-model="phpSelection" class="form-control">
+                            {% for php in phps %}
+                                <option>{{ php }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div ng-hide="DomainCreateForm" class="form-group">
+                        <label class="form-label">{% trans "Additional Features" %}</label>
+                        
+                        <div class="checkbox-group">
+                            <div class="checkbox-wrapper">
+                                {% if test_domain_data %}
+                                    <input ng-model="apacheBackend" type="checkbox" id="apacheBackend">
+                                    <label for="apacheBackend" class="checkbox-label">
+                                        OpenLiteSpeed + Apache (Backend)
+                                        <small style="display: block; color: var(--text-secondary, #8893a7); font-weight: normal; margin-top: 4px;">
+                                            {% trans "For Ubuntu 22, AlmaLinux 8 and AlmaLinux 9" %}
+                                        </small>
+                                    </label>
+                                {% else %}
+                                    <input ng-model="apacheBackend" type="checkbox" id="apacheBackend" disabled>
+                                    <label for="apacheBackend" class="checkbox-label">
+                                        OpenLiteSpeed + Apache (Backend) - 
+                                        <a href="https://cyberpanel.net/KnowledgeBase/home/creating-website/" target="_blank">
+                                            Premium Feature
+                                            <i class="fas fa-external-link-alt" style="font-size: 10px;"></i>
+                                        </a>
+                                        <small style="display: block; color: var(--text-secondary, #8893a7); font-weight: normal; margin-top: 4px;">
+                                            {% trans "For Ubuntu 22, AlmaLinux 8 and AlmaLinux 9" %}
+                                        </small>
+                                    </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div ng-hide="DomainCreateForm" class="button-group">
+                        <button type="button" ng-click="createDomain()" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            {% trans "Create Domain" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="content-card" ng-hide="installationProgress">
+                <h2 class="card-title">{% trans "Installation Progress" %}</h2>
+                
+                <div class="progress-section">
+                    <div class="progress-status">{$ currentStatus $}</div>
+                    
+                    <div class="progress-bar-container">
+                        <div id="installProgress" class="progress-bar-fill" style="width:0%"></div>
+                    </div>
+                    
+                    <div ng-hide="errorMessageBox" class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>{% trans "Error message:" %} {$ errorMessage $}</span>
+                    </div>
+                    
+                    <div ng-hide="success" class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <span>{% trans "Domain successfully created." %}</span>
+                    </div>
+                    
+                    <div ng-hide="couldNotConnect" class="alert alert-danger">
+                        <i class="fas fa-times-circle"></i>
+                        <span>{% trans "Could not connect to server. Please refresh this page." %}</span>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" ng-disabled="goBackDisable" ng-click="goBack()"
+                            class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        {% trans "Go Back" %}
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

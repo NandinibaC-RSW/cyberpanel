@@ -1,0 +1,513 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Configure Hostname and other default Settings - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Onboarding Page Specific Styles */
+    .onboarding-wrapper {
+        background: transparent;
+        padding: 20px;
+        min-height: calc(100vh - 180px);
+    }
+    
+    .onboarding-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e8e9ff;
+        text-align: center;
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .page-header h1 i {
+        color: #5b5fcf;
+        font-size: 24px;
+    }
+    
+    .page-header p {
+        font-size: 16px;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.5;
+    }
+    
+    .learn-more-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #5b5fcf;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 6px 12px;
+        background: #f0f1ff;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+    }
+    
+    .learn-more-btn:hover {
+        background: #5b5fcf;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+    }
+    
+    /* Configuration Section */
+    .configuration-section {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e8e9ff;
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2f3640;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5b5fcf;
+        border-radius: 2px;
+    }
+    
+    .section-title .loading-spinner {
+        margin-left: auto;
+        width: 20px;
+        height: 20px;
+    }
+    
+    /* Alert Box */
+    .alert-box {
+        background: linear-gradient(135deg, #f0f1ff 0%, #e8e9ff 100%);
+        border: 1px solid #c7d2fe;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .alert-box-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .alert-box-header i {
+        color: #5b5fcf;
+        font-size: 20px;
+    }
+    
+    .alert-box-header h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2f3640;
+    }
+    
+    .alert-box ul {
+        margin: 0;
+        padding-left: 20px;
+        list-style: none;
+    }
+    
+    .alert-box ul li {
+        position: relative;
+        padding-left: 25px;
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: #475569;
+        line-height: 1.6;
+    }
+    
+    .alert-box ul li::before {
+        content: '\f00c';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        top: 2px;
+        color: #5b5fcf;
+        font-size: 12px;
+    }
+    
+    .alert-box ul li strong {
+        color: #1e293b;
+        font-weight: 600;
+    }
+    
+    /* Form Styling */
+    .config-form {
+        margin-top: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2f3640;
+        margin-bottom: 8px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        border: 2px solid #e8e9ff;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        background: #fafbff;
+        color: #2f3640;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5b5fcf;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(91,95,207,0.1);
+    }
+    
+    .checkbox-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 15px;
+        background: #f8f9ff;
+        border-radius: 10px;
+        border: 1px solid #e8e9ff;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .checkbox-wrapper:hover {
+        background: #f0f1ff;
+        border-color: #c7d2fe;
+    }
+    
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+        cursor: pointer;
+        accent-color: #5b5fcf;
+    }
+    
+    .checkbox-label {
+        flex: 1;
+        font-size: 14px;
+        color: #2f3640;
+        line-height: 1.5;
+    }
+    
+    .checkbox-label span {
+        display: block;
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 4px;
+    }
+    
+    /* Buttons */
+    .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .btn-primary {
+        background: #5b5fcf;
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+    }
+    
+    .btn-primary:hover {
+        background: #4b4fbf;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(91,95,207,0.3);
+    }
+    
+    .btn-primary:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-secondary {
+        background: #f0f1ff;
+        color: #5b5fcf;
+        border: 2px solid #e8e9ff;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .btn-secondary:hover {
+        background: #e8e9ff;
+        border-color: #c7d2fe;
+        transform: translateY(-2px);
+    }
+    
+    /* Progress Section */
+    .progress-section {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        margin-top: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e8e9ff;
+    }
+    
+    .progress-info {
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .progress-info i {
+        color: #f59e0b;
+        font-size: 18px;
+    }
+    
+    .progress-info p {
+        margin: 0;
+        font-size: 14px;
+        color: #92400e;
+        flex: 1;
+    }
+    
+    .progress-status {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2f3640;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .progress-status .loading-spinner {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .progress-bar-wrapper {
+        width: 100%;
+        height: 8px;
+        background: #e8e9ff;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: #5b5fcf;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .onboarding-container {
+            max-width: 100%;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+        }
+        
+        .button-group {
+            flex-direction: column;
+        }
+        
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="onboarding-wrapper">
+    <div class="onboarding-container" ng-controller="OnboardingCP">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <i class="fas fa-cog"></i>
+                {% trans "Initial Configurations" %}
+            </h1>
+            <p>{% trans "Configure Hostname and other default Settings for CyberPanel" %}</p>
+            <a href="https://cyberpanel.net/KnowledgeBase/home/onboarding-and-initial-cyberpanel-configurations/" target="_blank" rel="noopener" class="learn-more-btn">
+                <i class="fas fa-book"></i>
+                {% trans "Learn More" %}
+            </a>
+        </div>
+        
+        <!-- Configuration Section -->
+        <div class="configuration-section">
+            <h2 class="section-title">
+                {% trans "Server Configuration" %}
+                <img ng-hide="cyberpanelLoading" src="{% static 'images/loading.gif' %}" class="loading-spinner">
+            </h2>
+            
+            <!-- Alert Box -->
+            <div ng-hide="success" class="alert-box">
+                <div class="alert-box-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h4>{% trans "Important Configuration Notes" %}</h4>
+                </div>
+                <ul>
+                    <li>
+                        <strong>{% trans "Choose wisely" %}:</strong> {% trans "If you are not going to use email service on this server, skip rDNS checks." %}
+                    </li>
+                    <li>
+                        {% trans "Ensure that the hostname you provide below is set as rDNS (reverse DNS, also called PTR record) against your IP address. (Only required if you want to use email services on the same server)" %}
+                    </li>
+                    <li>
+                        {% trans "Make sure that the provided hostname also has an A record pointing to your server's IP address." %}
+                    </li>
+                    <li>
+                        {% trans "If the above conditions fail, your server may not function as expected, especially for email services." %}
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Configuration Form -->
+            <form class="config-form">
+                <div class="form-group">
+                    <label class="form-label">{% trans "Hostname" %}</label>
+                    <input type="text" class="form-control" ng-model="hostname" 
+                           placeholder="mail.example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">{% trans "Additional Features" %}</label>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="rdnsCheck" ng-model="rDNSCheck">
+                        <label for="rdnsCheck" class="checkbox-label">
+                            {% trans "Skip rDNS/PTR Check" %}
+                            <span>{% trans "Check this if you don't want to use email service on this server" %}</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" ng-click="RunOnboarding()" class="btn-primary">
+                        <i class="fas fa-play"></i>
+                        {% trans "Start Configurations" %}
+                    </button>
+                    
+                    <button type="button" ng-click="RestartCyberPanel()" 
+                            ng-hide="OnboardineDone" class="btn-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                        {% trans "Restart CyberPanel" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Progress Section -->
+        <div ng-hide="ExecutionStatus" class="progress-section">
+            <div class="progress-info">
+                <i class="fas fa-info-circle"></i>
+                <p>{% trans "Note: Once configurations are completed, click Restart CyberPanel above. After clicking Restart CyberPanel, refresh the page to fetch new SSL from the browser." %}</p>
+            </div>
+            
+            <div class="progress-status">
+                {$ functionStatus $}
+                <img ng-hide="cyberpanelLoading" src="{% static 'images/loading.gif' %}" class="loading-spinner">
+            </div>
+            
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" ng-style="functionProgress"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

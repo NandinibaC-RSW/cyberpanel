@@ -1,0 +1,567 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Suspend/Unsuspend Website - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern page styles matching new design */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    /* Card styles */
+    .content-card {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    /* Form styles */
+    .form-group {
+        margin-bottom: 24px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-secondary, white);
+        transition: all 0.2s ease;
+    }
+    
+    /* Specific styling for select elements to fix Windows visibility issues */
+    select.form-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-color: var(--bg-secondary, white);
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b5fcf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 20px;
+        padding-right: 40px;
+        color: var(--text-primary, #2f3640) !important;
+        font-size: 14px !important;
+        line-height: 1.5;
+        height: auto;
+        min-height: 42px;
+    }
+    
+    /* Ensure option text is visible */
+    select.form-control option {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    /* Fix for Windows high contrast mode */
+    @media screen and (-ms-high-contrast: active) {
+        select.form-control {
+            border: 2px solid;
+        }
+        select.form-control option {
+            background: var(--bg-secondary, white);
+            color: var(--text-primary, black);
+        }
+    }
+    
+    .form-control:hover {
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    /* Specific focus styles for select */
+    select.form-control:focus {
+        background-color: var(--bg-secondary, white);
+        color: var(--text-primary, #2f3640);
+    }
+    
+    /* Website selector card */
+    .website-selector-card {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .website-selector-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* State badge styles */
+    .state-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+    
+    .state-badge.active {
+        background: var(--success-bg, #e8f5e9);
+        color: var(--success-text, #2e7d32);
+        border: 1px solid var(--success-border, #c8e6c9);
+    }
+    
+    .state-badge.suspended {
+        background: var(--danger-bg, #ffebee);
+        color: var(--danger-text, #c62828);
+        border: 1px solid var(--danger-border, #ffcdd2);
+    }
+    
+    /* State selection */
+    .state-selection {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .state-option {
+        flex: 1;
+        padding: 20px;
+        border: 2px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: var(--bg-secondary, white);
+    }
+    
+    .state-option:hover {
+        border-color: var(--accent-color, #5b5fcf);
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .state-option.selected {
+        border-color: var(--accent-color, #5b5fcf);
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .state-option.suspend {
+        border-color: #ffcdd2;
+    }
+    
+    .state-option.suspend:hover,
+    .state-option.suspend.selected {
+        background: #ffebee;
+        border-color: #ef5350;
+    }
+    
+    .state-option.unsuspend {
+        border-color: #c8e6c9;
+    }
+    
+    .state-option.unsuspend:hover,
+    .state-option.unsuspend.selected {
+        background: #e8f5e9;
+        border-color: #66bb6a;
+    }
+    
+    .state-option-icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+    
+    .state-option.suspend .state-option-icon {
+        color: #ef5350;
+    }
+    
+    .state-option.unsuspend .state-option-icon {
+        color: #66bb6a;
+    }
+    
+    .state-option-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 5px;
+    }
+    
+    .state-option-desc {
+        font-size: 12px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4a4fc4);
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-danger {
+        background: #ef5350;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #e53935;
+        box-shadow: 0 4px 12px rgba(239,83,80,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-success {
+        background: #66bb6a;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #4caf50;
+        box-shadow: 0 4px 12px rgba(102,187,106,0.3);
+        transform: translateY(-1px);
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #ffebee);
+        border: 1px solid var(--danger-border, #ffcdd2);
+        color: var(--danger-text, #c62828);
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        color: var(--success-text, #2e7d32);
+    }
+    
+    .alert-warning {
+        background: var(--warning-bg, #fff3e0);
+        border: 1px solid var(--warning-border, #ffe0b2);
+        color: var(--warning-text, #f57c00);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Info box */
+    .info-box {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .info-box i {
+        color: var(--accent-color, #5b5fcf);
+        font-size: 18px;
+    }
+    
+    .info-box-content {
+        flex: 1;
+    }
+    
+    .info-box-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 4px;
+    }
+    
+    .info-box-text {
+        font-size: 12px;
+        color: #64748b;
+        line-height: 1.5;
+    }
+    
+    /* Current state display */
+    .current-state {
+        margin-top: 15px;
+        font-size: 13px;
+        color: #64748b;
+    }
+    
+    .current-state strong {
+        color: var(--text-primary, #2f3640);
+        font-weight: 600;
+    }
+    
+    /* Button container */
+    .button-container {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    
+    /* Additional Windows-specific fixes */
+    @supports (-ms-ime-align: auto) {
+        /* Edge/IE specific styles */
+        select.form-control {
+            color: var(--text-primary, #2f3640) !important;
+            background-color: var(--bg-secondary, white) !important;
+        }
+    }
+    
+    /* Fix for Firefox on Windows */
+    @-moz-document url-prefix() {
+        select.form-control {
+            color: var(--text-primary, #2f3640) !important;
+            text-shadow: none;
+        }
+    }
+    
+    /* Ensure selected option is always visible */
+    select.form-control::-ms-value {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+    }
+    
+    /* Fix for Chrome on Windows */
+    select.form-control:not(:focus):not(:hover) {
+        color: var(--text-primary, #2f3640) !important;
+    }
+    
+    @media (max-width: 768px) {
+        .state-selection {
+            flex-direction: column;
+        }
+        
+        .content-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="page-wrapper" ng-controller="suspendWebsiteControl">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{% trans "Suspend/Unsuspend Website" %}</h1>
+            <p class="page-subtitle">{% trans "Manage website state by suspending or unsuspending websites" %}</p>
+        </div>
+
+        <div class="content-card">
+            <h2 class="card-title">
+                {% trans "Website Selection" %}
+                <span ng-hide="suspendLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <div class="website-selector-card">
+                <label class="website-selector-label">{% trans "Select Website to Manage" %}</label>
+                <select ng-change="showSuspendUnsuspend()" ng-model="websiteToBeSuspended" class="form-control">
+                    <option value="">-- {% trans "Select a website" %} --</option>
+                    {% for items in websiteList %}
+                        <option>{{ items }}</option>
+                    {% endfor %}
+                </select>
+                
+                <div ng-show="websiteToBeSuspended && currentWebsiteState" class="current-state">
+                    {% trans "Current Status:" %} 
+                    <strong ng-show="currentWebsiteState == 'Active'" style="color: #66bb6a;">
+                        <i class="fas fa-check-circle"></i> {$ currentWebsiteState $}
+                    </strong>
+                    <strong ng-show="currentWebsiteState == 'Suspended'" style="color: #ef5350;">
+                        <i class="fas fa-pause-circle"></i> {$ currentWebsiteState $}
+                    </strong>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <div class="info-box-content">
+                    <div class="info-box-title">{% trans "Website State Management" %}</div>
+                    <div class="info-box-text">
+                        {% trans "Suspending a website will make it temporarily inaccessible. You can unsuspend it at any time to restore access." %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- State Selection -->
+        <div class="content-card" ng-hide="stateView">
+            <h2 class="card-title">{% trans "Select Action" %}</h2>
+            
+            <div class="state-selection">
+                <div class="state-option suspend" ng-class="{selected: state == 'Suspend'}" ng-click="state = 'Suspend'">
+                    <i class="fas fa-pause-circle state-option-icon"></i>
+                    <div class="state-option-title">{% trans "Suspend" %}</div>
+                    <div class="state-option-desc">{% trans "Make website temporarily inaccessible" %}</div>
+                </div>
+                
+                <div class="state-option unsuspend" ng-class="{selected: state == 'Un-Suspend'}" ng-click="state = 'Un-Suspend'">
+                    <i class="fas fa-play-circle state-option-icon"></i>
+                    <div class="state-option-title">{% trans "Un-Suspend" %}</div>
+                    <div class="state-option-desc">{% trans "Restore website accessibility" %}</div>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button type="button" ng-click="save()" class="btn" 
+                        ng-class="{'btn-danger': state == 'Suspend', 'btn-success': state == 'Un-Suspend', 'btn-primary': !state}"
+                        ng-disabled="!websiteToBeSuspended || !state">
+                    <i class="fas fa-save"></i>
+                    {% trans "Apply Changes" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div ng-hide="websiteSuspendFailure" class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{% trans "Cannot suspend website. Error message:" %} {$ errorMessage $}</span>
+        </div>
+
+        <div ng-hide="websiteUnsuspendFailure" class="alert alert-danger">
+            <i class="fas fa-times-circle"></i>
+            <span>{% trans "Cannot unsuspend website. Error message:" %} {$ errorMessage $}</span>
+        </div>
+
+        <div ng-hide="websiteSuccess" class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <span>{% trans "Website" %} <strong>{$ websiteStatus $}</strong> {% trans "successfully" %} {$ finalStatus $}.</span>
+        </div>
+
+        <div ng-hide="couldNotConnect" class="alert alert-danger">
+            <i class="fas fa-network-wired"></i>
+            <span>{% trans "Could not connect to server. Please refresh this page." %}</span>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script>
+// Enhance the suspend website controller with current state detection
+$(document).ready(function() {
+    // This will be handled by the existing Angular controller
+    // The showSuspendUnsuspend function already handles the state visibility
+});
+</script>
+{% endblock %}

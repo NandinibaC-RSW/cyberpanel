@@ -1,0 +1,653 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Docker Manage Images - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, var(--accent-shadow-light, rgba(91, 95, 207, 0.15)) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .docker-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-md, rgba(0,0,0,0.1));
+    }
+    
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4547a9);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary, #fff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--accent-shadow-light, rgba(91, 95, 207, 0.2));
+    }
+    
+    .btn-warning {
+        background: var(--warning-color, #f59e0b);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-warning:hover {
+        background: var(--warning-hover, #d97706);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--warning-shadow, rgba(245, 158, 11, 0.4));
+    }
+    
+    .btn-danger {
+        background: var(--danger-color, #ef4444);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.825rem;
+    }
+    
+    .btn-danger:hover {
+        background: var(--danger-hover, #dc2626);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--danger-shadow, rgba(239, 68, 68, 0.4));
+    }
+    
+    .btn-info {
+        background: var(--info-color, #3b82f6);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.825rem;
+    }
+    
+    .btn-info:hover {
+        background: var(--info-hover, #2563eb);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--info-shadow, rgba(59, 130, 246, 0.4));
+    }
+    
+    .main-card {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .search-section {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        background: var(--bg-secondary, #fff);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-shadow-light, rgba(91, 95, 207, 0.1));
+    }
+    
+    .images-table {
+        width: 100%;
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 2rem;
+    }
+    
+    .images-table thead {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+    }
+    
+    .images-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid var(--border-color, #e8e9ff);
+    }
+    
+    .images-table td {
+        padding: 1rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-light, #f3f4f6);
+    }
+    
+    .images-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .images-table tbody tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .images-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .image-name {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .image-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--accent-light, #e0e7ff);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    .official-badge {
+        background: var(--success-light, #d1fae5);
+        color: var(--success-text, #065f46);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-left: 0.5rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #e8e9ff;
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+    
+    .modal-content {
+        border-radius: 16px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 25px 50px -12px var(--shadow-lg, rgba(0, 0, 0, 0.25));
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        padding: 1.5rem 2rem;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-footer {
+        background: var(--bg-hover, #f8f9ff);
+        border-top: 1px solid var(--border-color, #e8e9ff);
+        padding: 1rem 2rem;
+    }
+    
+    .history-table {
+        width: 100%;
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .history-table th {
+        background: var(--border-color, #e8e9ff);
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+    }
+    
+    .history-table td {
+        padding: 0.75rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        word-break: break-all;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-buttons button {
+            width: 100%;
+        }
+        
+        .images-table {
+            font-size: 0.75rem;
+        }
+        
+        .images-table th,
+        .images-table td {
+            padding: 0.5rem;
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="manageImages">
+    <div class="page-header">
+        <h1 class="page-title">
+            <div class="docker-icon">
+                <i class="fab fa-docker" style="color: var(--accent-color, #5b5fcf); font-size: 1.75rem;"></i>
+            </div>
+            {% trans "Manage Docker Images" %}
+        </h1>
+        <p class="page-subtitle">{% trans "Pull, manage, and organize Docker images for your containers" %}</p>
+        <div class="header-actions">
+            <a href="{% url "containerImage" %}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                {% trans "Create Container" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Images Section -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-search"></i>
+                {% trans "Search & Pull Images" %}
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="search-section">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-search" style="margin-right: 0.5rem;"></i>
+                        {% trans "Search Docker Hub" %}
+                    </label>
+                    <input type="text" ng-change="searchImages()" ng-model="searchString" 
+                           class="form-control" placeholder="{% trans 'Enter image name (e.g., nginx, mysql, ubuntu)' %}">
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="images-table" id="searchResult">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Image Name" %}</th>
+                            <th>{% trans "Tags" %}</th>
+                            <th style="text-align: center;">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="image in images track by $index">
+                            <td>
+                                <div class="image-name">
+                                    <div class="image-icon">
+                                        <i class="fab fa-docker"></i>
+                                    </div>
+                                    <div>
+                                        <span ng-bind="image.name"></span>
+                                        <span ng-show="image.is_official == true" class="official-badge">
+                                            <i class="fas fa-check"></i>
+                                            {% trans "Official" %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <select ng-focus="loadTags($event)" ng-click="selectTag()" 
+                                        ng-model="imageTag[image.name2]" 
+                                        ng-options="tag for tag in tagList[image.name2]" 
+                                        ng-attr-id="{$ image.name2 $}" 
+                                        data-pageloaded='0' 
+                                        class="form-control">
+                                    <option value="">{% trans "Select tag..." %}</option>
+                                </select>
+                            </td>
+                            <td style="text-align: center;">
+                                <button ng-click="pullImage(image.name, imageTag[image.name2])" 
+                                        class="btn-primary">
+                                    <i class="fas fa-download"></i>
+                                    {% trans "Pull" %}
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local Images Section -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-hdd"></i>
+                {% trans "Local Images" %}
+                <span id="imageLoading" style="display: none;" class="loading-spinner"></span>
+            </h2>
+            <button class="btn-warning" ng-click="rmImage(0)" title="{% trans 'Delete unused images' %}">
+                <i class="fas fa-broom"></i>
+                {% trans "Prune Unused" %}
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="images-table" id="imageList">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Image Name" %}</th>
+                            <th>{% trans "Tags" %}</th>
+                            <th style="text-align: center;">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for name, image in images.items %}
+                        <tr>
+                            <td>
+                                <div class="image-name">
+                                    <div class="image-icon">
+                                        <i class="fab fa-docker"></i>
+                                    </div>
+                                    <strong>{{ image.name }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <select class="form-control tagList" id="{{ forloop.counter }}">
+                                    {% for tag in image.tags %}
+                                    <option>{{ tag }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td style="text-align: center;">
+                                <div class="action-buttons">
+                                    <button class="btn-info" title="{% trans 'View History' %}" 
+                                            ng-click="getHistory({{ forloop.counter }})">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    <button class="btn-danger" title="{% trans 'Delete Image' %}" 
+                                            ng-click="rmImage({{ forloop.counter }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="history" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-history" style="margin-right: 0.5rem;"></i>
+                        {% trans "Image History" %}
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" 
+                            style="font-size: 1.5rem; background: transparent; border: none;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "ID" %}</th>
+                                <th>{% trans "Created By" %}</th>
+                                <th>{% trans "Created" %}</th>
+                                <th>{% trans "Comment" %}</th>
+                                <th>{% trans "Size" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="history in historyList track by $index">
+                                <td ng-bind="history.Id"></td>
+                                <td ng-bind="history.CreatedBy"></td>
+                                <td ng-bind="history.Created"></td>
+                                <td ng-bind="history.Comment"></td>
+                                <td ng-bind="history.Size"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        {% trans "Close" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script src="{% static 'dockerManager/dockerManager.js' %}"></script>
+{% endblock %}

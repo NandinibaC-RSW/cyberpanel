@@ -1,0 +1,75 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Edit Plugin Bucket - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <div class="container" style="background: var(--bg-primary, #f0f0ff); padding: 20px; border-radius: 12px;">
+        <span id="pluginbID" style="display: none">{{ pluginbID }}</span>
+        <div id="page-title" style="background: var(--bg-secondary, white); padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08)); border: 1px solid var(--border-color, #e8e9ff);">
+            <h2 id="domainNamePage" style="color: var(--text-heading, #2f3640); margin: 0;">{% trans "Edit Plugin Bucket" %}
+
+            </h2>
+        </div>
+        <div ng-controller="WPAddNewPlugin" class="panel" style="background: var(--bg-secondary, white); border-radius: 12px; box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08)); border: 1px solid var(--border-color, #e8e9ff);">
+            <div class="panel-body" style="padding: 25px;">
+                <div class="example-box-wrapper">
+                    <h2 style="color: var(--text-heading, #2f3640); margin-bottom: 20px;">{{ BucketName }}</h2>
+
+                    <form name="websiteCreationForm" action="/" id="createPackages"
+                          class="form-horizontal bordered-row panel-body" style="background: var(--bg-hover, #f8f9ff); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color, #e8e9ff);">
+
+
+
+
+                        <label style="margin-bottom: 10px; color: var(--text-primary, #2f3640); font-weight: 600;">{% trans "Search Plugin Name" %}</label>
+
+                        <input name="searchcontent" type="text" class="form-control" ng-model="searchcontent"
+                               ng-keyup="SearchPluginName('eidt')"
+                               placeholder="{% trans "Search Plugin...." %}" required
+                               style="border: 1px solid var(--border-color, #e8e9ff); background: var(--bg-secondary, white); color: var(--text-primary, #2f3640); padding: 12px 16px; border-radius: 8px;">
+
+                        <div id="mysearch" class="col-lg-12" style="display: none; border-top: none!important;
+                                                            border: 1px solid var(--border-color, rgba(90, 91, 92, 0.7));
+                                                            position: absolute; z-index: 1;
+                                                            background-color: var(--bg-secondary, #FFFFFF); border-radius: 8px; box-shadow: 0 4px 12px var(--shadow-color, rgba(0,0,0,0.1));">
+                        </div>
+
+                        <h3 style="margin-top: 20px; color: var(--text-heading, #2f3640);">Selected Plugin</h3>
+                        <div id="sedplugn" style="display: flex; flex-direction: row; margin-top: 10px; gap: 10px; flex-wrap: wrap;">
+                            {% for plugin in Selectedplugins %}
+                                <div id="selplug"
+                                     style="background-color: var(--accent-color, #12207a); color: #FFFFFF; padding: 8px 12px; border-radius: 30px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500;">
+                                    {{ plugin }}
+                                    <svg ng-click="deletesPlgin('{{ plugin }}')" xmlns="http://www.w3.org/2000/svg"
+                                         aria-hidden="true"
+                                         role="img" width="1em" height="1em"
+                                         preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16"
+                                         style="cursor: pointer; transition: all 0.2s ease;"
+                                         onmouseover="this.style.transform='scale(1.2)'"
+                                         onmouseout="this.style.transform='scale(1)'">
+                                        <path fill="none" stroke="currentColor" stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="1.5" d="m11.25 4.75l-6.5 6.5m0-6.5l6.5 6.5"/>
+                                    </svg>
+
+                                </div>
+                                &nbsp &nbsp
+                            {% endfor %}
+
+
+                        </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+
+
+{% endblock %}

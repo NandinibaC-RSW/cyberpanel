@@ -1,0 +1,225 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Design - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        body {
+            background-color: var(--bg-primary, #f0f0ff);
+        }
+        
+        .page-wrapper {
+            background: transparent;
+            padding: 20px;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-heading, #2f3640);
+            margin-bottom: 8px;
+        }
+        
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary, #8893a7);
+        }
+        
+        .content-card {
+            background: var(--bg-secondary, white);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            margin-bottom: 25px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary, #2f3640);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-color, #5b5fcf);
+            border-radius: 2px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-select,
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary, #2f3640);
+            background: var(--bg-secondary, white);
+            transition: all 0.2s ease;
+        }
+        
+        .form-select:hover,
+        .form-control:hover {
+            border-color: var(--accent-color, #5b5fcf);
+        }
+        
+        .form-select:focus,
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+        }
+        
+        textarea.form-control {
+            min-height: 200px;
+            font-family: 'SF Mono', Monaco, monospace;
+            line-height: 1.5;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4a4fc4);
+            box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert-success {
+            background: var(--success-bg, #f0fdf4);
+            border: 1px solid var(--success-border, #bbf7d0);
+            color: var(--success-text, #166534);
+        }
+        
+        .info-box {
+            background: var(--bg-hover, #f8f9ff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            padding: 15px;
+            color: var(--text-secondary, #64748b);
+            font-size: 14px;
+        }
+        
+        .info-box p {
+            margin: 0;
+        }
+        
+        .loading-icon {
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        @media (max-width: 768px) {
+            .content-card {
+                padding: 20px;
+            }
+        }
+    </style>
+
+    <div class="page-wrapper" ng-controller="designtheme">
+        <div class="page-container">
+            <div class="page-header">
+                <h1 class="page-title">{% trans "Design" %}</h1>
+            </div>
+
+            <div class="content-card">
+                <h2 class="card-title">
+                    {% trans "Custom CSS" %}
+                    <img class="loading-icon" ng-hide="themeloading" src="{% static 'images/loading.gif' %}">
+                </h2>
+                
+                <div class="info-box" style="margin-bottom: 2rem;">
+                    <p>{% trans "Any CSS added here will apply to the entire dashboard design." %}</p>
+                </div>
+
+                <form action="{% url 'design' %}" method="POST">
+                    {% csrf_token %}
+
+                    {% if saved %}
+                        <div class="alert alert-success">
+                            <i class="fa fa-check-circle"></i> {% trans "Changes saved successfully." %}
+                        </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Select Theme" %}</label>
+                        <select ng-change="getthemedata()" ng-model="stheme" id="stheme" class="form-select">
+                            {% for key in tree %}
+                                <option value="{{ key }}">{{ key }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div ng-hide="keyBox" class="form-group">
+                        <label class="form-label">{% trans "Custom CSS" %}</label>
+                        <textarea id="appendthemedata" name="MainDashboardCSS" rows="12" class="form-control">{{ cosmetic.MainDashboardCSS }}</textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save"></i> {% trans "Save Changes" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

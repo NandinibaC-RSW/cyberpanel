@@ -1,0 +1,503 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Set up Backup Destinations" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Page Specific Styles */
+    .backup-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .backup-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e8e9ff;
+    }
+    
+    .page-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #2f3640;
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-header .icon {
+        width: 48px;
+        height: 48px;
+        background: #5b5fcf;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+    }
+    
+    .page-header p {
+        font-size: 14px;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.6;
+    }
+    
+    .docs-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #5b5fcf;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+    
+    .docs-link:hover {
+        color: #4b4fbf;
+        transform: translateX(2px);
+    }
+    
+    /* Content Section */
+    .content-section {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e8e9ff;
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2f3640;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5b5fcf;
+        border-radius: 2px;
+    }
+    
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #2f3640;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        border: 1px solid #e8e9ff;
+        border-radius: 8px;
+        background: #f8f9ff;
+        color: #2f3640;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5b5fcf;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        border: 1px solid #e8e9ff;
+        border-radius: 8px;
+        background: #f8f9ff;
+        color: #2f3640;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #5b5fcf;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    .form-help {
+        font-size: 12px;
+        color: #8893a7;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .form-help i {
+        font-size: 13px;
+        color: #5b5fcf;
+    }
+    
+    /* Button Styles */
+    .btn-primary {
+        background: #5b5fcf;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-primary:hover {
+        background: #4b4fbf;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(91,95,207,0.3);
+    }
+    
+    .btn-primary:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Angular cloak */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+        display: none !important;
+    }
+    
+    /* Loading Spinner */
+    .loading-spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 0.8s linear infinite;
+        margin-left: 8px;
+    }
+    
+    .loading-spinner.ng-hide {
+        display: none !important;
+    }
+    
+    /* Show spinner only when Angular explicitly shows it */
+    .loading-spinner[style*="display: none;"] {
+        display: none !important;
+    }
+    
+    .loading-spinner.ng-hide-add,
+    .loading-spinner.ng-hide-remove {
+        display: none !important;
+    }
+    
+    .btn-primary .loading-spinner:not([style*="display: none;"]):not(.ng-hide) {
+        display: inline-block !important;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Table Styles */
+    .destinations-table {
+        width: 100%;
+        margin-top: 30px;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e8e9ff;
+    }
+    
+    .destinations-table th {
+        background: #f8f9ff;
+        padding: 15px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e8e9ff;
+    }
+    
+    .destinations-table td {
+        padding: 15px;
+        font-size: 14px;
+        color: #2f3640;
+        border-bottom: 1px solid #f0f0ff;
+    }
+    
+    .destinations-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .destinations-table tr:hover {
+        background: #f8f9ff;
+    }
+    
+    .delete-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .delete-btn:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(239,68,68,0.3);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #8893a7;
+    }
+    
+    .empty-state i {
+        font-size: 48px;
+        color: #e8e9ff;
+        margin-bottom: 15px;
+    }
+    
+    .empty-state p {
+        font-size: 14px;
+        margin: 0;
+    }
+    
+    /* Alert Box */
+    .alert-box {
+        background: #f0f0ff;
+        border: 1px solid #e8e9ff;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .alert-box i {
+        color: #5b5fcf;
+        font-size: 18px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    
+    .alert-box-content {
+        flex: 1;
+    }
+    
+    .alert-box-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2f3640;
+        margin-bottom: 4px;
+    }
+    
+    .alert-box-text {
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.5;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .backup-wrapper {
+            padding: 15px;
+        }
+        
+        .content-section {
+            padding: 20px;
+        }
+        
+        .destinations-table {
+            font-size: 12px;
+        }
+        
+        .destinations-table th,
+        .destinations-table td {
+            padding: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="backup-wrapper">
+    <div class="backup-container" ng-controller="incrementalDestinations">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <div class="icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                {% trans "Set up Incremental Backup Destinations" %}
+            </h1>
+            <p>{% trans "Configure your backup destinations for incremental backups. Currently supporting AWS S3 storage." %}</p>
+            <a href="https://cyberpanel.net/docs/1-add-remove-destinations-for-incremental-backups/" target="_blank" class="docs-link">
+                <i class="fas fa-book"></i>
+                {% trans "View Documentation" %}
+                <i class="fas fa-external-link-alt" style="font-size: 11px;"></i>
+            </a>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="content-section">
+            <h2 class="section-title">{% trans "Add Backup Destination" %}</h2>
+            
+            <div class="alert-box">
+                <i class="fas fa-info-circle"></i>
+                <div class="alert-box-content">
+                    <div class="alert-box-title">{% trans "Important Information" %}</div>
+                    <div class="alert-box-text">{% trans "Incremental backups allow you to save storage space and bandwidth by only backing up changes since the last backup." %}</div>
+                </div>
+            </div>
+
+
+            <form>
+                <div class="form-group">
+                    <label class="form-label">{% trans "Destination Type" %}</label>
+                    <select ng-change="fetchDetails()" ng-model="destinationType" class="form-select">
+                        <option value="">{% trans "Select destination type" %}</option>
+                        <option value="AWS">AWS S3</option>
+                    </select>
+                    <div class="form-help">
+                        <i class="fas fa-lightbulb"></i>
+                        {% trans "Choose your backup storage provider" %}
+                    </div>
+                </div>
+
+                <!-- AWS Configuration -->
+                <div ng-hide="awsHide">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "AWS Access Key ID" %}</label>
+                        <input type="text" class="form-control" ng-model="AWS_ACCESS_KEY_ID" placeholder="{% trans 'Enter your AWS access key' %}" required>
+                        <div class="form-help">
+                            <i class="fas fa-key"></i>
+                            {% trans "You can find this in your AWS IAM console" %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{% trans "AWS Secret Access Key" %}</label>
+                        <input type="password" class="form-control" ng-model="AWS_SECRET_ACCESS_KEY" placeholder="{% trans 'Enter your AWS secret key' %}" required>
+                        <div class="form-help">
+                            <i class="fas fa-lock"></i>
+                            {% trans "Keep this key secure and never share it" %}
+                        </div>
+                    </div>
+
+                    <button type="button" ng-click="addDestination('AWS')" class="btn-primary" ng-disabled="cyberpanelLoading">
+                        <i class="fas fa-plus-circle" ng-hide="cyberpanelLoading"></i>
+                        <i class="fas fa-spinner fa-spin" ng-show="cyberpanelLoading" ng-cloak></i>
+                        <span ng-hide="cyberpanelLoading">{% trans "Add Destination" %}</span>
+                        <span ng-show="cyberpanelLoading" ng-cloak>{% trans "Adding..." %}</span>
+                    </button>
+                </div>
+
+
+            </form>
+        </div>
+
+        <!-- Existing Destinations -->
+        <div class="content-section" ng-hide="awsHide">
+            <h2 class="section-title">{% trans "Configured Destinations" %}</h2>
+            
+            <div ng-if="!records || records.length === 0" class="empty-state">
+                <i class="fas fa-cloud-slash"></i>
+                <p>{% trans "No backup destinations configured yet" %}</p>
+            </div>
+            
+            <table class="destinations-table" ng-if="records && records.length > 0">
+                <thead>
+                    <tr>
+                        <th>{% trans "AWS Access Key ID" %}</th>
+                        <th style="text-align: right;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="record in records track by $index">
+                        <td>
+                            <i class="fas fa-key" style="color: #5b5fcf; margin-right: 8px;"></i>
+                            <span ng-bind="record.AWS_ACCESS_KEY_ID"></span>
+                        </td>
+                        <td style="text-align: right;">
+                            <button type="button" class="delete-btn" ng-click="removeDestination('AWS', record.AWS_ACCESS_KEY_ID)">
+                                <i class="fas fa-trash-alt"></i>
+                                {% trans "Delete" %}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'IncBackups/IncBackups.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Initialize the page with AWS selected by default
+    setTimeout(function() {
+        var scope = angular.element(document.querySelector('[ng-controller="incrementalDestinations"]')).scope();
+        if (scope && scope.fetchDetails) {
+            scope.$apply(function() {
+                scope.destinationType = 'AWS';
+                scope.fetchDetails();
+            });
+        }
+    }, 500);
+});
+</script>
+{% endblock %}

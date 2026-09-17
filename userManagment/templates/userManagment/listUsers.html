@@ -1,0 +1,439 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "List Users  - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        body {
+            background-color: var(--bg-primary, #f0f0ff);
+        }
+        .page-wrapper {
+            background: transparent;
+            padding: 20px;
+        }
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .content-card {
+            background: var(--bg-secondary, white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            margin-bottom: 25px;
+        }
+        .section-header {
+            overflow: hidden;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--accent-color, #5b5fcf);
+        }
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1a1a2e);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+            float: left;
+        }
+        .header-actions {
+            float: right;
+            margin-top: 0.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-color, #5b5fcf) 0%, var(--accent-hover, #7b7fd0) 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.625rem 1.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(91, 95, 207, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--accent-hover, #4b4fbf) 0%, var(--accent-hover, #6b6fc0) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+        .table {
+            margin-bottom: 0;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table thead th {
+            background: var(--bg-hover, #f8f9ff);
+            color: var(--text-primary, #1a1a2e);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 1rem;
+            letter-spacing: 0.75px;
+            padding: 1.25rem 1rem;
+            border: none;
+            border-bottom: 2px solid var(--border-color, #e8e9ff);
+            text-align: left;
+        }
+        .table tbody td {
+            padding: 1.25rem 1rem;
+            vertical-align: middle;
+            color: var(--text-primary, #2f3640);
+            font-size: 1.125rem;
+            border-bottom: 1px solid var(--border-color, #f0f0ff);
+            line-height: 1.5;
+        }
+        .table tbody td strong {
+            color: var(--text-primary, #1a1a2e);
+            font-weight: 600;
+        }
+        .table tbody tr:hover {
+            background: var(--bg-hover, #f8f9ff);
+        }
+        .btn-action {
+            padding: 0.5rem 0.875rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 0.25rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+        }
+        .btn-suspend {
+            color: var(--danger-text, #ef4444);
+            background: var(--danger-bg, rgba(239, 68, 68, 0.1));
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        .btn-suspend:hover {
+            background: var(--danger-text, #ef4444);
+            color: white;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+        .btn-activate {
+            color: var(--success-text, #10b981);
+            background: var(--success-bg, rgba(16, 185, 129, 0.1));
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        .btn-activate:hover {
+            background: var(--success-text, #10b981);
+            color: white;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+        .btn-edit {
+            color: var(--accent-color, #5b5fcf);
+            background: rgba(91, 95, 207, 0.1);
+            border-color: rgba(91, 95, 207, 0.2);
+        }
+        .btn-edit:hover {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+        .btn-delete {
+            color: var(--danger-text, #ef4444);
+            background: var(--danger-bg, rgba(239, 68, 68, 0.1));
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        .btn-delete:hover {
+            background: var(--danger-text, #ef4444);
+            color: white;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+        .state-badge {
+            padding: 0.375rem 0.875rem;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .state-active {
+            background: var(--success-bg, rgba(16, 185, 129, 0.15));
+            color: var(--success-text, #065f46);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .state-suspended {
+            background: var(--danger-bg, rgba(239, 68, 68, 0.15));
+            color: var(--danger-text, #991b1b);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .loading-icon {
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+        }
+        .modal-content {
+            border-radius: 12px;
+            border: 1px solid var(--border-color, #e8e9ff);
+            background: var(--bg-secondary, white);
+        }
+        .modal-header {
+            background: var(--bg-hover, #f8f9ff);
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 12px 12px 0 0;
+            padding: 1.5rem;
+        }
+        .modal-title {
+            font-weight: 700;
+            color: var(--text-primary, #1a1a2e);
+            font-size: 1.5rem;
+        }
+        .modal-body {
+            padding: 2rem;
+        }
+        .form-label {
+            color: var(--text-primary, #1a1a2e);
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+            display: block;
+            letter-spacing: 0.3px;
+        }
+        .form-control {
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+            color: var(--text-primary, #2f3640);
+            background: var(--bg-secondary, white);
+            line-height: 1.5;
+        }
+        .form-control:focus {
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+            outline: none;
+        }
+        .danger-text {
+            color: var(--danger-text, #dc2626);
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-text, #ef4444) 0%, var(--danger-text, #dc2626) 100%);
+            border: none;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: linear-gradient(135deg, var(--danger-text, #dc2626) 0%, var(--danger-text, #b91c1c) 100%);
+        }
+        .btn-default {
+            background: var(--bg-hover, #e5e7eb);
+            border: none;
+            color: var(--text-secondary, #374151);
+        }
+        .btn-default:hover {
+            background: var(--bg-hover, #d1d5db);
+        }
+        @media (max-width: 768px) {
+            .page-container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            .content-card {
+                padding: 1.5rem;
+            }
+            .section-title {
+                float: none;
+                text-align: center;
+                margin-bottom: 1rem;
+                font-size: 1.875rem;
+            }
+            .header-actions {
+                float: none;
+                text-align: center;
+                margin-top: 0;
+            }
+            .table {
+                font-size: 1rem;
+            }
+            .table thead th {
+                font-size: 0.9375rem;
+                padding: 0.875rem 0.625rem;
+            }
+            .table tbody td {
+                padding: 0.875rem 0.625rem;
+                font-size: 1rem;
+            }
+            .btn-action {
+                padding: 0.375rem 0.625rem;
+                font-size: 0.9375rem;
+                margin: 0.125rem;
+            }
+            .state-badge {
+                font-size: 0.9375rem;
+                padding: 0.25rem 0.625rem;
+            }
+        }
+    </style>
+
+    <div class="page-wrapper" ng-controller="listTableUsers">
+      <div class="page-container">
+        <div class="content-card">
+          <div class="section-header">
+            <h3 class="section-title">{% trans "List Users" %}</h3>
+            <div class="header-actions">
+                <a class="btn-primary" href="{% url 'createUser' %}">
+                    <i class="fa fa-user-plus"></i> {% trans "Create User" %}
+                </a>
+            </div>
+          </div>
+          
+          <div style="overflow-x: auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Username" %}</th>
+                        <th>{% trans "Websites Limit" %}</th>
+                        <th>{% trans "Disk Usage" %}</th>
+                        <th>{% trans "ACL" %}</th>
+                        <th>{% trans "Owner" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="record in records track by $index">
+                        <td>
+                            <strong ng-bind="record.name"></strong>
+                        </td>
+                        <td ng-bind="record.websites"></td>
+                        <td ng-bind="record.diskUsage"></td>
+                        <td ng-bind="record.acl"></td>
+                        <td ng-bind="record.owner"></td>
+                        <td>
+                            <span ng-if="record.state=='ACTIVE'" class="state-badge state-active">
+                                <i class="fa fa-check-circle"></i> {% trans "Active" %}
+                            </span>
+                            <span ng-if="record.state=='SUSPENDED'" class="state-badge state-suspended">
+                                <i class="fa fa-pause-circle"></i> {% trans "Suspended" %}
+                            </span>
+                        </td>
+                        <td>
+                            <a ng-show="record.state=='ACTIVE'"
+                               class="btn-action btn-suspend"
+                               ng-click="controlUserState(record.name, 'SUSPEND')"
+                               title="Suspend User">
+                               <i class="fa fa-pause"></i> {% trans "Suspend" %}
+                            </a>
+                            <a ng-show="record.state=='SUSPENDED'"
+                               class="btn-action btn-activate"
+                               ng-click="controlUserState(record.name, 'ACTIVATE')"
+                               title="Activate User">
+                               <i class="fa fa-play"></i> {% trans "Activate" %}
+                            </a>
+                            <a ng-click="editInitial(record.name)"
+                               class="btn-action btn-edit"
+                               title="Edit User">
+                               <i class="fa fa-edit"></i> {% trans "Edit" %}
+                            </a>
+                            <a ng-click="deleteUserInitial(record.name)"
+                               class="btn-action btn-delete"
+                               title="Delete User">
+                               <i class="fa fa-trash"></i> {% trans "Delete" %}
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+          </div>
+
+          <!-- Place modals here, after the table, but still inside the controller div -->
+          <!-- Delete User Modal -->
+          <div id="deleteModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                          </button>
+                          <h4 class="modal-title" id="deleteModalLabel">
+                              <i class="fa fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                              {% trans "Delete User" %} {$ UserToDelete $}
+                              <img class="loading-icon" ng-hide="cyberpanelLoading" src="{% static 'images/loading.gif' %}">
+                          </h4>
+                      </div>
+                      <div class="modal-body">
+                          <p class="danger-text">
+                              <i class="fa fa-warning"></i> {% trans "This will delete all sites owned by this user and this process cannot be reversed." %}
+                          </p>
+                      </div>
+                      <div class="modal-footer">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                          <button ng-click="deleteUserFinal()" type="button" class="btn btn-danger">
+                              <i class="fa fa-trash"></i> {% trans "Delete Now" %}
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Edit User Modal -->
+          <div id="editModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                          </button>
+                          <h4 class="modal-title" id="editModalLabel">
+                              {% trans "Edit User" %}
+                              <img class="loading-icon" ng-hide="cyberpanelLoading" src="{% static 'images/loading.gif' %}">
+                          </h4>
+                      </div>
+                      <div class="modal-body">
+                          <form>
+                              <div class="form-group">
+                                  <label class="form-label">{% trans "Username" %}</label>
+                                  <input type="text" class="form-control" ng-model="name" readonly>
+                              </div>
+
+                              <div class="form-group">
+                                  <label class="form-label">{% trans "New Owner" %}</label>
+                                  <select ng-change="saveResellerChanges()" ng-model="$parent.newOwner" class="form-control">
+                                      <option value="">-- {% trans "Select new owner" %} --</option>
+                                      {% for items in resellerPrivUsers %}
+                                          <option>{{ items }}</option>
+                                      {% endfor %}
+                                  </select>
+                              </div>
+
+                              <div class="form-group">
+                                  <label class="form-label">{% trans "Access Control List" %}</label>
+                                  <select ng-change="changeACLFunc()" ng-model="$parent.selectedACL" class="form-control">
+                                      <option value="">-- {% trans "Select ACL" %} --</option>
+                                      {% for items in aclNames %}
+                                          <option>{{ items }}</option>
+                                      {% endfor %}
+                                  </select>
+                              </div>
+                          </form>
+                      </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% endblock %}

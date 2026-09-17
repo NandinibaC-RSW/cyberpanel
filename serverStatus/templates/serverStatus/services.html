@@ -1,0 +1,640 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'serverStatus/serverStatus.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Services Status - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    
+    /* Services Status Specific Styles */
+    .services-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .services-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-light, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-header .icon {
+        width: 48px;
+        height: 48px;
+        background: #5856d6;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(88, 86, 214, 0.3));
+    }
+    
+    .page-header p {
+        font-size: 15px;
+        color: var(--text-secondary, #64748b);
+        margin: 0;
+    }
+    
+    /* Content Section */
+    .content-section {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-light, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5856d6;
+        border-radius: 2px;
+    }
+    
+    /* Services Grid */
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    
+    .service-card {
+        background: var(--bg-primary, white);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 25px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px var(--shadow-medium, rgba(0,0,0,0.1));
+        border-color: var(--accent-color, #5856d6);
+    }
+    
+    .service-card.running {
+        border-top: 4px solid var(--success-accent, #10b981);
+    }
+    
+    .service-card.stopped {
+        border-top: 4px solid var(--danger-accent, #ef4444);
+    }
+    
+    .service-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 16px;
+        padding: 15px;
+    }
+    
+    .service-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .service-info {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .service-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .service-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .service-status.running {
+        background: var(--success-bg, #d1fae5);
+        color: var(--success-color, #065f46);
+    }
+    
+    .service-status.running i {
+        color: var(--success-accent, #10b981);
+        animation: pulse 2s infinite;
+    }
+    
+    .service-status.stopped {
+        background: var(--danger-bg, #fee2e2);
+        color: var(--danger-color, #991b1b);
+    }
+    
+    .service-status.stopped i {
+        color: var(--danger-accent, #ef4444);
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .service-stats {
+        text-align: center;
+        margin: 15px 0;
+        min-height: 24px;
+    }
+    
+    .service-stats p {
+        font-size: 14px;
+        color: var(--text-secondary, #64748b);
+        margin: 0;
+    }
+    
+    .service-stats strong {
+        color: var(--accent-color, #5856d6);
+        font-weight: 600;
+    }
+    
+    .service-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .action-btn.start {
+        background: var(--success-accent, #10b981);
+        color: white;
+    }
+    
+    .action-btn.start:hover:not(:disabled) {
+        background: var(--success-hover, #059669);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+    }
+    
+    .action-btn.stop {
+        background: var(--warning-accent, #f59e0b);
+        color: white;
+    }
+    
+    .action-btn.stop:hover:not(:disabled) {
+        background: var(--warning-hover, #d97706);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+    }
+    
+    .action-btn.restart {
+        background: var(--neutral-bg, #6b7280);
+        color: white;
+    }
+    
+    .action-btn.restart:hover:not(:disabled) {
+        background: var(--neutral-hover, #4b5563);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--neutral-shadow, rgba(107, 114, 128, 0.3));
+    }
+    
+    /* Alert Messages */
+    .alerts-container {
+        margin-top: 20px;
+    }
+    
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+    }
+    
+    .alert-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #d1fae5);
+        color: var(--success-color, #065f46);
+        border: 1px solid var(--success-border, #a7f3d0);
+    }
+    
+    .alert-success .alert-icon {
+        color: var(--success-accent, #10b981);
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #fee2e2);
+        color: var(--danger-color, #991b1b);
+        border: 1px solid var(--danger-border, #fecaca);
+    }
+    
+    .alert-danger .alert-icon {
+        color: var(--danger-accent, #ef4444);
+    }
+    
+    /* Loading Spinner */
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid var(--border-color, #e8e9ff);
+        border-top-color: var(--accent-color, #5856d6);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* System Overview */
+    .system-overview {
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .overview-item {
+        text-align: center;
+    }
+    
+    .overview-label {
+        font-size: 13px;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    
+    .overview-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--accent-color, #5856d6);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .services-wrapper {
+            padding: 15px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .content-section {
+            padding: 20px;
+        }
+        
+        .services-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .system-overview {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="services-wrapper">
+    <div class="services-container" ng-controller="servicesManager">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <div class="icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                {% trans "Services Status" %}
+                <span ng-show="actionLoader" class="loading-spinner"></span>
+            </h1>
+            <p>{% trans "Monitor and manage system services" %}</p>
+        </div>
+
+        <!-- Services Section -->
+        <div class="content-section">
+            <h2 class="section-title">{% trans "System Services" %}</h2>
+            
+            <div class="services-grid">
+                <!-- LiteSpeed/OpenLiteSpeed -->
+                <div class="service-card" ng-class="{'running': olsStatus === 'Running', 'stopped': olsStatus === 'Stopped'}">
+                    <div class="service-icon">
+                        <img src="{% static 'images/litespeed.png' %}" alt="{{ serverName }}">
+                    </div>
+                    <div class="service-info">
+                        <h3 class="service-name">{{ serverName }}</h3>
+                        <span class="service-status" ng-class="{'running': olsStatus === 'Running', 'stopped': olsStatus === 'Stopped'}">
+                            <i class="fas fa-circle"></i>
+                            <span ng-bind="olsStatus">{% trans "Stopped" %}</span>
+                        </span>
+                    </div>
+                    <div class="service-stats">
+                        <p ng-show="olsStats">{% trans "Memory Usage:" %} <strong ng-bind="olsMem"></strong></p>
+                    </div>
+                    <div class="service-actions">
+                        <button type="button" 
+                                class="action-btn start" 
+                                ng-disabled="btnDisable" 
+                                ng-show="olsStart" 
+                                ng-click="serviceAction('lsws','start')"
+                                title="{% trans 'Start' %}">
+                            <i class="fas fa-play"></i>
+                            {% trans "Start" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn stop" 
+                                ng-disabled="btnDisable" 
+                                ng-show="olsStop" 
+                                ng-click="serviceAction('lsws','stop')"
+                                title="{% trans 'Stop' %}">
+                            <i class="fas fa-pause"></i>
+                            {% trans "Stop" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn restart" 
+                                ng-disabled="btnDisable" 
+                                ng-click="serviceAction('lsws','restart')"
+                                title="{% trans 'Restart' %}">
+                            <i class="fas fa-sync-alt"></i>
+                            {% trans "Restart" %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MariaDB -->
+                <div class="service-card" ng-class="{'running': sqlStatus === 'Running', 'stopped': sqlStatus === 'Stopped'}">
+                    <div class="service-icon">
+                        <img src="{% static 'images/mariadb.png' %}" alt="MariaDB">
+                    </div>
+                    <div class="service-info">
+                        <h3 class="service-name">MariaDB</h3>
+                        <span class="service-status" ng-class="{'running': sqlStatus === 'Running', 'stopped': sqlStatus === 'Stopped'}">
+                            <i class="fas fa-circle"></i>
+                            <span ng-bind="sqlStatus">{% trans "Stopped" %}</span>
+                        </span>
+                    </div>
+                    <div class="service-stats">
+                        <p ng-show="sqlStats">{% trans "Memory Usage:" %} <strong ng-bind="sqlMem"></strong></p>
+                    </div>
+                    <div class="service-actions">
+                        <button type="button" 
+                                class="action-btn start" 
+                                ng-disabled="btnDisable" 
+                                ng-show="sqlStart" 
+                                ng-click="serviceAction('mysql','start')"
+                                title="{% trans 'Start' %}">
+                            <i class="fas fa-play"></i>
+                            {% trans "Start" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn stop" 
+                                ng-disabled="btnDisable" 
+                                ng-show="sqlStop" 
+                                ng-click="serviceAction('mysql','stop')"
+                                title="{% trans 'Stop' %}">
+                            <i class="fas fa-pause"></i>
+                            {% trans "Stop" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn restart" 
+                                ng-disabled="btnDisable" 
+                                ng-click="serviceAction('mysql','restart')"
+                                title="{% trans 'Restart' %}">
+                            <i class="fas fa-sync-alt"></i>
+                            {% trans "Restart" %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PowerDNS -->
+                <div class="service-card" ng-class="{'running': dnsStatus === 'Running', 'stopped': dnsStatus === 'Stopped'}">
+                    <div class="service-icon">
+                        <img src="{% static 'images/powerdns.png' %}" alt="PowerDNS">
+                    </div>
+                    <div class="service-info">
+                        <h3 class="service-name">PowerDNS</h3>
+                        <span class="service-status" ng-class="{'running': dnsStatus === 'Running', 'stopped': dnsStatus === 'Stopped'}">
+                            <i class="fas fa-circle"></i>
+                            <span ng-bind="dnsStatus">{% trans "Stopped" %}</span>
+                        </span>
+                    </div>
+                    <div class="service-stats">
+                        <p ng-show="dnsStats">{% trans "Memory Usage:" %} <strong ng-bind="dnsMem"></strong></p>
+                    </div>
+                    <div class="service-actions">
+                        <button type="button" 
+                                class="action-btn start" 
+                                ng-disabled="btnDisable" 
+                                ng-show="dnsStart" 
+                                ng-click="serviceAction('pdns','start')"
+                                title="{% trans 'Start' %}">
+                            <i class="fas fa-play"></i>
+                            {% trans "Start" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn stop" 
+                                ng-disabled="btnDisable" 
+                                ng-show="dnsStop" 
+                                ng-click="serviceAction('pdns','stop')"
+                                title="{% trans 'Stop' %}">
+                            <i class="fas fa-pause"></i>
+                            {% trans "Stop" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn restart" 
+                                ng-disabled="btnDisable" 
+                                ng-click="serviceAction('pdns','restart')"
+                                title="{% trans 'Restart' %}">
+                            <i class="fas fa-sync-alt"></i>
+                            {% trans "Restart" %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PureFTPd -->
+                <div class="service-card" ng-class="{'running': ftpStatus === 'Running', 'stopped': ftpStatus === 'Stopped'}">
+                    <div class="service-icon">
+                        <img src="{% static 'images/pureftpd.png' %}" alt="PureFTPd">
+                    </div>
+                    <div class="service-info">
+                        <h3 class="service-name">PureFTPd</h3>
+                        <span class="service-status" ng-class="{'running': ftpStatus === 'Running', 'stopped': ftpStatus === 'Stopped'}">
+                            <i class="fas fa-circle"></i>
+                            <span ng-bind="ftpStatus">{% trans "Stopped" %}</span>
+                        </span>
+                    </div>
+                    <div class="service-stats">
+                        <p ng-show="ftpStats">{% trans "Memory Usage:" %} <strong ng-bind="ftpMem"></strong></p>
+                    </div>
+                    <div class="service-actions">
+                        <button type="button" 
+                                class="action-btn start" 
+                                ng-disabled="btnDisable" 
+                                ng-show="ftpStart" 
+                                ng-click="serviceAction('pure-ftpd','start')"
+                                title="{% trans 'Start' %}">
+                            <i class="fas fa-play"></i>
+                            {% trans "Start" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn stop" 
+                                ng-disabled="btnDisable" 
+                                ng-show="ftpStop" 
+                                ng-click="serviceAction('pure-ftpd','stop')"
+                                title="{% trans 'Stop' %}">
+                            <i class="fas fa-pause"></i>
+                            {% trans "Stop" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn restart" 
+                                ng-disabled="btnDisable" 
+                                ng-click="serviceAction('pure-ftpd','restart')"
+                                title="{% trans 'Restart' %}">
+                            <i class="fas fa-sync-alt"></i>
+                            {% trans "Restart" %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Docker (if available) -->
+                {% if isDocker %}
+                <div class="service-card" ng-class="{'running': dockerStatus === 'Running', 'stopped': dockerStatus === 'Stopped'}">
+                    <div class="service-icon">
+                        <img src="{% static 'images/docker.png' %}" alt="Docker">
+                    </div>
+                    <div class="service-info">
+                        <h3 class="service-name">Docker</h3>
+                        <span class="service-status" ng-class="{'running': dockerStatus === 'Running', 'stopped': dockerStatus === 'Stopped'}">
+                            <i class="fas fa-circle"></i>
+                            <span ng-bind="dockerStatus">{% trans "Stopped" %}</span>
+                        </span>
+                    </div>
+                    <div class="service-stats">
+                        <!-- Docker stats could be added here -->
+                    </div>
+                    <div class="service-actions">
+                        <button type="button" 
+                                class="action-btn start" 
+                                ng-disabled="btnDisable" 
+                                ng-show="dockerStart" 
+                                ng-click="serviceAction('docker','start')"
+                                title="{% trans 'Start' %}">
+                            <i class="fas fa-play"></i>
+                            {% trans "Start" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn stop" 
+                                ng-disabled="btnDisable" 
+                                ng-show="dockerStop" 
+                                ng-click="serviceAction('docker','stop')"
+                                title="{% trans 'Stop' %}">
+                            <i class="fas fa-pause"></i>
+                            {% trans "Stop" %}
+                        </button>
+                        <button type="button" 
+                                class="action-btn restart" 
+                                ng-disabled="btnDisable" 
+                                ng-click="serviceAction('docker','restart')"
+                                title="{% trans 'Restart' %}">
+                            <i class="fas fa-sync-alt"></i>
+                            {% trans "Restart" %}
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Alert Messages -->
+            <div class="alerts-container">
+                <div ng-show="ActionFailed" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                    <span>{% trans "Action Failed" %}</span>
+                </div>
+                <div ng-show="ActionSuccessfull" class="alert alert-success">
+                    <i class="fas fa-check-circle alert-icon"></i>
+                    <span>{% trans "Action Completed Successfully" %}</span>
+                </div>
+                <div ng-show="couldNotConnect" class="alert alert-danger">
+                    <i class="fas fa-wifi alert-icon"></i>
+                    <span>{% trans "Could not connect to server. Please refresh this page." %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

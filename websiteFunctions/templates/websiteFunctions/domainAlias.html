@@ -1,0 +1,229 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Domain Aliases - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <div ng-controller="manageAliasController" class="container">
+        <div id="page-title">
+            <h2>{% trans "Domain Aliases" %}</h2>
+            <p>{% trans "With Domain Aliases you can visit example.com using example.net and view the same content." %}</p>
+        </div>
+
+        <div class="panel">
+            <div class="panel-body">
+                <h3 class="title-hero">
+                    {% trans "Domain Aliases" %} <img ng-hide="domainLoading"
+                                                      src="{% static 'images/loading.gif' %}">
+                </h3>
+                <div class="example-box-wrapper">
+
+
+                <span id="domainNamePage" style="display: none">{{ masterDomain }}</span>
+
+
+                    <form action="/" class="form-horizontal bordered-row">
+
+                        <!------ Modification form that appears after a click --------------->
+                        <div ng-hide="addAliasButton" class="form-group">
+                            <div class="col-sm-4">
+                                <button ng-click="showAliasForm('{{ masterDomain }}')"
+                                        class="btn ra-100 btn-blue-alt">{% trans 'Create Alias' %}</button>
+                            </div>
+                        </div>
+
+                    </form>
+
+                    <!---------- HTML For creating domains --------------->
+                    <div class="col-md-12 mx-10">
+                        <form id="domainCreationForm" name="websiteCreationForm" action="/"
+                              class="form-horizontal bordered-row">
+
+                            <div ng-hide="installationDetailsForm" class="form-group">
+                                <label class="col-sm-3 control-label">{% trans "Domain Name" %}</label>
+                                <div class="col-sm-6">
+                                    <input name="dom" type="text" class="form-control"
+                                           ng-model="domainNameCreate" required>
+                                </div>
+                                <div style="margin-bottom: 1%;" class=" col-sm-1">
+                                    <a title="{% trans 'Cancel' %}" ng-click="hideDomainCreationForm()" href="">
+                                        <h3 class="glyph-icon icon-close text-danger mt-5"></h3>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div ng-hide="installationDetailsForm" ng-hide="installationDetailsForm"
+                                 class="form-group">
+                                <label class="col-sm-3 control-label">{% trans "Additional Features" %}</label>
+                                <div class="col-sm-9">
+                                    <div class="checkbox">
+                                        <label>
+                                            <input ng-model="sslCheck" type="checkbox" value="">
+                                            SSL
+                                        </label>
+                                    </div>
+                                </div>
+                                <label class="col-sm-3 control-label"></label>
+                            </div>
+
+                            <div ng-hide="installationDetailsForm" class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-4">
+                                    <button type="button" ng-click="createDomain()"
+                                            class="btn btn-primary btn-lg">{% trans "Create Alias" %}</button>
+
+                                </div>
+                            </div>
+
+                            <div ng-hide="installationProgress" class="form-group">
+                                <label class="col-sm-2 control-label"></label>
+                                <div class="col-sm-7">
+
+                                    <div class="alert alert-success text-center">
+                                        <h2>{$ currentStatus $}</h2>
+                                    </div>
+
+                                    <div class="progress">
+                                        <div id="installProgress" class="progress-bar" role="progressbar"
+                                             aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"
+                                             style="width:0%">
+                                            <span class="sr-only">70% Complete</span>
+                                        </div>
+                                    </div>
+
+                                    <div ng-hide="errorMessageBox" class="alert alert-danger">
+                                        <p>{% trans "Error message:" %} {$ errorMessage $}</p>
+                                    </div>
+
+                                    <div ng-hide="success" class="alert alert-success">
+                                        <p>{% trans "Website succesfully created." %}</p>
+                                    </div>
+
+
+                                    <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                        <p>{% trans "Could not connect to server. Please refresh this page." %}</p>
+                                    </div>
+
+
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1%" ng-hide="installationProgress" class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-4">
+                                    <button type="button" ng-disabled="goBackDisable" ng-click="goBack()"
+                                            class="btn btn-primary btn-lg">{% trans "Go Back" %}</button>
+                                </div>
+                            </div>
+
+
+                        </form>
+                    </div>
+
+                    <!---------- HTML For creating domains --------------->
+
+                    <!---------- HTML For Listing domains --------------->
+
+                    <div id="listDomains" class="col-md-12 mx-10">
+
+                        <form ng-hide="" class="form-horizontal bordered-row">
+
+
+                            <div ng-hide="phpChanged" class="alert alert-success">
+                                <p>{% trans "PHP Version Changed to:" %} {$ changedPHPVersion $} </p>
+                            </div>
+
+                            <div ng-hide="domainDeleted" class="alert alert-success">
+                                <p>{% trans "Deleted:" %} {$ deletedDomain $} </p>
+                            </div>
+
+                            <div ng-hide="sslIssued" class="alert alert-success">
+                                <p>{% trans "SSL Issued:" %} {$ sslDomainIssued $} </p>
+                            </div>
+
+                            <div ng-hide="childBaseDirChanged" class="alert alert-success">
+                                <p>{% trans "Changes applied successfully." %} </p>
+                            </div>
+
+
+                            <div ng-hide="domainError" class="alert alert-danger">
+                                <p>{$ errorMessage $}</p>
+                            </div>
+
+
+                            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                <p>{% trans "Could not connect to server. Please refresh this page." %}</p>
+                            </div>
+
+
+                            <div ng-hide="" class="form-group">
+
+                                <div class="col-sm-11">
+                                    <input placeholder="Search Domain..." ng-model="logSearch" name="dom"
+                                           type="text" class="form-control"
+                                           required>
+                                </div>
+
+                                <div style="margin-bottom: 1%;" class=" col-sm-1">
+                                    <a title="{% trans 'Close' %}" ng-click="hideListDomains()" href="">
+                                        <h3 class="glyph-icon icon-close text-danger mt-5"></h3>
+                                    </a>
+                                </div>
+
+
+                                <div class="col-sm-12">
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>Domain</th>
+                                            <th>Launch</th>
+                                            <th>Path</th>
+                                            <th>SSL</th>
+                                            <th>Delete</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr ng-repeat="record in childDomains | filter:logSearch">
+                                            <td ng-bind="record.childDomain"></td>
+                                            <td><a href="{$ record.childLunch $}"><img width="30px" height="30"
+                                                                                       class="center-block"
+                                                                                       src="{% static 'baseTemplate/assets/image-resources/webPanel.png' %}"></a>
+                                            </td>
+                                            <td ng-bind="record.path"></td>
+                                            <td>
+                                                <button type="button"
+                                                        ng-click="issueSSL(masterDomain, record.childDomain)"
+                                                        class="btn ra-50 btn-primary">{% trans "Issue" %}</button>
+                                            </td>
+                                            <td>
+                                                <button type="button"
+                                                        ng-click="removeAlias(masterDomain, record.childDomain)"
+                                                        class="btn ra-50 btn-primary">{% trans "Delete" %}</button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+
+                        </form>
+
+                    </div>
+
+                    <!---------- HTML For Listing domains --------------->
+
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+{% endblock %}

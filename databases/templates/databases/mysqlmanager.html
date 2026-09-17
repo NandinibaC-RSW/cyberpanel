@@ -1,0 +1,690 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'databases/databases.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "MySQL Manager - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    :root {
+        /* Light mode variables */
+        --bg-primary: #f8f9ff;
+        --bg-secondary: #ffffff;
+        --bg-card: #ffffff;
+        --bg-hover: #f8f9ff;
+        --bg-gradient-primary: linear-gradient(135deg, #f8f9ff 0%, #f0f1ff 100%);
+        --bg-gradient-uptime: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        --bg-gradient-connections: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        --bg-gradient-slow-queries: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --border-color: #e8e9ff;
+        --border-light: #f3f4f6;
+        --shadow-color: rgba(0,0,0,0.05);
+        --shadow-color-md: rgba(0,0,0,0.08);
+        --shadow-color-lg: rgba(0,0,0,0.12);
+        --accent-color: #5b5fcf;
+        --accent-hover: #4547a9;
+        --accent-light: #e0e7ff;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --warning-bg: #fef3c7;
+        --warning-text: #92400e;
+        --info-color: #0ea5e9;
+        --success-bg: #d1fae5;
+        --success-text: #065f46;
+        --icon-color: #cbd5e1;
+    }
+    
+    [data-theme="dark"] {
+        /* Dark mode variables */
+        --bg-primary: #0f0f23;
+        --bg-secondary: #1a1a3e;
+        --bg-card: #1e1e42;
+        --bg-hover: #252550;
+        --bg-gradient-primary: linear-gradient(135deg, #16162e 0%, #1a1a3e 100%);
+        --bg-gradient-uptime: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        --bg-gradient-connections: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+        --bg-gradient-slow-queries: linear-gradient(135deg, #78350f 0%, #451a03 100%);
+        --text-primary: #e4e4e7;
+        --text-secondary: #9ca3af;
+        --text-muted: #6b7280;
+        --border-color: #2a2a5e;
+        --border-light: #374151;
+        --shadow-color: rgba(0,0,0,0.3);
+        --shadow-color-md: rgba(0,0,0,0.4);
+        --shadow-color-lg: rgba(0,0,0,0.5);
+        --accent-color: #7c7ff3;
+        --accent-hover: #6b6ee8;
+        --accent-light: #3730a3;
+        --success-color: #34d399;
+        --warning-color: #fbbf24;
+        --warning-bg: #78350f;
+        --warning-text: #fbbf24;
+        --info-color: #60a5fa;
+        --success-bg: #064e3b;
+        --success-text: #34d399;
+        --icon-color: #6b7280;
+    }
+    
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: var(--bg-gradient-primary);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, var(--accent-color, rgba(91, 95, 207, 0.15)) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .mysql-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-color-lg);
+    }
+    
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color);
+        color: var(--bg-secondary);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 1rem;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--shadow-color-lg);
+        color: var(--bg-secondary);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--accent-color);
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 1rem;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--accent-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--shadow-color-md);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .stat-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 1px 3px var(--shadow-color), 0 10px 40px var(--shadow-color-md);
+        border: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1px 3px var(--shadow-color), 0 20px 60px var(--shadow-color-lg);
+    }
+    
+    .stat-card.uptime {
+        background: var(--bg-gradient-uptime);
+        border-color: var(--info-color);
+    }
+    
+    .stat-card.connections {
+        background: var(--bg-gradient-connections);
+        border-color: var(--success-color);
+    }
+    
+    .stat-card.slow-queries {
+        background: var(--bg-gradient-slow-queries);
+        border-color: var(--warning-color);
+    }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: 0 2px 8px var(--shadow-color-lg);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+    }
+    
+    .main-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-color), 0 10px 40px var(--shadow-color-md);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card-header {
+        background: var(--bg-gradient-primary);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 0;
+    }
+    
+    .processes-table {
+        width: 100%;
+        background: var(--bg-card);
+    }
+    
+    .processes-table thead {
+        background: var(--bg-hover);
+    }
+    
+    .processes-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid var(--border-color);
+        white-space: nowrap;
+    }
+
+    .processes-table td {
+        padding: 1rem;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .processes-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .processes-table tbody tr:hover {
+        background: var(--bg-hover);
+    }
+    
+    .processes-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .process-id {
+        font-weight: 600;
+        color: var(--accent-color);
+        font-family: monospace;
+    }
+    
+    .process-user {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .user-icon {
+        width: 24px;
+        height: 24px;
+        background: var(--accent-light);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        color: var(--accent-color);
+    }
+    
+    .command-badge {
+        background: var(--border-light);
+        color: var(--text-primary);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        font-family: monospace;
+    }
+    
+    .time-badge {
+        background: var(--warning-bg);
+        color: var(--warning-text);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .state-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .state-active {
+        background: var(--success-bg);
+        color: var(--success-text);
+    }
+    
+    .state-idle {
+        background: var(--accent-light);
+        color: var(--accent-color);
+    }
+    
+    .info-text {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: monospace;
+        font-size: 1rem;
+    }
+    
+    .progress-bar {
+        width: 100px;
+        height: 6px;
+        background: var(--border-color);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: var(--accent-color);
+        transition: width 0.3s ease;
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-color);
+        border-top-color: var(--accent-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+    
+    .refresh-btn {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .refresh-btn:hover {
+        color: var(--accent-color);
+        border-color: var(--accent-color);
+        transform: rotate(180deg);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--icon-color);
+        margin-bottom: 1rem;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    /* Angular cloak */
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+        display: none !important;
+    }
+    
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+        }
+        
+        .processes-table {
+            font-size: 1rem;
+        }
+        
+        .processes-table th,
+        .processes-table td {
+            padding: 0.5rem;
+        }
+        
+        .info-text {
+            max-width: 150px;
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="Mysqlmanager" ng-init="cyberPanelLoading=false" ng-cloak>
+    <div class="page-header">
+        <h1 class="page-title">
+            <div class="mysql-icon">
+                <i class="fas fa-database" style="color: var(--accent-color); font-size: 1.75rem;"></i>
+            </div>
+            {% trans "MySQL Manager" %}
+        </h1>
+        <p class="page-subtitle">{% trans "Monitor and manage your MySQL database performance" %}</p>
+        <div class="header-actions">
+            <a href="{% url 'OptimizeMySQL' %}" class="btn-primary">
+                <i class="fas fa-tachometer-alt"></i>
+                {% trans "Optimize MySQL" %}
+            </a>
+            <a href="{% url 'phpMyAdmin' %}" class="btn-secondary">
+                <i class="fas fa-external-link-alt"></i>
+                {% trans "phpMyAdmin" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="stats-grid">
+        <div class="stat-card uptime">
+            <div class="stat-header">
+                <h3 class="stat-title">{% trans "MySQL Uptime" %}</h3>
+                <div class="stat-icon" style="color: var(--info-color);">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <p class="stat-value">{$ uptime $}</p>
+            <p class="stat-label">{% trans "Server running time" %}</p>
+        </div>
+
+        <div class="stat-card connections">
+            <div class="stat-header">
+                <h3 class="stat-title">{% trans "Active Connections" %}</h3>
+                <div class="stat-icon" style="color: var(--success-color);">
+                    <i class="fas fa-link"></i>
+                </div>
+            </div>
+            <p class="stat-value">{$ connections $}</p>
+            <p class="stat-label">{% trans "Current connections" %}</p>
+        </div>
+
+        <div class="stat-card slow-queries">
+            <div class="stat-header">
+                <h3 class="stat-title">{% trans "Slow Queries" %}</h3>
+                <div class="stat-icon" style="color: var(--warning-color);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+            <p class="stat-value">{$ Slow_queries $}</p>
+            <p class="stat-label">{% trans "Queries exceeding time limit" %}</p>
+        </div>
+    </div>
+
+    <!-- Processes Table -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-list-ul"></i>
+                {% trans "Active MySQL Processes" %}
+                <span ng-show="cyberPanelLoading" class="loading-spinner"></span>
+            </h2>
+            <button class="refresh-btn" ng-click="refreshProcesses()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="processes-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "ID" %}</th>
+                            <th>{% trans "User" %}</th>
+                            <th>{% trans "Database" %}</th>
+                            <th>{% trans "Command" %}</th>
+                            <th>{% trans "Time" %}</th>
+                            <th>{% trans "State" %}</th>
+                            <th>{% trans "Query Info" %}</th>
+                            <th>{% trans "Progress" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="process in processes">
+                            <td>
+                                <span class="process-id" ng-bind="process.id"></span>
+                            </td>
+                            <td>
+                                <div class="process-user">
+                                    <div class="user-icon">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <span ng-bind="process.user"></span>
+                                </div>
+                            </td>
+                            <td>
+                                <i class="fas fa-database" style="color: var(--text-muted); margin-right: 0.5rem;"></i>
+                                <span ng-bind="process.database || 'None'"></span>
+                            </td>
+                            <td>
+                                <span class="command-badge" ng-bind="process.command"></span>
+                            </td>
+                            <td>
+                                <span class="time-badge" ng-bind="process.time + 's'"></span>
+                            </td>
+                            <td>
+                                <span class="state-badge" 
+                                      ng-class="{'state-active': process.state === 'executing', 'state-idle': process.state !== 'executing'}"
+                                      ng-bind="process.state || 'Idle'"></span>
+                            </td>
+                            <td>
+                                <span class="info-text" 
+                                      ng-bind="process.info || 'No query'"
+                                      ng-attr-title="{$ process.info $}"></span>
+                            </td>
+                            <td>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" 
+                                         ng-style="{'width': (process.progress || 0) + '%'}"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr ng-if="processes.length === 0">
+                            <td colspan="8" class="empty-state">
+                                <i class="fas fa-check-circle"></i>
+                                <p>{% trans "No active processes found" %}</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        angular.module('CyberCP').controller('Mysqlmanager', function($scope, $http, $interval) {
+            // Existing controller code...
+            
+            $scope.refreshProcesses = function() {
+                // Trigger a refresh of the processes
+                var icon = document.querySelector('.refresh-btn i');
+                icon.style.animation = 'spin 1s linear';
+                setTimeout(function() {
+                    icon.style.animation = '';
+                }, 1000);
+                // The actual refresh logic should be implemented in the controller
+            };
+        });
+    });
+</script>
+
+{% endblock %}

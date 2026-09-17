@@ -1,0 +1,292 @@
+# CyberPanel Translation File.
+# Copyright (C) 2025 LiteSpeedTech
+# This file is distributed under the same license as the CyberPanel package.
+# FIRST AUTHOR <kimskorgenes@hotmail.com>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: CyberPanel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-11-21 19:54+0500\n"
+"PO-Revision-Date: 2025-09-08 16:47+0200\n"
+"Last-Translator: Kim Birkeland Skorgenes <kimskorgenes@hotmail.com>\n"
+"Language-Team: Norwegian Bokmål Translation Team\n"
+"Language: nb\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.7\n"
+
+#: CLManager/templates/CLManager/createPackage.html:3
+msgid "Create Cloud Linux Package - CyberPanel"
+msgstr "Opprett Cloud Linux Pakke - CyberPanel"
+
+#: CLManager/templates/CLManager/createPackage.html:9
+msgid "Create CloudLinux Package."
+msgstr "Opprett CloudLinux Pakke."
+
+#: CLManager/templates/CLManager/createPackage.html:10
+msgid ""
+"Each CloudLinux package have one associated (owner) CyberPanel package. During website "
+"creation associated CloudLinux package will be assigned to website user."
+msgstr ""
+"Hver CloudLinux pakke har en tilknyttet (eier) CyberPanel pakke. Under opprettelse av "
+"nettside vil den tilknyttede CloudLinux pakken bli tildelt nettsidebrukeren."
+
+#: CLManager/templates/CLManager/createPackage.html:15
+#: CLManager/templates/CLManager/createPackage.html:130
+#: baseTemplate/templates/baseTemplate/index.html:435
+#: baseTemplate/templates/baseTemplate/index.html:666
+#: packages/templates/packages/createPackage.html:13
+#: packages/templates/packages/createPackage.html:100
+#: packages/templates/packages/index.html:25 packages/templates/packages/index.html:28
+#: userManagment/templates/userManagment/createACL.html:152
+#: userManagment/templates/userManagment/modifyACL.html:156
+msgid "Create Package"
+msgstr "Opprett Pakke"
+
+#: CLManager/templates/CLManager/createPackage.html:24
+#: packages/templates/packages/deletePackage.html:26
+#: packages/templates/packages/modifyPackage.html:24
+#: websiteFunctions/templates/websiteFunctions/createWebsite.html:29
+#: websiteFunctions/templates/websiteFunctions/modifyWebsite.html:45
+msgid "Select Package"
+msgstr "Velg Pakke"
+
+#: CLManager/templates/CLManager/createPackage.html:40
+#: packages/templates/packages/createPackage.html:27
+msgid "Package Name"
+msgstr "Pakkenavn"
+
+#: CLManager/templates/CLManager/createPackage.html:47
+#: CLManager/templates/CLManager/listPackages.html:87
+msgid "SPEED"
+msgstr "HASTIGHET"
+
+#: CLManager/templates/CLManager/createPackage.html:56
+#: CLManager/templates/CLManager/listPackages.html:98
+msgid "VMEM"
+msgstr "VMEM"
+
+#: CLManager/templates/CLManager/createPackage.html:64
+#: CLManager/templates/CLManager/listPackages.html:109
+msgid "PMEM"
+msgstr "PMEM"
+
+#: CLManager/templates/CLManager/createPackage.html:73
+#: CLManager/templates/CLManager/listPackages.html:120
+msgid "IO"
+msgstr "IO"
+
+#: CLManager/templates/CLManager/createPackage.html:81
+#: CLManager/templates/CLManager/listPackages.html:131
+#: containerization/templates/containerization/websiteContainerLimit.html:52
+#: containerization/templates/containerization/websiteContainerLimit.html:99
+msgid "IOPS"
+msgstr "IOPS"
+
+#: CLManager/templates/CLManager/createPackage.html:89
+#: CLManager/templates/CLManager/listPackages.html:142
+msgid "EP"
+msgstr "EP"
+
+#: CLManager/templates/CLManager/createPackage.html:97
+#: CLManager/templates/CLManager/listPackages.html:153
+msgid "NPROC"
+msgstr "NPROC"
+
+#: CLManager/templates/CLManager/createPackage.html:105
+#: CLManager/templates/CLManager/listPackages.html:164
+msgid "INODES soft"
+msgstr "INODES soft"
+
+#: CLManager/templates/CLManager/createPackage.html:113
+#: CLManager/templates/CLManager/listPackages.html:175
+msgid "INODES hard"
+msgstr "INODES hard"
+
+#: CLManager/templates/CLManager/listPackages.html:3
+msgid "Manage CloudLinux Packages - CyberPanel"
+msgstr "Administrer CloudLinux Pakker - CyberPanel"
+
+#: CLManager/templates/CLManager/listPackages.html:14
+msgid "Manage CloudLinux Packages"
+msgstr "Administrer CloudLinux Pakker"
+
+#: CLManager/templates/CLManager/listPackages.html:15
+msgid "Manage/Delete CloudLinux Packages."
+msgstr "Administrer/Slett CloudLinux Pakker."
+
+#: CLManager/templates/CLManager/listPackages.html:76
+#: dns/templates/dns/addDeleteDNSRecords.html:74
+#: dns/templates/dns/addDeleteDNSRecords.html:97
+#: dns/templates/dns/addDeleteDNSRecords.html:121
+#: dns/templates/dns/addDeleteDNSRecords.html:144
+#: dns/templates/dns/addDeleteDNSRecords.html:172
+#: dns/templates/dns/addDeleteDNSRecords.html:196
+#: dns/templates/dns/addDeleteDNSRecords.html:220
+#: dns/templates/dns/addDeleteDNSRecords.html:244
+#: dns/templates/dns/addDeleteDNSRecords.html:268
+#: dns/templates/dns/addDeleteDNSRecords.html:295
+#: dns/templates/dns/addDeleteDNSRecords.html:328
+#: dockerManager/templates/dockerManager/runContainer.html:29
+#: filemanager/templates/filemanager/index.html:203
+#: firewall/templates/firewall/firewall.html:120
+#: packages/templates/packages/listPackages.html:84
+#: pluginHolder/templates/pluginHolder/plugins.html:28
+#: serverStatus/templates/serverStatus/litespeedStatus.html:38
+#: serverStatus/templates/serverStatus/litespeedStatus.html:262
+#: userManagment/templates/userManagment/listUsers.html:75
+msgid "Name"
+msgstr "Navn"
+
+#: CLManager/templates/CLManager/listPackages.html:205
+#: CLManager/templates/CLManager/listWebsites.html:86
+#: CLManager/templates/CLManager/monitorUsage.html:57
+#: containerization/templates/containerization/listWebsites.html:57
+#: emailPremium/templates/emailPremium/emailLimits.html:172
+#: emailPremium/templates/emailPremium/emailPage.html:179
+#: emailPremium/templates/emailPremium/listDomains.html:75
+#: pluginHolder/templates/pluginHolder/plugins.html:51
+#: websiteFunctions/templates/websiteFunctions/listWebsites.html:133
+msgid "Cannot list websites. Error message:"
+msgstr "Kan ikke liste opp nettsider. Feilmelding:"
+
+#: CLManager/templates/CLManager/listWebsites.html:3
+msgid "CageFS - CyberPanel"
+msgstr "CageFS - CyberPanel"
+
+#: CLManager/templates/CLManager/listWebsites.html:14
+#: CLManager/templates/CLManager/monitorUsage.html:14
+#: baseTemplate/templates/baseTemplate/index.html:411
+#: containerization/templates/containerization/listWebsites.html:14
+#: websiteFunctions/templates/websiteFunctions/index.html:31
+#: websiteFunctions/templates/websiteFunctions/index.html:55
+#: websiteFunctions/templates/websiteFunctions/listWebsites.html:19
+msgid "List Websites"
+msgstr "Liste Opp Nettsider"
+
+#: CLManager/templates/CLManager/listWebsites.html:15
+msgid "Enable/Disable and view CageFS status for websites."
+msgstr "Aktiver/Deaktiver og vis CageFS status for nettsider."
+
+#: CLManager/templates/CLManager/listWebsites.html:28
+msgid "Default: "
+msgstr "Standard: "
+
+#: CLManager/templates/CLManager/monitorUsage.html:3
+msgid "Monitor Usage - CyberPanel"
+msgstr "Overvåk Bruk - CyberPanel"
+
+#: CLManager/templates/CLManager/monitorUsage.html:15
+msgid "Monitor usage of your websites."
+msgstr "Overvåk bruken av dine nettsider."
+
+#: CLManager/templates/CLManager/monitorUsage.html:21
+#: baseTemplate/templates/baseTemplate/homePage.html:42
+#: baseTemplate/templates/baseTemplate/index.html:276
+#: baseTemplate/templates/baseTemplate/index.html:400
+#: baseTemplate/templates/baseTemplate/index.html:401
+#: baseTemplate/templates/baseTemplate/index.html:402
+#: containerization/templates/containerization/listWebsites.html:21
+msgid "Websites"
+msgstr "Nettsider"
+
+#: CLManager/templates/CLManager/notAvailable.html:3
+#: containerization/templates/containerization/notAvailable.html:3
+msgid "Not available - CyberPanel"
+msgstr "Ikke tilgjengelig - CyberPanel"
+
+#: CLManager/templates/CLManager/notAvailable.html:13
+#: containerization/templates/containerization/notAvailable.html:13
+msgid "Not available"
+msgstr "Ikke tilgjengelig"
+
+#: CLManager/templates/CLManager/notAvailable.html:14
+msgid "Either CageFS is not installed or you are not on CloudLinux OS."
+msgstr "Enten er CageFS ikke installert eller du bruker ikke CloudLinux OS."
+
+#: CLManager/templates/CLManager/notAvailable.html:22
+msgid "CageFS is only available with CloudLinux OS. "
+msgstr "CageFS er kun tilgjengelig med CloudLinux OS. "
+
+#: CLManager/templates/CLManager/notAvailable.html:24
+#: containerization/templates/containerization/notAvailable.html:24
+msgid " for conversion details."
+msgstr " for konverteringsdetaljer."
+
+#: CLManager/templates/CLManager/notAvailable.html:34
+#: containerization/templates/containerization/notAvailable.html:34
+msgid "Install Packages"
+msgstr "Installer Pakker"
+
+#: CLManager/templates/CLManager/notAvailable.html:39
+msgid "CageFS is not installed on this server. Please proceed to installation."
+msgstr "CageFS er ikke installert på denne serveren. Vennligst fortsett med installasjonen."
+
+#: CLManager/templates/CLManager/websiteContainerLimit.html:3
+msgid " usage - CyberPanel"
+msgstr " bruk - CyberPanel"
+
+#: CLManager/templates/CLManager/websiteContainerLimit.html:14
+#: emailMarketing/templates/emailMarketing/website.html:40
+#: websiteFunctions/templates/websiteFunctions/launchChild.html:43
+#: websiteFunctions/templates/websiteFunctions/website.html:43
+msgid "Usage"
+msgstr "Bruk"
+
+#: CLManager/templates/CLManager/websiteContainerLimit.html:15
+msgid "View CPU, Memory and Disk usage for "
+msgstr "Vis CPU, Minne og Disk bruk for "
+
+#: CLManager/templates/CLManager/websiteContainerLimit.html:21
+#: containerization/templates/containerization/websiteContainerLimit.html:155
+msgid "CPU Usage of"
+msgstr "CPU Bruk av"
+
+#: CLManager/templates/CLManager/websiteContainerLimit.html:30
+#: containerization/templates/containerization/websiteContainerLimit.html:164
+msgid "Memory Usage of"
+msgstr "Minne Bruk av"
+
+#: CLManager/templates/CLManager/websiteContainerLimit.html:39
+#: containerization/templates/containerization/websiteContainerLimit.html:173
+msgid "Disk Usage of"
+msgstr "Disk Bruk av"
+
+#: CyberCP/settings.py:175
+msgid "English"
+msgstr "Engelsk"
+
+#: CyberCP/settings.py:176
+msgid "Chinese"
+msgstr "Kinesisk"
+
+#: CyberCP/settings.py:177
+msgid "Bulgarian"
+msgstr "Bulgarsk"
+
+#: CyberCP/settings.py:178
+msgid "Portuguese"
+msgstr "Portugisisk"
+
+#: CyberCP/settings.py:179
+msgid "Japanese"
+msgstr "Japansk"
+
+#: CyberCP/settings.py:180
+msgid "Bosnian"
+msgstr "Bosnisk"
+
+#: CyberCP/settings.py:181
+msgid "Greek"
+msgstr "Gresk"
+
+#: CyberCP/settings.py:182
+msgid "Russian"
+msgstr "Russisk"
+
+#: CyberCP/settings.py:183
+msgid "Turkish"
+msgstr "Tyrkisk"

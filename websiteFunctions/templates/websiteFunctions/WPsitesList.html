@@ -1,0 +1,955 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "WordPress Toolkit - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+    <script>
+        var cyberCPModule = angular.module('CyberCP');
+
+        cyberCPModule.controller('listWordPressSites', function($scope, $http) {
+            $scope.wpSites = {{ wpsite|safe }};
+            $scope.debug = {{ debug_info|safe }};
+            $scope.totalSites = {{ total_sites }};
+            $scope.userId = $scope.debug.user_id;
+            $scope.isAdmin = $scope.debug.is_admin;
+            $scope.wpSitesCount = $scope.debug.wp_sites_count;
+            $scope.currentPage = 1;
+            $scope.recordsToShow = 50; // Default to 50 items
+            $scope.expandedSites = {}; // Track which sites are expanded
+            $scope.currentWP = null; // Store current WordPress site for password protection
+
+            // Function to toggle site expansion
+            $scope.toggleSite = function(site) {
+                if (!$scope.expandedSites[site.id]) {
+                    $scope.expandedSites[site.id] = true;
+                    site.loading = true;
+                    site.loadingPlugins = true;
+                    site.loadingTheme = true;
+                    fetchSiteData(site);
+                } else {
+                    $scope.expandedSites[site.id] = false;
+                }
+            };
+
+            // Function to check if site is expanded
+            $scope.isExpanded = function(siteId) {
+                return $scope.expandedSites[siteId];
+            };
+
+            // Function to check if site data is loaded
+            $scope.isDataLoaded = function(site) {
+                return site.version !== undefined;
+            };
+
+            $scope.updatePagination = function() {
+                var filteredSites = $scope.wpSites;
+                if ($scope.searchText) {
+                    filteredSites = $scope.wpSites.filter(function(site) {
+                        return site.title.toLowerCase().includes($scope.searchText.toLowerCase()) ||
+                               site.url.toLowerCase().includes($scope.searchText.toLowerCase());
+                    });
+                }
+                $scope.totalPages = Math.ceil(filteredSites.length / $scope.recordsToShow);
+                if ($scope.currentPage > $scope.totalPages) {
+                    $scope.currentPage = 1;
+                }
+            };
+
+            $scope.$watch('searchText', function() {
+                $scope.updatePagination();
+            });
+
+            $scope.$watch('recordsToShow', function() {
+                $scope.updatePagination();
+            });
+
+            $scope.updatePagination();
+
+            $scope.getFullUrl = function(url) {
+                if (!url) return '';
+                if (url.startsWith('http://') || url.startsWith('https://')) {
+                    return url;
+                }
+                return 'https://' + url;
+            };
+
+            $scope.deleteWPSite = function(site) {
+                if (confirm('Are you sure you want to delete this WordPress site? This action cannot be undone.')) {
+                    window.location.href = "{% url 'ListWPSites' %}?DeleteID=" + site.id;
+                }
+            };
+
+            $scope.ScanWordpressSite = function () {
+                $('#cyberPanelLoading').show();
+                var url = "{% url 'ScanWordpressSite' %}";
+                var data = {};
+                var config = {
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                };
+
+                $http.post(url, data, config).then(function(response) {
+                    $('#cyberPanelLoading').hide();
+                    if (response.data.status === 1) {
+                        new PNotify({
+                            title: 'Success!',
+                            text: 'WordPress sites scanned successfully!',
+                            type: 'success'
+                        });
+                        location.reload();
+                    } else {
+                        new PNotify({
+                            title: 'Operation Failed!',
+                            text: response.data.error_message,
+                            type: 'error'
+                        });
+                    }
+                }, function(response) {
+                    $('#cyberPanelLoading').hide();
+                    new PNotify({
+                        title: 'Operation Failed!',
+                        text: response.data.error_message,
+                        type: 'error'
+                    });
+                });
+            };
+
+            $scope.updateSetting = function(site, setting) {
+                var settingMap = {
+                    'search-indexing': 'searchIndex',
+                    'debugging': 'debugging',
+                    'password-protection': 'passwordProtection',
+                    'maintenance-mode': 'maintenanceMode'
+                };
+
+                var data = {
+                    WPid: site.id,
+                    setting: setting,
+                    value: site[settingMap[setting]] ? 1 : 0
+                };
+
+                GLobalAjaxCall($http, "{% url 'UpdateWPSettings' %}", data, 
+                    function(response) {
+                        if (!response.data.status) {
+                            site[settingMap[setting]] = !site[settingMap[setting]];
+                            new PNotify({
+                                title: 'Operation Failed!',
+                                text: response.data.error_message || 'Unknown error',
+                                type: 'error'
+                            });
+                        } else {
+                            new PNotify({
+                                title: 'Success!',
+                                text: 'Setting updated successfully.',
+                                type: 'success'
+                            });
+                        }
+                    }, 
+                    function(response) {
+                        site[settingMap[setting]] = !site[settingMap[setting]];
+                        new PNotify({
+                            title: 'Operation Failed!',
+                            text: 'Could not connect to server, please try again.',
+                            type: 'error'
+                        });
+                    }
+                );
+            };
+
+            // Function to fetch plugin data
+            function fetchPluginData(site) {
+                var data = { WPid: site.id };
+                GLobalAjaxCall($http, "{% url 'GetCurrentPlugins' %}", data,
+                    function(response) {
+                        if (response.data.status === 1) {
+                            try {
+                                var plugins = JSON.parse(response.data.plugins);
+                                // WordPress CLI returns an array of objects with 'name' and 'status' properties
+                                site.activePlugins = plugins.filter(function(p) { 
+                                    return p.status && p.status.toLowerCase() === 'active'; 
+                                }).length;
+                                site.totalPlugins = plugins.length;
+                            } catch (e) {
+                                console.error('Error parsing plugin data:', e);
+                                site.activePlugins = 'Error';
+                                site.totalPlugins = 'Error';
+                            }
+                        } else {
+                            site.activePlugins = 'Error';
+                            site.totalPlugins = 'Error';
+                        }
+                        site.loadingPlugins = false;
+                    },
+                    function(response) {
+                        site.activePlugins = 'Error';
+                        site.totalPlugins = 'Error';
+                        site.loadingPlugins = false;
+                    }
+                );
+            }
+
+            // Function to fetch theme data
+            function fetchThemeData(site) {
+                var data = { WPid: site.id };
+                GLobalAjaxCall($http, "{% url 'GetCurrentThemes' %}", data,
+                    function(response) {
+                        if (response.data.status === 1) {
+                            var themes = JSON.parse(response.data.themes);
+                            site.activeTheme = themes.find(function(t) { return t.status === 'active'; }).name;
+                            site.totalThemes = themes.length;
+                        }
+                        site.loadingTheme = false;
+                    },
+                    function(response) {
+                        site.activeTheme = 'Error';
+                        site.loadingTheme = false;
+                    }
+                );
+            }
+
+            // Function to fetch site data
+            function fetchSiteData(site) {
+                var data = { WPid: site.id };
+                site.fullUrl = $scope.getFullUrl(site.url);
+                site.phpVersion = 'Loading...'; // Set initial loading state
+
+                GLobalAjaxCall($http, "{% url 'FetchWPdata' %}", data,
+                    function(response) {
+                        if (response.data.status === 1) {
+                            var data = response.data.ret_data;
+                            site.version = data.version;
+                            site.phpVersion = data.phpVersion || 'PHP 7.4'; // Default to PHP 7.4 if not set
+                            site.searchIndex = data.searchIndex === 1;
+                            site.debugging = data.debugging === 1;
+                            site.passwordProtection = data.passwordprotection === 1;
+                            site.maintenanceMode = data.maintenanceMode === 1;
+                            site.loading = false;
+                            fetchPluginData(site);
+                            fetchThemeData(site);
+                        } else {
+                            site.phpVersion = 'PHP 7.4'; // Default value on error
+                            site.loading = false;
+                            console.log('Failed to fetch site data:', response.data.error_message);
+                        }
+                    },
+                    function(response) {
+                        site.phpVersion = 'PHP 7.4'; // Default value on error
+                        site.loading = false;
+                        console.log('Failed to fetch site data');
+                    }
+                );
+            }
+
+            if ($scope.wpSites && $scope.wpSites.length > 0) {
+                // Load data for first site by default
+                $scope.expandedSites[$scope.wpSites[0].id] = true;
+                fetchSiteData($scope.wpSites[0]);
+            }
+
+            $scope.togglePasswordProtection = function(site) {
+                if (site.passwordProtection) {
+                    // Show modal for credentials
+                    site.PPUsername = "";
+                    site.PPPassword = "";
+                    $scope.currentWP = site;
+                    $('#passwordProtectionModal').modal('show');
+                } else {
+                    // Disable password protection
+                    var data = {
+                        WPid: site.id,
+                        setting: 'password-protection',
+                        value: 0
+                    };
+                    
+                    GLobalAjaxCall($http, "{% url 'UpdateWPSettings' %}", data, 
+                        function(response) {
+                            if (!response.data.status) {
+                                site.passwordProtection = !site.passwordProtection;
+                                new PNotify({
+                                    title: 'Operation Failed!',
+                                    text: response.data.error_message || 'Failed to disable password protection',
+                                    type: 'error'
+                                });
+                            } else {
+                                new PNotify({
+                                    title: 'Success!',
+                                    text: 'Password protection disabled successfully.',
+                                    type: 'success'
+                                });
+                            }
+                        },
+                        function(error) {
+                            site.passwordProtection = !site.passwordProtection;
+                            new PNotify({
+                                title: 'Operation Failed!',
+                                text: 'Could not connect to server.',
+                                type: 'error'
+                            });
+                        }
+                    );
+                }
+            };
+
+            $scope.submitPasswordProtection = function() {
+                if (!$scope.currentWP) {
+                    new PNotify({
+                        title: 'Error!',
+                        text: 'No WordPress site selected.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                if (!$scope.currentWP.PPUsername || !$scope.currentWP.PPPassword) {
+                    new PNotify({
+                        title: 'Error!',
+                        text: 'Please provide both username and password',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                var data = {
+                    siteId: $scope.currentWP.id,
+                    setting: 'password-protection',
+                    value: 1,
+                    PPUsername: $scope.currentWP.PPUsername,
+                    PPPassword: $scope.currentWP.PPPassword
+                };
+
+                $('#passwordProtectionModal').modal('hide');
+
+                GLobalAjaxCall($http, "{% url 'UpdateWPSettings' %}", data,
+                    function(response) {
+                        if (response.data.status === 1) {
+                            // Update the site's password protection state
+                            $scope.currentWP.passwordProtection = true;
+                            new PNotify({
+                                title: 'Success!',
+                                text: 'Password protection enabled successfully!',
+                                type: 'success'
+                            });
+                            // Refresh the site data
+                            fetchSiteData($scope.currentWP);
+                        } else {
+                            // Revert the checkbox state
+                            $scope.currentWP.passwordProtection = false;
+                            new PNotify({
+                                title: 'Error!',
+                                text: response.data.error_message || 'Failed to enable password protection',
+                                type: 'error'
+                            });
+                        }
+                    },
+                    function(error) {
+                        // Revert the checkbox state
+                        $scope.currentWP.passwordProtection = false;
+                        new PNotify({
+                            title: 'Error!',
+                            text: 'Could not connect to server',
+                            type: 'error'
+                        });
+                    }
+                );
+            };
+        });
+
+        // Add a range filter for pagination
+        cyberCPModule.filter('range', function() {
+            return function(input, start, end) {
+                start = parseInt(start);
+                end = parseInt(end);
+                var direction = (start <= end) ? 1 : -1;
+                while (start != end) {
+                    input.push(start);
+                    start += direction;
+                }
+                input.push(end);
+                return input;
+            };
+        });
+        
+        // Ensure modal is hidden on page load
+        $(document).ready(function() {
+            $('#passwordProtectionModal').modal('hide');
+        });
+    </script>
+    
+    <style>
+        /* WordPress Toolkit Specific Styles */
+        .wp-wrapper {
+            background: transparent;
+            padding: 20px;
+        }
+        
+        .wp-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .wp-section {
+            background: var(--bg-secondary, white);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-heading, #2f3640);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-color, #5b5fcf);
+            border-radius: 2px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .search-bar {
+            background: var(--bg-hover, #fafbff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .form-control {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary, #2f3640);
+            background: var(--bg-secondary, white);
+            transition: all 0.2s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            border-color: var(--accent-color, #5b5fcf);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4b4fbf);
+            border-color: var(--accent-hover, #4b4fbf);
+            box-shadow: 0 3px 8px rgba(91,95,207,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-success {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            border-color: #059669;
+            box-shadow: 0 3px 8px rgba(16,185,129,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-info {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            box-shadow: 0 3px 8px rgba(59,130,246,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+            box-shadow: 0 3px 8px rgba(239,68,68,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-default {
+            background: white;
+            border-color: #e8e9ff;
+            color: #2f3640;
+        }
+        
+        .btn-default:hover {
+            background: #f8f9ff;
+            border-color: #5b5fcf;
+            color: #5b5fcf;
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        /* WordPress Site Item */
+        .wp-site-item {
+            background: var(--bg-secondary, white);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .wp-site-item:hover {
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 4px 12px rgba(91,95,207,0.15);
+        }
+        
+        .wp-site-header {
+            padding: 20px;
+            background: var(--bg-hover, #fafbff);
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .wp-site-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-heading, #2f3640);
+            display: flex;
+            align-items: center;
+        }
+        
+        .wp-site-content {
+            padding: 20px;
+            background: var(--bg-secondary, white);
+        }
+        
+        .site-preview {
+            background: var(--bg-hover, #fafbff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .site-preview img {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background: var(--bg-hover, #fafbff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .info-box label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary, #8893a7);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-box span {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary, #2f3640);
+        }
+        
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .settings-group {
+            background: var(--bg-hover, #fafbff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .checkbox {
+            margin-bottom: 12px;
+        }
+        
+        .checkbox label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-primary, #2f3640);
+            cursor: pointer;
+        }
+        
+        .checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .loading-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-color, #5b5fcf);
+            font-size: 14px;
+            padding: 0 8px;
+        }
+        
+        .loading-indicator i {
+            font-size: 14px;
+        }
+        
+        .pagination-info {
+            background: var(--bg-hover, #fafbff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .alert-info {
+            background: var(--info-bg, #e3f2fd);
+            border: 1px solid var(--info-border, #bbdefb);
+            border-radius: 8px;
+            padding: 15px;
+            color: var(--info-text, #1976d2);
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        /* Modal Styles */
+        .modal-content {
+            border-radius: 12px;
+            border: 1px solid var(--border-color, #e8e9ff);
+            box-shadow: 0 10px 40px var(--shadow-color, rgba(0,0,0,0.1));
+        }
+        
+        .modal-header {
+            background: var(--bg-hover, #fafbff);
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-heading, #2f3640);
+            margin: 0;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .modal-footer {
+            background: var(--bg-hover, #fafbff);
+            border-top: 1px solid var(--border-color, #e8e9ff);
+            padding: 15px 20px;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .btn-secondary {
+            background: var(--text-secondary, #64748b);
+            border-color: var(--text-secondary, #64748b);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--text-primary, #475569);
+            border-color: var(--text-primary, #475569);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .wp-wrapper {
+                padding: 15px;
+            }
+            
+            .wp-section {
+                padding: 20px;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .header-actions .btn {
+                width: 100%;
+            }
+            
+            .search-bar {
+                flex-direction: column;
+            }
+            
+            .search-bar > * {
+                width: 100%;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="wp-wrapper" ng-controller="listWordPressSites">
+        <div class="wp-container">
+            <!-- Header Section -->
+            <div class="wp-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                    <h2 class="section-title">WORDPRESS SITES</h2>
+                    <div class="header-actions">
+                        <button ng-click="ScanWordpressSite()" class="btn btn-info btn-sm">
+                            <i class="fas fa-sync-alt"></i>
+                            Scan WordPress Sites
+                        </button>
+                        <a href="{% url 'createWordpress' %}" class="btn btn-success btn-sm">
+                            <i class="fab fa-wordpress"></i>
+                            Install WordPress
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="search-bar">
+                    <div style="flex: 1;">
+                        <input ng-model="searchText" placeholder="Search by title or URL..." class="form-control">
+                    </div>
+                    <div style="width: 150px;">
+                        <select ng-model="recordsToShow" class="form-control" ng-change="updatePagination()"
+                                ng-options="option.value as option.label for option in [{value: 10, label: '10 items'}, {value: 50, label: '50 items'}, {value: 100, label: '100 items'}]">
+                        </select>
+                    </div>
+                </div>
+
+                <!-- No Sites Alert -->
+                <div ng-if="wpSites && wpSites.length === 0" class="alert-info">
+                    <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                    No WordPress sites found. Click "Install WordPress" to create your first site.
+                </div>
+
+                <!-- WordPress Sites List -->
+                <div ng-repeat="site in filteredSites = (wpSites | filter:searchText | limitTo:recordsToShow:(currentPage-1)*recordsToShow)" class="wp-site-item">
+                    <div class="wp-site-header">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                            <h4>
+                                <i class="fas" 
+                                   ng-class="{'fa-chevron-down': isExpanded(site.id), 'fa-chevron-right': !isExpanded(site.id)}"
+                                   ng-click="toggleSite(site)"
+                                   style="cursor: pointer; margin-right: 10px; color: #5b5fcf;"></i>
+                                {$ site.title $}
+                                <span ng-if="site.loading || site.loadingPlugins || site.loadingTheme" class="loading-indicator">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </span>
+                            </h4>
+                            <div class="header-actions">
+                                <a ng-href="{% url 'WPHome' %}?ID={$ site.id $}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-cog"></i>
+                                    Manage
+                                </a>
+                                <button class="btn btn-danger btn-sm" ng-click="deleteWPSite(site)">
+                                    <i class="fas fa-trash"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="wp-site-content" ng-if="isExpanded(site.id)">
+                        <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 20px;">
+                            <!-- Site Preview -->
+                            <div class="site-preview">
+                                <img ng-src="https://api.microlink.io/?url={$ getFullUrl(site.url) $}&screenshot=true&meta=false&embed=screenshot.url" 
+                                     alt="{$ site.title $}" 
+                                     onerror="this.onerror=null; this.src='https://s.wordpress.org/style/images/about/WordPress-logotype-standard.png';">
+                                <div style="display: flex; gap: 10px; justify-content: center;">
+                                    <a ng-href="{$ getFullUrl(site.url) $}" target="_blank" class="btn btn-default btn-sm">
+                                        <i class="fas fa-external-link-alt"></i>
+                                        Visit Site
+                                    </a>
+                                    <a href="{% url 'AutoLogin' %}?id={$ site.id $}" target="_blank" class="btn btn-primary btn-sm">
+                                        <i class="fab fa-wordpress"></i>
+                                        WP Login
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <!-- Site Details -->
+                            <div>
+                                <!-- Info Grid -->
+                                <div class="info-grid">
+                                    <div class="info-box">
+                                        <label>WordPress</label>
+                                        <span>{$ site.version || 'Loading...' $}</span>
+                                        <i ng-if="site.loading" class="fa fa-spinner fa-spin" style="margin-left: 5px; font-size: 12px;"></i>
+                                    </div>
+                                    <div class="info-box">
+                                        <label>PHP Version</label>
+                                        <span>{$ site.phpVersion || 'Loading...' $}</span>
+                                        <i ng-if="site.loading" class="fa fa-spinner fa-spin" style="margin-left: 5px; font-size: 12px;"></i>
+                                    </div>
+                                    <div class="info-box">
+                                        <label>Theme</label>
+                                        <span>{$ site.activeTheme || 'Loading...' $}</span>
+                                        <i ng-if="site.loadingTheme" class="fa fa-spinner fa-spin" style="margin-left: 5px; font-size: 12px;"></i>
+                                    </div>
+                                    <div class="info-box">
+                                        <label>Plugins</label>
+                                        <span ng-if="site.activePlugins !== undefined">{$ site.activePlugins $} active of {$ site.totalPlugins $}</span>
+                                        <span ng-if="site.activePlugins === undefined">Loading...</span>
+                                        <i ng-if="site.loadingPlugins" class="fa fa-spinner fa-spin" style="margin-left: 5px; font-size: 12px;"></i>
+                                    </div>
+                                </div>
+                                
+                                <!-- Settings Grid -->
+                                <div class="settings-grid">
+                                    <div class="settings-group">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" ng-model="site.searchIndex" ng-change="updateSetting(site, 'search-indexing')">
+                                                Search engine indexing
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" ng-model="site.debugging" ng-change="updateSetting(site, 'debugging')">
+                                                Debugging
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="settings-group">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" 
+                                                       ng-model="site.passwordProtection"
+                                                       ng-change="togglePasswordProtection(site)">
+                                                Password protection
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" ng-model="site.maintenanceMode" ng-change="updateSetting(site, 'maintenance-mode')">
+                                                Maintenance mode
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-info">
+                    <span style="color: #64748b;">
+                        Showing {$ ((currentPage-1)*recordsToShow) + 1 $} to {$ ((currentPage-1)*recordsToShow) + filteredSites.length $} of {$ (wpSites | filter:searchText).length $} sites
+                    </span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="margin: 0; color: #64748b;">Page:</label>
+                        <select ng-model="currentPage" class="form-control" style="width: 100px;" ng-options="page for page in [] | range:1:totalPages">
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Password Protection Modal -->
+        <div class="modal fade" id="passwordProtectionModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Password Protection</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" ng-model="currentWP.PPUsername" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" ng-model="currentWP.PPPassword" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary btn-sm" ng-click="submitPasswordProtection()">Enable Protection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

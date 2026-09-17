@@ -1,0 +1,500 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Modify Website - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern page styles matching new design */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    /* Card styles */
+    .content-card {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    /* Form styles */
+    .form-group {
+        margin-bottom: 24px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-secondary, white);
+        transition: all 0.2s ease;
+    }
+    
+    /* Specific styling for select elements to fix Windows visibility issues */
+    select.form-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-color: var(--bg-secondary, white);
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b5fcf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 20px;
+        padding-right: 40px;
+        color: var(--text-primary, #2f3640) !important;
+        font-size: 14px !important;
+        line-height: 1.5;
+        height: auto;
+        min-height: 42px;
+    }
+    
+    /* Ensure option text is visible */
+    select.form-control option {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    /* Fix for Windows high contrast mode */
+    @media screen and (-ms-high-contrast: active) {
+        select.form-control {
+            border: 2px solid;
+        }
+        select.form-control option {
+            background: var(--bg-secondary, white);
+            color: var(--text-primary, black);
+        }
+    }
+    
+    .form-control:hover {
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    /* Specific focus styles for select */
+    select.form-control:focus {
+        background-color: var(--bg-secondary, white);
+        color: var(--text-primary, #2f3640);
+    }
+    
+    /* Current value display */
+    .current-value {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 6px 12px;
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--accent-color, #5b5fcf);
+        font-weight: 600;
+    }
+    
+    .current-value-label {
+        color: #64748b;
+        font-weight: 500;
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4a4fc4);
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .alert-info {
+        background: var(--info-bg, #e3f2fd);
+        border: 1px solid var(--info-border, #bbdefb);
+        color: var(--info-text, #1565c0);
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        color: var(--success-text, #2e7d32);
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #ffebee);
+        border: 1px solid var(--danger-border, #ffcdd2);
+        color: var(--danger-text, #c62828);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Website selection card */
+    .website-selector-card {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .website-selector-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Form row */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    /* Divider */
+    .form-divider {
+        height: 1px;
+        background: var(--border-color, #e8e9ff);
+        margin: 30px 0;
+    }
+    
+    /* Info box */
+    .info-box {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .info-box i {
+        color: var(--accent-color, #5b5fcf);
+        font-size: 18px;
+    }
+    
+    .info-box-content {
+        flex: 1;
+    }
+    
+    .info-box-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 4px;
+    }
+    
+    .info-box-text {
+        font-size: 12px;
+        color: #64748b;
+        line-height: 1.5;
+    }
+    
+    /* Button container */
+    .button-container {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    /* Modification details section */
+    #webSiteDetailsToBeModified {
+        display: none;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    #webSiteDetailsToBeModified.show {
+        display: block;
+    }
+    
+    /* Hide elements by default */
+    #modifyWebsiteLoading,
+    #websiteModifyFailure,
+    #canNotModify,
+    #websiteModifySuccess,
+    #websiteSuccessfullyModified {
+        display: none;
+    }
+    
+    /* Additional Windows-specific fixes */
+    @supports (-ms-ime-align: auto) {
+        /* Edge/IE specific styles */
+        select.form-control {
+            color: var(--text-primary, #2f3640) !important;
+            background-color: var(--bg-secondary, white) !important;
+        }
+    }
+    
+    /* Fix for Firefox on Windows */
+    @-moz-document url-prefix() {
+        select.form-control {
+            color: var(--text-primary, #2f3640) !important;
+            text-shadow: none;
+        }
+    }
+    
+    /* Ensure selected option is always visible */
+    select.form-control::-ms-value {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+    }
+    
+    /* Fix for Chrome on Windows */
+    select.form-control:not(:focus):not(:hover) {
+        color: var(--text-primary, #2f3640) !important;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .content-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="page-wrapper" ng-controller="modifyWebsitesController">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{% trans "Modify Website" %}</h1>
+            <p class="page-subtitle">{% trans "Update website settings including package, owner, email, and PHP version" %}</p>
+        </div>
+
+        <div class="content-card">
+            <h2 class="card-title">
+                {% trans "Website Selection" %}
+                <span id="modifyWebsiteLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <div class="website-selector-card">
+                <label class="website-selector-label">{% trans "Select Website to Modify" %}</label>
+                <select ng-change="fetchWebsites()" ng-model="websiteToBeModified" class="form-control">
+                    <option value="">-- {% trans "Select a website" %} --</option>
+                    {% for items in websiteList %}
+                        <option>{{ items }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <div class="info-box-content">
+                    <div class="info-box-title">{% trans "Modification Tips" %}</div>
+                    <div class="info-box-text">
+                        {% trans "Select a website from the dropdown above to load its current settings. You can then modify the package, owner, email address, or PHP version." %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Website Details Form -->
+        <div class="content-card" id="webSiteDetailsToBeModified">
+            <h2 class="card-title">{% trans "Website Settings" %}</h2>
+            
+            <form>
+                <div class="form-group">
+                    <label class="form-label">{% trans "Package" %}</label>
+                    <select ng-model="selectedPack" class="form-control">
+                        <option value="">-- {% trans "Select a package" %} --</option>
+                        <option ng-repeat="pack in webpacks">{$ pack.pack $}</option>
+                    </select>
+                    <div class="current-value">
+                        <span class="current-value-label">{% trans "Current:" %}</span> {$ currentPack $}
+                    </div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Website Owner" %}</label>
+                        <select ng-model="selectedAdmin" class="form-control">
+                            <option value="">-- {% trans "Select an owner" %} --</option>
+                            <option ng-repeat="admins in adminNames">{$ admins.adminNames $}</option>
+                        </select>
+                        <div class="current-value">
+                            <span class="current-value-label">{% trans "Current:" %}</span> {$ currentAdmin $}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Email Address" %}</label>
+                        <input type="email" class="form-control" ng-model="adminEmail" 
+                               placeholder="{% trans 'admin@example.com' %}" required>
+                    </div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <div class="form-group">
+                    <label class="form-label">{% trans "PHP Version" %}</label>
+                    <select ng-model="phpSelection" class="form-control">
+                        <option value="">-- {% trans "Select PHP version" %} --</option>
+                        {% for php in phps %}
+                            <option>{{ php }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="button-container">
+                    <button type="button" ng-click="modifyWebsiteFunc()" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        {% trans "Save Changes" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="websiteModifyFailure" class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{% trans "Cannot fetch website details. Error message:" %} {$ errorMessage $}</span>
+        </div>
+
+        <div id="canNotModify" class="alert alert-danger">
+            <i class="fas fa-times-circle"></i>
+            <span>{% trans "Cannot modify website. Error message:" %} {$ errMessage $}</span>
+        </div>
+
+        <div id="websiteModifySuccess" class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <span>{% trans "Website details successfully fetched" %}</span>
+        </div>
+
+        <div id="websiteSuccessfullyModified" class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <span><strong>{$ websiteModified $}</strong> {% trans "successfully modified" %}</span>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

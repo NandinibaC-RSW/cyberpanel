@@ -1,0 +1,702 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'backup/backup.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Schedule Backup - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+    }
+    
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 1.5rem;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4547a9);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+        color: var(--bg-secondary, white);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary, #fff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--accent-shadow-light, rgba(91, 95, 207, 0.2));
+    }
+    
+    .btn-danger {
+        background: var(--danger-color, #ef4444);
+        color: var(--bg-secondary, white);
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.825rem;
+    }
+    
+    .btn-danger:hover {
+        background: var(--danger-hover, #dc2626);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--danger-shadow, rgba(239, 68, 68, 0.4));
+    }
+    
+    .btn-gray {
+        background: #6b7280;
+        color: white;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-gray:hover {
+        background: #4b5563;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+    }
+    
+    .main-card {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        background: var(--bg-secondary, #fff);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-focus, rgba(91, 95, 207, 0.1));
+    }
+    
+    .schedule-info-card {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .schedule-table {
+        width: 100%;
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .schedule-table thead {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+    }
+    
+    .schedule-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .schedule-table td {
+        padding: 1rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-light, #f3f4f6);
+    }
+    
+    .schedule-table tbody tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .schedule-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .status-badge {
+        background: var(--success-bg, #d1fae5);
+        color: var(--success-text, #065f46);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .frequency-badge {
+        background: var(--accent-bg, #e0e7ff);
+        color: var(--accent-color, #5b5fcf);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-color, #e8e9ff);
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .job-selector {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .modal-content {
+        border-radius: 16px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        padding: 1.5rem 2rem;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .log-table {
+        width: 100%;
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .log-table th {
+        background: #e8e9ff;
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+    }
+    
+    .log-table td {
+        padding: 0.75rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .log-type {
+        font-weight: 600;
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-buttons button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="scheduleBackup">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-clock"></i>
+            {% trans "Schedule Backup" %}
+        </h1>
+        <p class="page-subtitle">{% trans "Schedule automatic backups to localhost or remote servers" %}</p>
+        <div class="header-actions">
+            <a href="https://cyberpanel.net/KnowledgeBase/home/schedule-backups-local-or-sftp/" 
+               target="_blank" 
+               rel="noopener"
+               class="btn-secondary">
+                <i class="fas fa-book"></i>
+                {% trans "Remote Backups Guide" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Create New Schedule Card -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-plus-circle"></i>
+                {% trans "Create New Backup Schedule" %}
+                <span ng-hide="cyberPanelLoading" class="loading-spinner"></span>
+            </h2>
+        </div>
+        <div class="card-body">
+            <form action="/" method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-server" style="margin-right: 0.5rem;"></i>
+                                {% trans "Select Destination" %}
+                            </label>
+                            <select ng-model="selectedAccountAdd" class="form-control">
+                                <option value="">{% trans "Choose a destination..." %}</option>
+                                {% for items in destinations %}
+                                    <option>{{ items }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-tag" style="margin-right: 0.5rem;"></i>
+                                {% trans "Schedule Name" %}
+                            </label>
+                            <input type="text" class="form-control" ng-model="name" 
+                                   placeholder="{% trans 'e.g., Daily Website Backup' %}" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-sync-alt" style="margin-right: 0.5rem;"></i>
+                                {% trans "Backup Frequency" %}
+                            </label>
+                            <select ng-model="backupFrequency" class="form-control">
+                                <option>Never</option>
+                                <option>Daily</option>
+                                <option>Weekly</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-history" style="margin-right: 0.5rem;"></i>
+                                {% trans "Backup Retention (0 = unlimited)" %}
+                            </label>
+                            <input ng-model="backupRetention" type="number" value="0" 
+                                   class="form-control" min="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="button" ng-click="addSchedule()" class="btn-primary">
+                        <i class="fas fa-calendar-plus"></i>
+                        {% trans "Add Schedule" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manage Existing Schedules Card -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-tasks"></i>
+                {% trans "Manage Existing Backup Schedules" %}
+                <span ng-hide="cyberPanelLoading" class="loading-spinner"></span>
+            </h2>
+        </div>
+        <div class="card-body">
+            <!-- Destination and Job Selector -->
+            <div class="job-selector">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-server" style="margin-right: 0.5rem;"></i>
+                                {% trans "Select Destination" %}
+                            </label>
+                            <select ng-change="fetchJobs()" ng-model="selectedAccount" class="form-control">
+                                <option value="">{% trans "Choose a destination..." %}</option>
+                                {% for items in destinations %}
+                                    <option>{{ items }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6" ng-hide="jobsHidden">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-briefcase" style="margin-right: 0.5rem;"></i>
+                                {% trans "Select Job" %}
+                            </label>
+                            <div style="display: flex; gap: 1rem;">
+                                <select ng-change="fetchWebsites()" ng-model="selectedJob" class="form-control">
+                                    <option value="">{% trans "Choose a job..." %}</option>
+                                    <option ng-repeat="job in jobs track by $index">{$ job $}</option>
+                                </select>
+                                <button ng-hide="driveHidden" type="button" ng-click="deleteAccount()" class="btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                    {% trans "Delete" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Info -->
+            <div ng-hide="driveHidden" class="schedule-info-card">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Last Run" %}</th>
+                            <th>{% trans "All Sites" %}</th>
+                            <th>{% trans "Frequency" %} <span style="font-weight: normal;">({$ currently $})</span></th>
+                            <th>{% trans "Retention" %} <span style="font-weight: normal;">({$ currently $})</span></th>
+                            <th>{% trans "Current Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><i class="fas fa-calendar-check" style="color: var(--accent-color, #5b5fcf); margin-right: 0.5rem;"></i>{$ lastRun $}</td>
+                            <td><span class="frequency-badge">{$ allSites $}</span></td>
+                            <td>
+                                <select ng-change="changeFrequency()" ng-model="backupFrequency" 
+                                        class="form-control" style="width: auto; min-width: 120px;">
+                                    <option>Never</option>
+                                    <option>Daily</option>
+                                    <option>Weekly</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input ng-model="backupRetention" ng-change="changeFrequency()" 
+                                       type="number" min="0" 
+                                       class="form-control" style="width: 100px;">
+                            </td>
+                            <td><span class="status-badge">{$ currentStatus $}</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 1.5rem;">
+                    <button data-toggle="modal" data-target="#backupLogs" 
+                            type="button" ng-click="fetchLogs()" class="btn-gray">
+                        <i class="fas fa-file-alt"></i>
+                        {% trans "View Logs" %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Site Management -->
+            <div ng-hide="driveHidden">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-globe" style="margin-right: 0.5rem;"></i>
+                            {% trans "Add Sites for Backup" %}
+                        </label>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <select ng-model="selectedWebsite" class="form-control" style="flex: 1;">
+                                <option value="">{% trans "Choose a website..." %}</option>
+                                {% for items in websites %}
+                                    <option>{{ items }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="action-buttons" style="flex: 0;">
+                                <button type="button" ng-click="addSite('one')" class="btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    {% trans "Add Site" %}
+                                </button>
+                                <button type="button" ng-click="addSite('all')" class="btn-primary">
+                                    <i class="fas fa-plus-circle"></i>
+                                    {% trans "Add All" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sites Table -->
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                    <select ng-model="recordsToShow" ng-change="fetchWebsites()" 
+                            class="form-control" style="width: auto;">
+                        <option>10</option>
+                        <option>50</option>
+                        <option>100</option>
+                    </select>
+                </div>
+
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Website" %}</th>
+                            <th style="text-align: center;">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="website in websites track by $index">
+                            <td>
+                                <i class="fas fa-globe" style="color: var(--accent-color, #5b5fcf); margin-right: 0.5rem;"></i>
+                                <strong ng-bind="website.name"></strong>
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" ng-click="deleteSite(website.name)" class="btn-danger">
+                                    <i class="fas fa-times"></i>
+                                    {% trans "Remove" %}
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                    <select ng-model="currentPage" class="form-control" 
+                            ng-change="fetchWebsites()" style="width: auto;">
+                        <option ng-repeat="page in pagination">{$ $index + 1 $}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Modal -->
+    <div id="backupLogs" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-file-alt" style="margin-right: 0.5rem;"></i>
+                        {% trans "Backup Logs" %}
+                        <span ng-hide="cyberPanelLoading" class="loading-spinner" style="width: 16px; height: 16px;"></span>
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" style="font-size: 1.5rem;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                        <select ng-model="recordsToShowLogs" ng-change="fetchLogs()" 
+                                class="form-control" style="width: auto;">
+                            <option>10</option>
+                            <option>50</option>
+                            <option>100</option>
+                        </select>
+                    </div>
+
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 100px;">{% trans "Type" %}</th>
+                                <th>{% trans "Message" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="log in logs track by $index">
+                                <td class="log-type" ng-bind="log.type"></td>
+                                <td ng-bind="log.message"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                        <select ng-model="currentPageLogs" class="form-control" 
+                                ng-change="fetchLogs()" style="width: auto;">
+                            <option ng-repeat="page in paginationLogs">{$ $index + 1 $}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

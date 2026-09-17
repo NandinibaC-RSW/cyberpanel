@@ -1,0 +1,614 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Backup Website - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        .modern-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            border-radius: 20px;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 1.5rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: var(--text-inverse, white);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+            color: var(--text-inverse, white);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary, #fff);
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover, #f8f9ff);
+            border-color: var(--accent-color, #5b5fcf);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--accent-shadow-light, rgba(91, 95, 207, 0.2));
+        }
+        
+        .btn-danger {
+            background: var(--danger-color, #ef4444);
+            color: var(--text-inverse, white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.825rem;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-hover, #dc2626);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--danger-shadow, rgba(239, 68, 68, 0.4));
+        }
+        
+        .main-card {
+            background: var(--bg-secondary, white);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .promo-banner {
+            background: linear-gradient(135deg, var(--accent-color, #5b5fcf) 0%, var(--accent-light, #8187ff) 100%);
+            color: var(--text-inverse, white);
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px var(--accent-shadow, rgba(91, 95, 207, 0.3));
+        }
+        
+        .promo-text {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .promo-link {
+            background: var(--bg-secondary, white);
+            color: var(--accent-color, #5b5fcf);
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .promo-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-dark, rgba(0,0,0,0.2));
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 10px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary, #fff);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px var(--accent-focus, rgba(91, 95, 207, 0.1));
+        }
+        
+        .running-backup-card {
+            background: var(--warning-bg, #fef3c7);
+            border: 1px solid var(--warning-border, #fde68a);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .running-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--warning-color, #fbbf24);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-details h4 {
+            margin: 0;
+            color: var(--warning-text, #92400e);
+            font-size: 1rem;
+        }
+        
+        .status-details p {
+            margin: 0;
+            color: var(--warning-text, #92400e);
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+        
+        .backup-table {
+            width: 100%;
+            background: var(--bg-secondary, white);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .backup-table thead {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        }
+        
+        .backup-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .backup-table td {
+            padding: 1rem;
+            color: var(--text-secondary, #64748b);
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+        }
+        
+        .backup-table tbody tr:hover {
+            background: var(--bg-hover, #f8f9ff);
+        }
+        
+        .backup-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .file-badge {
+            background: var(--accent-bg, #e0e7ff);
+            color: var(--accent-color, #5b5fcf);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            font-family: monospace;
+        }
+        
+        .size-badge {
+            background: var(--border-light, #f3f4f6);
+            color: var(--text-primary, #1e293b);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-complete {
+            background: var(--success-bg, #d1fae5);
+            color: var(--success-text, #065f46);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-success {
+            background: var(--success-bg, #d1fae5);
+            color: var(--success-text, #065f46);
+            border: 1px solid var(--success-border, #a7f3d0);
+        }
+        
+        .alert-danger {
+            background: var(--danger-bg, #fee2e2);
+            color: var(--danger-text, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color, #e8e9ff);
+            border-top-color: var(--accent-color, #5b5fcf);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 1rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .promo-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .button-group button {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <script>
+        // Ensure elements are shown when website is selected
+        document.addEventListener('DOMContentLoaded', function() {
+            var selectElement = document.getElementById('create-backup-select');
+            if (selectElement) {
+                selectElement.addEventListener('change', function() {
+                    if (this.value && this.value !== '') {
+                        // Show all elements with destinationHide class
+                        var elements = document.querySelectorAll('.destinationHide');
+                        elements.forEach(function(el) {
+                            el.style.display = 'block';
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+
+    <div class="modern-container" ng-controller="backupWebsiteControl">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-download"></i>
+                {% trans "Backup Website" %}
+            </h1>
+            <p class="page-subtitle">{% trans "Create and manage backups of your websites to ensure data safety" %}</p>
+            <div class="header-actions">
+                <a href="https://cyberpanel.net/KnowledgeBase/home/backup-restore/" target="_blank" class="btn-secondary">
+                    <i class="fas fa-book"></i>
+                    {% trans "Backup Documentation" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Promo Banner -->
+        <div class="promo-banner">
+            <span class="promo-text">
+                <i class="fas fa-shield-alt" style="margin-right: 0.5rem;"></i>
+                {% trans "Configure automatic backups to our secure servers in 60 seconds" %}
+            </span>
+            <a href="/backup/OneClickBackups" class="promo-link">
+                <i class="fas fa-rocket"></i>
+                {% trans "Set-up now" %}
+            </a>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-archive"></i>
+                    {% trans "Create New Backup" %}
+                    <span ng-hide="backupLoading" class="loading-spinner"></span>
+                </h2>
+            </div>
+            <div class="card-body">
+
+                <form action="/" method="post">
+                    <div class="form-section">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">{% trans "Select Website" %}</label>
+                                    <select id="create-backup-select" ng-model="websiteToBeBacked" ng-change="fetchDetails()" class="form-control">
+                                        <option value="">{% trans "Choose a website..." %}</option>
+                                        {% for items in websiteList %}
+                                            <option>{{ items }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group destinationHide">
+                                    <label class="form-label">{% trans "Destination" %}</label>
+                                    <select ng-change="destinationSelection()" ng-model="backupDestinations" class="form-control">
+                                        <option>{% trans "Home" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Running Backup Status -->
+                    <div ng-hide="runningBackup" class="running-backup-card">
+                        <div class="running-status">
+                            <div class="status-info">
+                                <div class="status-icon">
+                                    <i class="fas fa-sync-alt fa-spin" style="color: white;"></i>
+                                </div>
+                                <div class="status-details">
+                                    <h4>{% trans "Backup in Progress" %}</h4>
+                                    <p>
+                                        <strong>{% trans "File:" %}</strong> {$ fileName $} | 
+                                        <strong>{% trans "Status:" %}</strong> {$ status $}
+                                        <span ng-hide="backupLoadingBottom" class="loading-spinner" style="margin-left: 0.5rem;"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="button-group">
+                        <button type="button" ng-click="createBackup()" id="createBackup" class="btn-primary destinationHide">
+                            <i class="fas fa-play"></i>
+                            {% trans "Create Backup" %}
+                        </button>
+                        <button type="button" ng-click="cancelBackup()" ng-hide="cancelButton" class="btn-danger">
+                            <i class="fas fa-stop"></i>
+                            {% trans "Cancel Backup" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- Existing Backups -->
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-history"></i>
+                    {% trans "Existing Backups" %}
+                </h2>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "ID" %}</th>
+                            <th>{% trans "File" %}</th>
+                            <th>{% trans "Date" %}</th>
+                            <th>{% trans "Size" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th style="text-align: center;">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="record in records track by $index">
+                            <td><strong ng-bind="record.id"></strong></td>
+                            <td>
+                                <span class="file-badge" ng-bind="record.file"></span>
+                            </td>
+                            <td>
+                                <i class="fas fa-calendar-alt" style="color: var(--text-secondary, #64748b); margin-right: 0.5rem;"></i>
+                                <span ng-bind="record.date"></span>
+                            </td>
+                            <td>
+                                <span class="size-badge" ng-bind="record.size"></span>
+                            </td>
+                            <td>
+                                <span class="status-complete" ng-bind="record.status"></span>
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" ng-click="deleteBackup(record.id)" class="btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                    {% trans "Delete" %}
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="websiteDeleteFailure" class="alert alert-danger" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            {% trans "Cannot delete backup. Error message:" %} {$ errorMessage $}
+        </div>
+
+        <div id="websiteDeleteSuccess" class="alert alert-success" style="display: none;">
+            <i class="fas fa-check-circle"></i>
+            {% trans "Backup" %} <strong>{$ deletedWebsite $}</strong> {% trans "successfully deleted" %}
+        </div>
+    </div>
+
+{% endblock %}

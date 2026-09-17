@@ -1,0 +1,729 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "CSF (ConfigServer Security and Firewall) - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    .modern-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .csf-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .page-subtitle {
+        font-size: 1.125rem;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+    
+    /* Install Panel */
+    .install-panel {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+        text-align: center;
+        padding: 3rem;
+    }
+    
+    .install-icon {
+        font-size: 4rem;
+        color: #5b5fcf;
+        margin-bottom: 1.5rem;
+    }
+    
+    .install-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+    }
+    
+    .install-subtitle {
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 2rem;
+    }
+    
+    .btn-install {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 1rem 3rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 1.125rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-install:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    /* Installation Progress */
+    .install-progress {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .progress-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .progress-icon {
+        font-size: 2rem;
+        color: #5b5fcf;
+        animation: spin 2s linear infinite;
+    }
+    
+    .progress-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+    }
+    
+    .log-textarea {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid var(--border-primary, #e8e9ff);
+        border-radius: 10px;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 0.875rem;
+        background: #1e293b;
+        color: #5b5fcf;
+        resize: vertical;
+        min-height: 300px;
+    }
+    
+    /* Configuration Panel */
+    .config-panel {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    /* Tabs */
+    .modern-tabs {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.5rem;
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+    
+    .tab-button {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--text-secondary, #64748b);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .tab-button:hover {
+        background: rgba(91, 95, 207, 0.1);
+        color: #5b5fcf;
+    }
+    
+    .tab-button.active {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(91, 95, 207, 0.3);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    /* Native GUI Button */
+    .native-gui-btn {
+        background: var(--bg-secondary, #f8f9ff);
+        border: 2px solid var(--border-primary, #e8e9ff);
+        color: #5b5fcf;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        text-decoration: none;
+    }
+    
+    .native-gui-btn:hover {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    /* Form Styles */
+    .form-section {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .form-section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .form-label {
+        flex: 0 0 200px;
+        font-weight: 600;
+        color: var(--text-secondary, #334155);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .form-control {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border-primary, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.9375rem;
+        transition: all 0.3s ease;
+        background: var(--bg-secondary, #f8f9ff);
+        color: var(--text-primary, #1e293b);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5b5fcf;
+        background: var(--bg-primary, white);
+        box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+    }
+    
+    .btn-round {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    
+    .btn-round:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    /* Custom Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+    
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--bg-tertiary, #cbd5e1);
+        transition: .4s;
+        border-radius: 26px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+    
+    .switch-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    
+    /* Alerts */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: fadeInUp 0.3s ease-out;
+    }
+    
+    .alert-success {
+        background: var(--alert-success-bg, #e8e6ff);
+        color: var(--alert-success-text, #5856d6);
+        border: 1px solid var(--alert-success-border, #d4d4ff);
+    }
+    
+    .alert-danger {
+        background: var(--alert-danger-bg, #fee2e2);
+        color: var(--alert-danger-text, #991b1b);
+        border: 1px solid var(--alert-danger-border, #fecaca);
+    }
+    
+    .alert-icon {
+        font-size: 1.25rem;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #5b5fcf;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Coming Soon */
+    .coming-soon {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 1.125rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modern-container {
+            padding: 1rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .form-group {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .form-label {
+            flex: none;
+            width: 100%;
+        }
+        
+        .tab-button {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<div ng-controller="csf" class="modern-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="page-title">
+                <div class="csf-icon">
+                    <i class="fas fa-shield-alt fa-2x"></i>
+                </div>
+                {% trans "ConfigServer Security & Firewall" %}
+            </div>
+            <p class="page-subtitle">
+                {% trans "Advanced firewall configuration for enhanced server security and IP management." %}
+            </p>
+        </div>
+    </div>
+
+    {% if csfInstalled == 0 %}
+        <!-- Installation Panel -->
+        <div class="install-panel">
+            <i class="fas fa-shield-alt install-icon"></i>
+            <h2 class="install-title">{% trans "CSF Not Installed" %}</h2>
+            <p class="install-subtitle">
+                {% trans "Install ConfigServer Security & Firewall for advanced server protection and IP management capabilities." %}
+            </p>
+            <button ng-click="installCSF()" class="btn-install">
+                <i class="fas fa-download"></i>
+                {% trans "Install CSF" %}
+            </button>
+        </div>
+        
+        <!-- Installation Progress (Hidden by default) -->
+        <div ng-hide="modeSecInstallBox" class="install-progress">
+            <div class="progress-header">
+                <i class="fas fa-cog progress-icon"></i>
+                <h3 class="progress-title">{% trans "Installing CSF..." %}</h3>
+            </div>
+            <textarea ng-model="requestData" class="log-textarea" readonly></textarea>
+        </div>
+        
+        <!-- Status Messages -->
+        <div ng-hide="modSecNotifyBox" style="margin-top: 2rem;">
+            <div ng-hide="failedToStartInallation" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Failed to start installation. Error message:" %} {$ errorMessage $}</span>
+            </div>
+            
+            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Could not connect. Please refresh this page." %}</span>
+            </div>
+            
+            <div ng-hide="installationFailed" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Installation failed." %} {$ errorMessage $}</span>
+            </div>
+            
+            <div ng-hide="modSecSuccessfullyInstalled" class="alert alert-success">
+                <i class="fas fa-check-circle alert-icon"></i>
+                <span>{% trans "CSF successfully installed, refreshing page in 3 seconds..." %}</span>
+            </div>
+        </div>
+    {% else %}
+        <!-- CSF Native GUI Button -->
+        <a href="/configservercsf" class="native-gui-btn">
+            <i class="fas fa-external-link-alt"></i>
+            {% trans "CSF Native GUI" %}
+        </a>
+        
+        <!-- Configuration Panel -->
+        <div class="config-panel">
+            <!-- Modern Tabs -->
+            <div class="modern-tabs">
+                <button ng-click="activateTab('generalLI', 'general')" id="generalLI" class="tab-button active">
+                    <i class="fas fa-cog"></i>
+                    {% trans 'General' %}
+                </button>
+                <button ng-click="activateTab('csfLI', 'csf')" id="csfLI" class="tab-button">
+                    <i class="fas fa-shield-alt"></i>
+                    {% trans 'CSF' %}
+                </button>
+                <button ng-click="activateTab('lfdLI', 'lfd')" id="lfdLI" class="tab-button">
+                    <i class="fas fa-lock"></i>
+                    {% trans 'LFD' %}
+                </button>
+            </div>
+            
+            <!-- Tab Contents -->
+            <div class="tab-content active" id="general">
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-cog"></i>
+                        {% trans 'General Settings' %}
+                    </h3>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label class="form-label">{% trans 'Remove CSF' %}</label>
+                            <button type="button" ng-click="removeCSF()" class="btn-danger">
+                                <i class="fas fa-trash"></i>
+                                {% trans 'Completely Remove CSF' %}
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans 'Firewall' %}</label>
+                            <div class="switch-wrapper">
+                                <label class="switch">
+                                    <input type="checkbox" id="firewallStatus">
+                                    <span class="slider"></span>
+                                </label>
+                                <span>{% trans 'Enable Firewall' %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans 'Testing Mode' %}</label>
+                            <div class="switch-wrapper">
+                                <label class="switch">
+                                    <input type="checkbox" id="testingMode">
+                                    <span class="slider"></span>
+                                </label>
+                                <span>{% trans 'Enable Testing Mode' %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "TCP IN Ports" %}</label>
+                            <input type="text" class="form-control" ng-model="tcpIN" placeholder="e.g., 22,80,443,8090">
+                            <button type="button" ng-click="modifyPorts('TCP_IN')" class="btn-round">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "TCP Out Ports" %}</label>
+                            <input type="text" class="form-control" ng-model="tcpOUT" placeholder="e.g., 20,21,22,25,80,443">
+                            <button type="button" ng-click="modifyPorts('TCP_OUT')" class="btn-round">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "UDP In Ports" %}</label>
+                            <input type="text" class="form-control" ng-model="udpIN" placeholder="e.g., 53,123">
+                            <button type="button" ng-click="modifyPorts('UDP_IN')" class="btn-round">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "UDP Out Ports" %}</label>
+                            <input type="text" class="form-control" ng-model="udpOUT" placeholder="e.g., 53,123">
+                            <button ng-click="modifyPorts('UDP_OUT')" class="btn-round">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="csf">
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-shield-alt"></i>
+                        {% trans 'IP Management' %}
+                    </h3>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Allow IP" %}</label>
+                            <input type="text" class="form-control" ng-model="allowIP" placeholder="Enter IP address to allow">
+                            <button type="button" ng-click="modifyIPs('allowIP')" class="btn-round">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Block IP" %}</label>
+                            <input type="text" class="form-control" ng-model="blockIP" placeholder="Enter IP address to block">
+                            <button type="button" ng-click="modifyIPs('blockIP')" class="btn-round">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="lfd">
+                <div class="coming-soon">
+                    <i class="fas fa-clock fa-3x" style="color: #5b5fcf; margin-bottom: 1rem;"></i>
+                    <h3 style="color: var(--text-primary, #1e293b); margin-bottom: 0.5rem;">{% trans 'LFD Configuration' %}</h3>
+                    <p>{% trans 'Login Failure Daemon configuration coming soon.' %}</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,556 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Docker Images - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, var(--accent-shadow-light, rgba(91, 95, 207, 0.15)) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .docker-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-medium, rgba(0,0,0,0.1));
+    }
+    
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4547a9);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+        color: var(--bg-secondary, white);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary, #fff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.2);
+    }
+    
+    .main-card {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .image-card {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .image-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--accent-focus, rgba(91, 95, 207, 0.1)) 0%, transparent 100%);
+        border-radius: 0 0 0 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .image-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px var(--accent-shadow-light, rgba(91, 95, 207, 0.15));
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .image-card:hover::before {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .image-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .image-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-secondary, white);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px var(--shadow-medium, rgba(0,0,0,0.1));
+        color: var(--accent-color, #5b5fcf);
+        font-size: 1.5rem;
+    }
+    
+    .image-name {
+        flex: 1;
+    }
+    
+    .image-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        word-break: break-word;
+    }
+    
+    .image-subtitle {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #64748b);
+        margin-top: 0.25rem;
+    }
+    
+    .tag-selector {
+        margin: 1rem 0;
+    }
+    
+    .tag-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .tag-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        background: var(--bg-secondary, white);
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .tag-select:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-focus, rgba(91, 95, 207, 0.1));
+    }
+    
+    .image-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: none;
+    }
+    
+    .action-btn.create {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+    }
+    
+    .action-btn.create:hover {
+        background: var(--accent-hover, #4547a9);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.3);
+    }
+    
+    .action-btn.details {
+        background: var(--bg-secondary, white);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .action-btn.details:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        transform: translateY(-2px);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: var(--accent-color, #5b5fcf);
+        font-size: 2rem;
+    }
+    
+    .empty-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-text {
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 2rem;
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #e8e9ff;
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .badge-count {
+        background: var(--accent-bg, #e0e7ff);
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .images-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .header-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .header-actions .btn-primary,
+        .header-actions .btn-secondary {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="manageImages">
+    <div class="page-header">
+        <h1 class="page-title">
+            <div class="docker-icon">
+                <i class="fab fa-docker" style="color: var(--accent-color, #5b5fcf); font-size: 1.75rem;"></i>
+            </div>
+            {% trans "Docker Images" %}
+        </h1>
+        <p class="page-subtitle">{% trans "Select an image to create a new container" %}</p>
+        <div class="header-actions">
+            <a href="{% url 'manageImages' %}" class="btn-primary">
+                <i class="fas fa-search"></i>
+                {% trans "Search & Manage Images" %}
+            </a>
+            <a href="{% url 'listContainers' %}" class="btn-secondary">
+                <i class="fas fa-cube"></i>
+                {% trans "View Containers" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Local Images Section -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-hdd"></i>
+                {% trans "Available Images" %}
+                <span class="badge badge-count">{{ images|length }}</span>
+            </h2>
+            <img id="imageLoading" src="/static/images/loading.gif" style="display: none;" class="loading-spinner">
+        </div>
+        <div class="card-body">
+            {% if images %}
+            <div class="images-grid">
+                {% for name, image in images.items %}
+                <div class="image-card">
+                    <div class="image-header">
+                        <div class="image-icon">
+                            <i class="fab fa-docker"></i>
+                        </div>
+                        <div class="image-name">
+                            <h3 class="image-title">{{ image.name }}</h3>
+                            <p class="image-subtitle">{% trans "Docker Image" %}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tag-selector">
+                        <label class="tag-label">{% trans "Select Tag" %}</label>
+                        <select class="tag-select" id="{{ forloop.counter }}" ng-model="imageTag['{{ image.name2 }}']">
+                            <option value="" disabled selected>{% trans "Choose a tag..." %}</option>
+                            {% for tag in image.tags %}
+                            <option value="{{ tag }}">{{ tag }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="image-actions">
+                        <a class="action-btn create" 
+                           ng-href="/docker/runContainer/?image={{ image.name }}&tag={$ imageTag['{{ image.name2 }}'] $}">
+                            <i class="fas fa-plus-circle"></i>
+                            {% trans "Create Container" %}
+                        </a>
+                        <button class="action-btn details" onclick="alert('Image details coming soon!')">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans "Details" %}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="far fa-images"></i>
+                </div>
+                <h3 class="empty-title">{% trans "No Images Found" %}</h3>
+                <p class="empty-text">{% trans "You don't have any Docker images installed yet." %}</p>
+                <a href="{% url 'manageImages' %}" class="btn-primary">
+                    <i class="fas fa-search"></i>
+                    {% trans "Search for Images" %}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Tips Section -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-lightbulb"></i>
+                {% trans "Quick Tips" %}
+            </h2>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <div style="background: var(--bg-hover, #f8f9ff); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color, #5b5fcf);">
+                    <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 0.5rem;">
+                        <i class="fas fa-tag" style="color: var(--accent-color, #5b5fcf); margin-right: 0.5rem;"></i>
+                        {% trans "About Tags" %}
+                    </h4>
+                    <p style="font-size: 0.8125rem; color: var(--text-secondary, #64748b); margin: 0;">
+                        {% trans "Tags represent different versions of an image. 'latest' is the most recent stable version." %}
+                    </p>
+                </div>
+                
+                <div style="background: var(--bg-hover, #f8f9ff); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--success-color, #10b981);">
+                    <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 0.5rem;">
+                        <i class="fas fa-memory" style="color: var(--success-color, #10b981); margin-right: 0.5rem;"></i>
+                        {% trans "Container Resources" %}
+                    </h4>
+                    <p style="font-size: 0.8125rem; color: var(--text-secondary, #64748b); margin: 0;">
+                        {% trans "You can set memory limits and other resources when creating a container." %}
+                    </p>
+                </div>
+                
+                <div style="background: var(--bg-hover, #f8f9ff); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--warning-color, #f59e0b);">
+                    <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 0.5rem;">
+                        <i class="fas fa-network-wired" style="color: var(--warning-color, #f59e0b); margin-right: 0.5rem;"></i>
+                        {% trans "Port Mapping" %}
+                    </h4>
+                    <p style="font-size: 0.8125rem; color: var(--text-secondary, #64748b); margin: 0;">
+                        {% trans "Configure port mappings to access services running inside containers." %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script src="{% static 'dockerManager/dockerManager.js' %}"></script>
+{% endblock %}

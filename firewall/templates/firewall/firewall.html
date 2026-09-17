@@ -1,0 +1,730 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Firewall - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--firewall-gradient-start, #ef4444) 0%, var(--firewall-gradient-end, #dc2626) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+        color: var(--text-light, white);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .firewall-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .page-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-light-secondary, rgba(255, 255, 255, 0.9));
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* Status Panel */
+    .status-panel {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .status-header {
+        background: var(--bg-tertiary, #f8f9ff);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .status-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-active {
+        background: var(--badge-success-bg, #d1fae5);
+        color: var(--badge-success-text, #065f46);
+    }
+
+    .status-inactive {
+        background: var(--badge-error-bg, #fee2e2);
+        color: var(--badge-error-text, #991b1b);
+    }
+
+    .status-content {
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .control-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 120px;
+        justify-content: center;
+    }
+
+    .btn-start {
+        background: var(--btn-success, #10b981);
+        color: var(--text-light, white);
+    }
+
+    .btn-start:hover {
+        background: var(--btn-success-hover, #059669);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--btn-success-shadow, rgba(16, 185, 129, 0.3));
+    }
+
+    .btn-stop {
+        background: var(--btn-warning, #f59e0b);
+        color: var(--text-light, white);
+    }
+
+    .btn-stop:hover {
+        background: var(--btn-warning-hover, #d97706);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--btn-warning-shadow, rgba(245, 158, 11, 0.3));
+    }
+
+    .btn-reload {
+        background: var(--btn-primary, #3b82f6);
+        color: var(--text-light, white);
+    }
+
+    .btn-reload:hover {
+        background: var(--btn-primary-hover, #2563eb);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--btn-primary-shadow, rgba(59, 130, 246, 0.3));
+    }
+
+    /* Rules Panel */
+    .rules-panel {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out 0.2s;
+        animation-fill-mode: both;
+    }
+
+    .panel-header {
+        background: linear-gradient(135deg, var(--firewall-gradient-start, #ef4444) 0%, var(--firewall-gradient-end, #dc2626) 100%);
+        color: var(--text-light, white);
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .panel-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .panel-icon {
+        width: 32px;
+        height: 32px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-rule-section {
+        background: var(--bg-tertiary, #f8f9ff);
+        padding: 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+
+    .rule-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 2fr 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: var(--text-secondary, #475569);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .form-control {
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        background: var(--bg-primary, #fff);
+        color: var(--text-primary, #1e293b);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--firewall-accent, #ef4444);
+        box-shadow: 0 0 0 3px var(--firewall-focus-shadow, rgba(239, 68, 68, 0.1));
+    }
+
+    .select-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+
+    .btn-add {
+        background: var(--firewall-accent, #ef4444);
+        color: var(--text-light, white);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        align-self: flex-end;
+    }
+
+    .btn-add:hover {
+        background: var(--firewall-accent-dark, #dc2626);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--firewall-shadow, rgba(239, 68, 68, 0.3));
+    }
+
+    /* Rules Table */
+    .rules-table-section {
+        padding: 2rem;
+    }
+
+    .rules-table {
+        width: 100%;
+        background: var(--bg-secondary, white);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+
+    .rules-table thead {
+        background: var(--bg-tertiary, #f8f9ff);
+    }
+
+    .rules-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-secondary, #475569);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+
+    .rules-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light, #f1f5f9);
+        color: var(--text-primary, #334155);
+        font-size: 0.875rem;
+    }
+
+    .rules-table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .rules-table tbody tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+
+    .rule-id {
+        font-weight: 600;
+        color: var(--text-muted, #64748b);
+    }
+
+    .rule-name {
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+    }
+
+    .protocol-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .protocol-tcp {
+        background: var(--badge-blue-bg, #dbeafe);
+        color: var(--badge-blue-text, #1e40af);
+    }
+
+    .protocol-udp {
+        background: var(--badge-yellow-bg, #fef3c7);
+        color: var(--badge-yellow-text, #92400e);
+    }
+
+    .ip-address {
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 0.875rem;
+        background: var(--bg-code, #f3f4f6);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        color: var(--text-primary, #334155);
+    }
+
+    .port-number {
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-weight: 600;
+        color: var(--firewall-accent, #ef4444);
+    }
+
+    .btn-delete {
+        background: var(--bg-error-light, #fee2e2);
+        color: var(--firewall-accent, #ef4444);
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 700;
+        border: none;
+    }
+
+    .btn-delete:hover {
+        background: var(--firewall-accent, #ef4444);
+        color: var(--text-light, white);
+        transform: scale(1.1);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted, #64748b);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-disabled, #94a3b8);
+        margin-bottom: 1rem;
+    }
+
+    .empty-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary, #475569);
+    }
+
+    .empty-text {
+        font-size: 0.875rem;
+        color: var(--text-muted, #64748b);
+    }
+
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: fadeInUp 0.3s ease-out;
+    }
+
+    .alert-success {
+        background: var(--alert-success-bg, #d1fae5);
+        color: var(--alert-success-text, #065f46);
+        border: 1px solid var(--alert-success-border, #a7f3d0);
+    }
+
+    .alert-danger {
+        background: var(--alert-error-bg, #fee2e2);
+        color: var(--alert-error-text, #991b1b);
+        border: 1px solid var(--alert-error-border, #fecaca);
+    }
+
+    .alert-icon {
+        font-size: 1.25rem;
+    }
+
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-light, #f3f3f3);
+        border-top: 2px solid var(--firewall-accent, #ef4444);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .rule-form {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .btn-add {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .modern-container {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+        }
+
+        .status-content {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .control-btn {
+            width: 100%;
+        }
+
+        .rules-table-section {
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .rules-table {
+            min-width: 600px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<div class="modern-container" ng-controller="firewallController">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="page-title">
+                <div class="firewall-icon">
+                    <i class="fas fa-shield-alt fa-2x"></i>
+                </div>
+                {% trans "Firewall Management" %}
+            </div>
+            <p class="page-subtitle">
+                {% trans "Manage your server's firewall rules to control network traffic. By default, all ports are blocked except those explicitly allowed." %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Status Panel -->
+    <div class="status-panel">
+        <div class="status-header">
+            <h3 class="status-title">
+                <i class="fas fa-info-circle"></i>
+                {% trans "Firewall Status" %}
+            </h3>
+            <div class="status-badge" ng-class="{'status-active': status == 'Active', 'status-inactive': status != 'Active'}">
+                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
+                {$ status $}
+            </div>
+        </div>
+        <div class="status-content">
+            <button type="button" ng-click="startFirewall()" class="control-btn btn-start">
+                <i class="fas fa-play"></i>
+                {% trans "Start" %}
+            </button>
+            <button type="button" ng-click="stopFirewall()" class="control-btn btn-stop">
+                <i class="fas fa-pause"></i>
+                {% trans "Stop" %}
+            </button>
+            <button type="button" ng-click="reloadFireWall()" class="control-btn btn-reload">
+                <i class="fas fa-sync-alt"></i>
+                {% trans "Reload" %}
+            </button>
+        </div>
+
+        <!-- Status Messages -->
+        <div style="padding: 0 2rem 1rem;">
+            <div ng-hide="actionFailed" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Action failed. Error message:" %} {$ errorMessage $}</span>
+            </div>
+
+            <div ng-hide="actionSuccess" class="alert alert-success">
+                <i class="fas fa-check-circle alert-icon"></i>
+                <span>{% trans "Action completed successfully." %}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Panel -->
+    <div class="rules-panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <div class="panel-icon">
+                    <i class="fas fa-list-alt"></i>
+                </div>
+                {% trans "Firewall Rules" %}
+            </div>
+            <div ng-show="rulesLoading" class="loading-spinner"></div>
+        </div>
+        
+        <!-- Add Rule Section -->
+        <div ng-hide="rulesDetails" class="add-rule-section">
+            <form class="rule-form">
+                <div class="form-group">
+                    <label class="form-label">{% trans "Rule Name" %}</label>
+                    <input type="text" 
+                           class="form-control" 
+                           ng-model="ruleName"
+                           placeholder="{% trans 'e.g., Allow SSH' %}"
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">{% trans "Protocol" %}</label>
+                    <select ng-model="ruleProtocol" class="form-control select-control">
+                        <option value="tcp">TCP</option>
+                        <option value="udp">UDP</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">{% trans "IP Address" %}</label>
+                    <input type="text" 
+                           class="form-control"
+                           ng-model="ruleIP" 
+                           placeholder="{% trans '0.0.0.0/0 for all IPs' %}"
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">{% trans "Port" %}</label>
+                    <input type="text" 
+                           class="form-control" 
+                           ng-model="rulePort" 
+                           placeholder="{% trans 'e.g., 80' %}"
+                           required>
+                </div>
+                
+                <button type="button" 
+                        ng-click="addRule()"
+                        class="btn-add">
+                    <i class="fas fa-plus"></i>
+                    {% trans "Add Rule" %}
+                </button>
+            </form>
+        </div>
+        
+        <!-- Rules Table -->
+        <div ng-hide="rulesDetails" class="rules-table-section">
+            <table class="rules-table" ng-if="rules.length > 0">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Rule Name" %}</th>
+                        <th>{% trans "Protocol" %}</th>
+                        <th>{% trans "IP Address" %}</th>
+                        <th>{% trans "Port" %}</th>
+                        <th>{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="rule in rules track by $index">
+                        <td class="rule-id">#{$ rule.id $}</td>
+                        <td class="rule-name">{$ rule.name $}</td>
+                        <td>
+                            <span class="protocol-badge" 
+                                  ng-class="{'protocol-tcp': rule.proto == 'tcp', 'protocol-udp': rule.proto == 'udp'}">
+                                {$ rule.proto $}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="ip-address">{$ rule.ipAddress $}</span>
+                        </td>
+                        <td>
+                            <span class="port-number">{$ rule.port $}</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button type="button"
+                                        ng-click="editRule(rule)"
+                                        class="btn-edit"
+                                        title="{% trans 'Edit Rule' %}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button"
+                                        ng-click="deleteRule(rule.id, rule.proto, rule.port, rule.ipAddress)"
+                                        class="btn-delete"
+                                        title="{% trans 'Delete Rule' %}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- Empty State -->
+            <div ng-if="rules.length == 0" class="empty-state">
+                <i class="fas fa-shield-alt empty-icon"></i>
+                <h3 class="empty-title">{% trans "No Firewall Rules" %}</h3>
+                <p class="empty-text">{% trans "Add your first firewall rule to control network access to your server." %}</p>
+            </div>
+        </div>
+        
+        <!-- Messages -->
+        <div style="padding: 0 2rem 2rem;">
+            <div ng-hide="canNotAddRule" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Error message:" %} {$ errorMessage $}</span>
+            </div>
+            
+            <div ng-hide="ruleAdded" class="alert alert-success">
+                <i class="fas fa-check-circle alert-icon"></i>
+                <span>{% trans "Rule successfully added." %}</span>
+            </div>
+            
+            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Could not connect to server. Please refresh this page." %}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

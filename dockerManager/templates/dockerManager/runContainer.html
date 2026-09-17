@@ -1,0 +1,1100 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Create Container" %} - {{ image }}:{{ tag }}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    .modern-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, var(--accent-shadow-light, rgba(91, 95, 207, 0.15)) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .docker-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-medium, rgba(0,0,0,0.1));
+    }
+    
+    .image-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        font-size: 1.125rem;
+        color: var(--text-secondary, #64748b);
+    }
+    
+    .image-badge {
+        background: var(--accent-bg, #e0e7ff);
+        color: var(--accent-color, #5b5fcf);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .progress-indicator {
+        display: flex;
+        justify-content: center;
+        margin: 2rem 0;
+        gap: 1rem;
+    }
+    
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+    
+    .progress-step::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 60px;
+        width: 100%;
+        height: 2px;
+        background: var(--border-color, #e8e9ff);
+    }
+    
+    .progress-step:last-child::after {
+        display: none;
+    }
+    
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--border-color, #e8e9ff);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary, #64748b);
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+    
+    .progress-step.active .step-icon {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+        box-shadow: 0 0 0 4px var(--accent-shadow-soft, rgba(91, 95, 207, 0.2));
+    }
+    
+    .progress-step.completed .step-icon {
+        background: var(--success-color, #10b981);
+        color: var(--bg-secondary, white);
+    }
+    
+    .step-label {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary, #64748b);
+        font-weight: 500;
+    }
+    
+    .progress-step.active .step-label {
+        color: var(--accent-color, #5b5fcf);
+        font-weight: 600;
+    }
+    
+    .form-container {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .form-section {
+        padding: 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--accent-bg, #e0e7ff);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+    }
+    
+    .section-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-secondary, #64748b);
+        margin-top: 0.25rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .required-star {
+        color: var(--danger-color, #ef4444);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        background: var(--bg-secondary, #fff);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-focus, rgba(91, 95, 207, 0.1));
+    }
+    
+    .form-control:disabled {
+        background: var(--bg-hover, #f8f9ff);
+        cursor: not-allowed;
+        color: var(--text-secondary, #64748b);
+    }
+    
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .input-addon {
+        font-size: 0.875rem;
+        color: var(--text-secondary, #64748b);
+        font-weight: 500;
+    }
+    
+    .port-mapping {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .port-arrow {
+        color: var(--accent-color, #5b5fcf);
+        font-size: 1.25rem;
+    }
+    
+    .port-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .dynamic-section {
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .dynamic-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .dynamic-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .dynamic-item {
+        display: grid;
+        grid-template-columns: 1fr 2fr auto;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary, white);
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4547a9);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.3);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary, white);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        transform: translateY(-2px);
+    }
+    
+    .btn-danger {
+        background: #fee2e2;
+        color: var(--danger-color, #ef4444);
+        border: 1px solid #fecaca;
+    }
+    
+    .btn-danger:hover {
+        background: #fecaca;
+        transform: translateY(-2px);
+    }
+    
+    .btn-success {
+        background: var(--success-bg, #d1fae5);
+        color: var(--success-text, #065f46);
+        border: 1px solid #a7f3d0;
+    }
+    
+    .btn-success:hover {
+        background: #a7f3d0;
+        transform: translateY(-2px);
+    }
+    
+    .btn-lg {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 2rem;
+        background: var(--bg-hover, #f8f9ff);
+        border-top: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .status-message {
+        text-align: center;
+        padding: 2rem;
+        animation: fadeIn 0.5s ease-out;
+    }
+    
+    .status-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .status-success {
+        background: var(--success-bg, #d1fae5);
+        color: var(--success-text, #065f46);
+    }
+    
+    .status-error {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 0.5rem;
+    }
+    
+    .status-text {
+        color: var(--text-secondary, #64748b);
+        font-size: 0.875rem;
+    }
+    
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e8e9ff;
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    
+    .tooltip {
+        position: relative;
+        cursor: help;
+    }
+    
+    .tooltip-icon {
+        color: var(--text-secondary, #64748b);
+        font-size: 0.875rem;
+    }
+    
+    .tooltip:hover .tooltip-content {
+        display: block;
+    }
+    
+    .tooltip-content {
+        display: none;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--text-primary, #1e293b);
+        color: var(--bg-secondary, white);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        margin-bottom: 0.5rem;
+    }
+    
+    .tooltip-content::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: var(--text-primary, #1e293b);
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    /* Toggle Switch Styles */
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    input:checked + .slider {
+        background-color: var(--accent-color, #5b5fcf);
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+    
+    /* Docker Compose Information Card Styles */
+    .compose-info-card {
+        background: linear-gradient(135deg, #f8f9ff 0%, #f0f1ff 100%);
+        border: 1px solid #e8e9ff;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    }
+    
+    .compose-benefits h4 {
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .compose-benefits h4 i {
+        color: #007bff;
+        font-size: 1.2rem;
+    }
+    
+    .compose-benefits ul {
+        margin: 1rem 0;
+        padding-left: 1.5rem;
+    }
+    
+    .compose-benefits li {
+        margin-bottom: 0.75rem;
+        color: #495057;
+        line-height: 1.6;
+    }
+    
+    .compose-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .compose-actions .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .compose-actions .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .compose-actions .btn i {
+        margin-right: 0.5rem;
+    }
+    
+    .slider:hover {
+        box-shadow: 0 0 8px rgba(91, 95, 207, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        
+        .form-label {
+            margin-bottom: 0.25rem;
+        }
+        
+        .port-mapping {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+        
+        .dynamic-item {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .progress-indicator {
+            display: none;
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="runContainer">
+    <div class="page-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <div class="docker-icon">
+                    <i class="fab fa-docker" style="color: var(--accent-color, #5b5fcf); font-size: 1.75rem;"></i>
+                </div>
+                {% trans "Create New Container" %}
+            </h1>
+            <div class="image-info">
+                <span>{% trans "From image:" %}</span>
+                <span class="image-badge">
+                    <i class="fas fa-cube"></i>
+                    {{ image }}:{{ tag }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator" ng-hide="installationProgress">
+        <div class="progress-step active">
+            <div class="step-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <span class="step-label">{% trans "Configure" %}</span>
+        </div>
+        <div class="progress-step">
+            <div class="step-icon">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <span class="step-label">{% trans "Deploy" %}</span>
+        </div>
+        <div class="progress-step">
+            <div class="step-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <span class="step-label">{% trans "Complete" %}</span>
+        </div>
+    </div>
+
+    <!-- Main Form Container -->
+    <div class="form-container" ng-hide="installationDetailsForm">
+        <form name="dockerInstallForm" novalidate>
+            
+            <!-- Basic Configuration Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">{% trans "Basic Configuration" %}</h2>
+                        <p class="section-subtitle">{% trans "Set the container name and resource limits" %}</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="form-label">
+                        {% trans "Container Name" %}
+                        <span class="required-star">*</span>
+                        <div class="tooltip">
+                            <i class="fas fa-question-circle tooltip-icon"></i>
+                            <div class="tooltip-content">
+                                {% trans "A unique name for your container" %}
+                            </div>
+                        </div>
+                    </label>
+                    <input type="text" class="form-control" ng-model="name" ng-init="name='{{ name }}'" 
+                           placeholder="{% trans 'e.g., my-nginx-server' %}" name="containerName" required>
+                </div>
+
+                <div class="form-row">
+                    <label class="form-label">
+                        {% trans "Owner" %}
+                        <span class="required-star">*</span>
+                    </label>
+                    <select class="form-control" ng-model="dockerOwner" name="dockerOwner" required>
+                        <option value="" disabled>{% trans "Select owner..." %}</option>
+                        {% for owner in ownerList %}
+                        <option value="{{ owner }}">{{ owner }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label class="form-label">
+                        {% trans "Memory Limit" %}
+                        <span class="required-star">*</span>
+                        <div class="tooltip">
+                            <i class="fas fa-question-circle tooltip-icon"></i>
+                            <div class="tooltip-content">
+                                {% trans "Maximum memory this container can use" %}
+                            </div>
+                        </div>
+                    </label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" ng-model="memory" 
+                               placeholder="512" min="128" name="memory" required>
+                        <span class="input-addon">MB</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="form-label">{% trans "Image" %}</label>
+                    <input type="text" class="form-control" ng-model="image" ng-init="image='{{ image }}'" disabled>
+                </div>
+
+                <div class="form-row">
+                    <label class="form-label">{% trans "Tag" %}</label>
+                    <input type="text" class="form-control" ng-model="tag" ng-init="tag='{{ tag }}'" disabled>
+                </div>
+            </div>
+
+            <!-- Port Configuration Section -->
+            {% if portConfig %}
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">{% trans "Port Mapping" %}</h2>
+                        <p class="section-subtitle">{% trans "Map container ports to host ports for external access" %}</p>
+                    </div>
+                </div>
+
+                {% for port, protocol in portConfig.items %}
+                <div class="port-mapping">
+                    <div>
+                        <div class="port-label">{% trans "Container Port" %}</div>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ port }}" disabled>
+                            <span class="input-addon">{{ protocol|upper }}</span>
+                        </div>
+                    </div>
+                    <div class="port-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div>
+                        <div class="port-label">{% trans "Host Port" %}</div>
+                        <input type="number" class="form-control" ng-model="eport['{{ port }}']" 
+                               placeholder="{% trans 'e.g., 8080' %}" name="port_{{ port }}" required>
+                    </div>
+                </div>
+                <span ng-init="iport[{{ port }}]={{ port }}; portType['{{ port }}']='{{ protocol }}'"></span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Docker Compose Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">{% trans "Docker Compose Benefits" %}</h2>
+                        <p class="section-subtitle">{% trans "Use Docker Compose for easier environment variable management" %}</p>
+                    </div>
+                </div>
+
+                <div class="compose-info-card">
+                    <div class="compose-benefits">
+                        <h4><i class="fas fa-rocket"></i> {% trans "With Docker Compose, you can:" %}</h4>
+                        <ul>
+                            <li>{% trans "Keep your environment variables in a separate .env file" %}</li>
+                            <li>{% trans "When you change the .env, you don't need to rebuild the entire container image" %}</li>
+                            <li>{% trans "You can simply run docker compose up -d again, and only the parts that changed (like the environment variables) will be reloaded" %}</li>
+                        </ul>
+                        <div class="compose-actions">
+                            <button type="button" class="btn btn-primary" ng-click="generateDockerCompose()">
+                                <i class="fas fa-file-code"></i> {% trans "Generate docker-compose.yml" %}
+                            </button>
+                            <button type="button" class="btn btn-success" ng-click="generateEnvFile()">
+                                <i class="fas fa-file-alt"></i> {% trans "Generate .env file" %}
+                            </button>
+                            <button type="button" class="btn btn-info" ng-click="showComposeHelp()">
+                                <i class="fas fa-question-circle"></i> {% trans "How to use" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environment Variables Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">{% trans "Environment Variables" %}</h2>
+                        <p class="section-subtitle">{% trans "Configure environment variables for your container" %}</p>
+                    </div>
+                </div>
+
+                <!-- Environment Variable Mode Toggle -->
+                <div class="env-mode-toggle" style="margin-bottom: 1.5rem;">
+                    <div class="toggle-container" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-hover, #f8f9ff); border-radius: 12px; border: 1px solid var(--border-color, #e8e9ff);">
+                        <div style="flex: 1;">
+                            <label style="font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 0.5rem; display: block;">
+                                {% trans "Environment Variable Mode" %}
+                            </label>
+                            <p style="font-size: 0.875rem; color: var(--text-secondary, #64748b); margin: 0;">
+                                {% trans "Choose between simple line-by-line input or advanced bulk editing mode" %}
+                            </p>
+                        </div>
+                        <div class="toggle-switch">
+                            <label class="switch" style="position: relative; display: inline-block; width: 60px; height: 34px;">
+                                <input type="checkbox" ng-model="advancedEnvMode" ng-change="toggleEnvMode()" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;">
+                                    <span class="slider-thumb" style="position: absolute; content: ''; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+                                </span>
+                            </label>
+                            <div style="text-align: center; margin-top: 0.5rem;">
+                                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary, #64748b);">
+                                    <span ng-show="!advancedEnvMode">{% trans "Simple Mode" %}</span>
+                                    <span ng-show="advancedEnvMode">{% trans "Advanced Mode" %}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simple Mode: Line-by-line input -->
+                <div ng-show="!advancedEnvMode" class="simple-env-mode">
+                    <div class="dynamic-section">
+                        <div class="dynamic-header">
+                            <span class="dynamic-title">{% trans "Environment Variables" %}</span>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button type="button" class="btn btn-secondary" ng-click="loadEnvTemplate()">
+                                    <i class="fas fa-file-import"></i>
+                                    {% trans "Load Template" %}
+                                </button>
+                                <button type="button" class="btn btn-secondary" ng-click="addEnvField()">
+                                    <i class="fas fa-plus"></i>
+                                    {% trans "Add Variable" %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <span ng-init="envList = {}"></span>
+                        {% for env, value in envList.items %}
+                            <span ng-init="envList[{{ forloop.counter0 }}] = {'name':'{{ env }}', 'value':'{{ value }}'}"></span>
+                        {% endfor %}
+
+                        <div ng-repeat="env in envList track by $index" class="dynamic-item">
+                            <input type="text" class="form-control" ng-model="envList[$index].name" 
+                                   placeholder="{% trans 'Variable name' %}">
+                            <input type="text" class="form-control" ng-model="envList[$index].value" 
+                                   placeholder="{% trans 'Value' %}">
+                            <button type="button" class="btn btn-danger" ng-click="removeEnvField($index)" 
+                                    ng-show="Object.keys(envList).length > 0">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <div ng-show="Object.keys(envList).length === 0" style="text-align: center; padding: 2rem; color: #64748b;">
+                            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                            {% trans "No environment variables configured. Click 'Add Variable' to add one." %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Mode: Bulk input -->
+                <div ng-show="advancedEnvMode" class="advanced-env-mode">
+                    <div class="advanced-env-container" style="background: var(--bg-secondary, white); border-radius: 12px; border: 1px solid var(--border-color, #e8e9ff); overflow: hidden;">
+                        <div class="advanced-env-header" style="background: var(--bg-hover, #f8f9ff); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color, #e8e9ff); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-primary, #1e293b);">
+                                    {% trans "Advanced Environment Variables" %}
+                                </h4>
+                                <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--text-secondary, #64748b);">
+                                    {% trans "Switch to advanced mode to copy & paste multiple variables" %}
+                                </p>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button type="button" class="btn btn-secondary" ng-click="loadEnvFromFile()" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                    <i class="fas fa-upload"></i>
+                                    {% trans "Load from .env" %}
+                                </button>
+                                <button type="button" class="btn btn-secondary" ng-click="copyEnvToClipboard()" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                    <i class="fas fa-copy"></i>
+                                    {% trans "Copy" %}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="advanced-env-content" style="padding: 1.5rem;">
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 0.5rem;">
+                                    {% trans "Environment Variables (one per line)" %}
+                                </label>
+                                <p style="font-size: 0.875rem; color: var(--text-secondary, #64748b); margin-bottom: 1rem;">
+                                    {% trans "Enter environment variables in KEY=VALUE format, one per line. Example:" %}
+                                </p>
+                                <div style="background: var(--bg-hover, #f8f9ff); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-family: monospace; font-size: 0.875rem; color: var(--text-secondary, #64748b);">
+                                    DATABASE_URL=postgresql://user:pass@localhost/db<br>
+                                    API_KEY=your-secret-key<br>
+                                    DEBUG=true<br>
+                                    PORT=3000
+                                </div>
+                            </div>
+                            
+                            <textarea ng-model="advancedEnvText" 
+                                      ng-change="parseAdvancedEnv()"
+                                      placeholder="DATABASE_URL=postgresql://user:pass@localhost/db&#10;API_KEY=your-secret-key&#10;DEBUG=true&#10;PORT=3000"
+                                      style="width: 100%; height: 200px; padding: 1rem; border: 1px solid var(--border-color, #e8e9ff); border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.875rem; resize: vertical; background: var(--bg-secondary, white);"
+                                      ng-init="advancedEnvText = ''"></textarea>
+                            
+                            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-size: 0.875rem; color: var(--text-secondary, #64748b);">
+                                    <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                                    <span ng-show="advancedEnvCount > 0">{% trans "Parsed" %} {{ advancedEnvCount }} {% trans "environment variables" %}</span>
+                                    <span ng-show="advancedEnvCount === 0">{% trans "No environment variables detected" %}</span>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button type="button" class="btn btn-secondary" ng-click="clearAdvancedEnv()" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                        <i class="fas fa-trash"></i>
+                                        {% trans "Clear" %}
+                                    </button>
+                                    <button type="button" class="btn btn-primary" ng-click="loadEnvTemplate()" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                        <i class="fas fa-magic"></i>
+                                        {% trans "Load Template" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Volume Mapping Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <div>
+                        <h2 class="section-title">{% trans "Volume Mapping" %}</h2>
+                        <p class="section-subtitle">{% trans "Mount host directories or volumes into the container" %}</p>
+                    </div>
+                </div>
+
+                <div class="dynamic-section">
+                    <div class="dynamic-header">
+                        <span class="dynamic-title">{% trans "Volume Mappings" %}</span>
+                        <button type="button" class="btn btn-secondary" ng-click="addVolField()">
+                            <i class="fas fa-plus"></i>
+                            {% trans "Add Volume" %}
+                        </button>
+                    </div>
+
+                    <div ng-repeat="volume in volList track by $index" class="dynamic-item">
+                        <input type="text" class="form-control" ng-model="volList[$index].src" 
+                               placeholder="{% trans 'Host path (e.g., /var/data)' %}">
+                        <input type="text" class="form-control" ng-model="volList[$index].dest" 
+                               placeholder="{% trans 'Container path (e.g., /data)' %}">
+                        <button type="button" class="btn btn-danger" ng-click="removeVolField()" 
+                                ng-show="$last && volListNumber > 0">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+
+                    <div ng-show="volListNumber === 0" style="text-align: center; padding: 2rem; color: #64748b;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                        {% trans "No volumes configured. Click 'Add Volume' to mount directories." %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                {% verbatim %}
+                <button type="button" class="btn btn-primary btn-lg" ng-click="createContainer()" 
+                        ng-disabled="!formIsValid || containerCreationLoading">
+                    <i class="fas fa-rocket"></i>
+                {% endverbatim %}
+                    {% trans "Create Container" %}
+                {% verbatim %}
+                </button>
+                {% endverbatim %}
+                <a href="{% url 'containerImage' %}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-arrow-left"></i>
+                    {% trans "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Progress/Status Section -->
+    <div class="form-container" ng-hide="installationProgress">
+        <div class="status-message">
+            <!-- Loading State -->
+            <div ng-show="containerCreationLoading">
+                <div class="loading-spinner"></div>
+                <h2 class="status-title" style="margin-top: 1.5rem;">{$ currentStatus $}</h2>
+                <p class="status-text">{% trans "Please wait while we create your container..." %}</p>
+            </div>
+
+            <!-- Success State -->
+            <div ng-hide="success">
+                <div class="status-icon status-success">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h2 class="status-title">{% trans "Container Created Successfully!" %}</h2>
+                <p class="status-text">{% trans "Your container has been created and is ready to use." %}</p>
+                <p class="status-text" style="margin-top: 1rem;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    {% trans "Redirecting to container management..." %}
+                </p>
+            </div>
+
+            <!-- Error State -->
+            <div ng-hide="errorMessageBox">
+                <div class="status-icon status-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2 class="status-title">{% trans "Creation Failed" %}</h2>
+                <p class="status-text" style="color: #991b1b; margin-top: 1rem;">
+                    <strong>{% trans "Error:" %}</strong> {$ errorMessage $}
+                </p>
+                <button type="button" class="btn btn-primary" ng-click="goBack()" 
+                        ng-disabled="goBackDisable" style="margin-top: 1.5rem;">
+                    <i class="fas fa-arrow-left"></i>
+                    {% trans "Go Back" %}
+                </button>
+            </div>
+
+            <!-- Connection Error -->
+            <div ng-hide="couldNotConnect">
+                <div class="status-icon status-error">
+                    <i class="fas fa-wifi"></i>
+                </div>
+                <h2 class="status-title">{% trans "Connection Error" %}</h2>
+                <p class="status-text">{% trans "Could not connect to server. Please refresh this page and try again." %}</p>
+                <button type="button" class="btn btn-primary" onclick="location.reload()" style="margin-top: 1.5rem;">
+                    <i class="fas fa-sync"></i>
+                    {% trans "Refresh Page" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script src="{% static 'dockerManager/dockerManager.js' %}"></script>
+<script>
+    // Initialize tooltips and other interactive elements
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any additional initialization code here
+    });
+</script>
+{% endblock %}

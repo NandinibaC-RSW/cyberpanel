@@ -1,0 +1,595 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'emailPremium/emailPremium.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Email Debugger - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Email Debugger Specific Styles */
+    .email-debugger-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .email-debugger-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-dark, #2f3640);
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-header .icon {
+        width: 48px;
+        height: 48px;
+        background: var(--primary-color, #5856d6);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bg-secondary, white);
+        font-size: 24px;
+        box-shadow: 0 4px 12px var(--primary-shadow, rgba(88,86,214,0.3));
+    }
+    
+    .page-header p {
+        font-size: 15px;
+        color: var(--text-secondary, #64748b);
+        margin: 0;
+    }
+    
+    /* Content Sections */
+    .content-section {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--primary-color, #5856d6);
+        border-radius: 2px;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+    
+    .primary-btn {
+        background: var(--primary-color, #5856d6);
+        color: var(--bg-secondary, white);
+        border: none;
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px var(--primary-shadow, rgba(88,86,214,0.3));
+    }
+    
+    .primary-btn:hover {
+        background: var(--primary-hover, #4644c0);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px var(--primary-shadow-hover, rgba(88,86,214,0.4));
+    }
+    
+    .danger-btn {
+        background: var(--danger-color, #ef4444);
+        color: var(--bg-secondary, white);
+        border: none;
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px var(--danger-shadow, rgba(239,68,68,0.3));
+    }
+    
+    .danger-btn:hover {
+        background: var(--danger-hover, #dc2626);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px var(--danger-shadow-hover, rgba(239,68,68,0.4));
+    }
+    
+    /* Progress Section */
+    .progress-section {
+        padding: 20px;
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .progress-status {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-dark, #2f3640);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .progress-bar-container {
+        width: 100%;
+        height: 10px;
+        background: var(--border-color, #e8e9ff);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: var(--primary-color, #5856d6);
+        border-radius: 5px;
+        transition: width 0.3s ease;
+    }
+    
+    /* Status Table */
+    .status-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .status-table th {
+        text-align: left;
+        padding: 15px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        border-bottom: 2px solid var(--border-color, #e8e9ff);
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .status-table td {
+        padding: 15px;
+        font-size: 14px;
+        color: var(--text-dark, #2f3640);
+        border-bottom: 1px solid var(--bg-light, #f0f0ff);
+    }
+    
+    .status-table tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    .status-badge.success {
+        background: var(--success-color, #10b981);
+        color: var(--bg-secondary, white);
+    }
+    
+    .status-badge.error {
+        background: var(--danger-color, #ef4444);
+        color: var(--bg-secondary, white);
+    }
+    
+    .status-badge.warning {
+        background: var(--warning-color, #f59e0b);
+        color: var(--bg-secondary, white);
+    }
+    
+    .status-badge.info {
+        background: var(--info-color, #3b82f6);
+        color: var(--bg-secondary, white);
+    }
+    
+    /* Action Link */
+    .action-link {
+        background: var(--bg-hover, #f8f9ff);
+        color: var(--primary-color, #5856d6);
+        border: 1px solid var(--border-color, #e8e9ff);
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .action-link:hover {
+        background: var(--primary-color, #5856d6);
+        color: var(--bg-secondary, white);
+        border-color: var(--primary-color, #5856d6);
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+    
+    /* Form Controls */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-dark, #2f3640);
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-dark, #2f3640);
+        background: var(--bg-secondary, white);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: var(--primary-color, #5856d6);
+        box-shadow: 0 0 0 3px var(--primary-focus, rgba(88,86,214,0.1));
+    }
+    
+    /* Loading Spinner */
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid var(--border-color, #e8e9ff);
+        border-top-color: var(--primary-color, #5856d6);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .email-debugger-wrapper {
+            padding: 15px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-buttons button {
+            width: 100%;
+        }
+        
+        .status-table {
+            font-size: 12px;
+        }
+        
+        .status-table th,
+        .status-table td {
+            padding: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="email-debugger-wrapper">
+    <div class="email-debugger-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <div class="icon">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                {% trans "Email Debugger" %}
+            </h1>
+            <p>{% trans "Email debugger to fix server-wide or website level email settings" %}</p>
+        </div>
+
+        <!-- Server Level Checks -->
+        <div class="content-section" ng-controller="EmailDebuuger">
+            <h2 class="section-title">
+                {% trans "Server Level Email Checks" %}
+                <span ng-hide="cyberpanelLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <div class="action-buttons">
+                <button type="button" ng-click="RunServerLevelEmailChecks()" class="primary-btn">
+                    <i class="fas fa-search"></i>
+                    {% trans "Run Server Level Checks" %}
+                </button>
+                <button type="button" ng-click="ResetEmailConfigurations()" class="danger-btn">
+                    <i class="fas fa-undo"></i>
+                    {% trans "Reset Server wide Email Configurations" %}
+                </button>
+            </div>
+
+            <!-- Progress Section -->
+            <div ng-hide="ExecutionStatus" class="progress-section">
+                <div class="progress-status">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    {$ functionStatus $}
+                </div>
+                <div class="progress-bar-container">
+                    <div ng-style="functionProgress" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Status Report Table -->
+            <div ng-hide="ReportStatus">
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Service" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <strong>Mail Server SSL</strong>
+                            </td>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': MailSSL == 'Active', 'error': MailSSL != 'Active'}">
+                                    <i ng-if="MailSSL == 'Active'" class="fas fa-check-circle"></i>
+                                    <i ng-if="MailSSL != 'Active'" class="fas fa-times-circle"></i>
+                                    {$ MailSSL $}
+                                </span>
+                            </td>
+                            <td>
+                                <a id="MailSSLURL" target="_blank" href="#" class="action-link">
+                                    <i class="fas fa-certificate"></i>
+                                    {% trans "Issue Now" %}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Port 25</strong> - {% trans "SMTP" %}
+                            </td>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': Port25 == 'Active', 'error': Port25 != 'Active'}">
+                                    <i ng-if="Port25 == 'Active'" class="fas fa-check-circle"></i>
+                                    <i ng-if="Port25 != 'Active'" class="fas fa-times-circle"></i>
+                                    {$ Port25 $}
+                                </span>
+                            </td>
+                            <td>
+                                <a target="_blank" href="https://cyberpanel.net/blog/test-smtp-connection/?utm_source=cyberpanel&utm_medium=cyberpanel&utm_campaign=from-cyberpanel&utm_id=from-cyberpanel" class="action-link">
+                                    <i class="fas fa-book"></i>
+                                    {% trans "Learn More" %}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Port 587</strong> - {% trans "SMTP Submission" %}
+                            </td>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': Port587 == 'Active', 'error': Port587 != 'Active'}">
+                                    <i ng-if="Port587 == 'Active'" class="fas fa-check-circle"></i>
+                                    <i ng-if="Port587 != 'Active'" class="fas fa-times-circle"></i>
+                                    {$ Port587 $}
+                                </span>
+                            </td>
+                            <td>
+                                <a target="_blank" href="https://cyberpanel.net/blog/test-smtp-connection/?utm_source=cyberpanel&utm_medium=cyberpanel&utm_campaign=from-cyberpanel&utm_id=from-cyberpanel" class="action-link">
+                                    <i class="fas fa-book"></i>
+                                    {% trans "Learn More" %}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Port 465</strong> - {% trans "SMTPS" %}
+                            </td>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': Port465 == 'Active', 'error': Port465 != 'Active'}">
+                                    <i ng-if="Port465 == 'Active'" class="fas fa-check-circle"></i>
+                                    <i ng-if="Port465 != 'Active'" class="fas fa-times-circle"></i>
+                                    {$ Port465 $}
+                                </span>
+                            </td>
+                            <td>
+                                <a target="_blank" href="https://cyberpanel.net/blog/test-smtp-connection/?utm_source=cyberpanel&utm_medium=cyberpanel&utm_campaign=from-cyberpanel&utm_id=from-cyberpanel" class="action-link">
+                                    <i class="fas fa-book"></i>
+                                    {% trans "Learn More" %}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Port 110</strong> - {% trans "POP3" %}
+                            </td>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': Port110 == 'Active', 'error': Port110 != 'Active'}">
+                                    <i ng-if="Port110 == 'Active'" class="fas fa-check-circle"></i>
+                                    <i ng-if="Port110 != 'Active'" class="fas fa-times-circle"></i>
+                                    {$ Port110 $}
+                                </span>
+                            </td>
+                            <td>
+                                <a target="_blank" href="https://cyberpanel.net/blog/test-smtp-connection/?utm_source=cyberpanel&utm_medium=cyberpanel&utm_campaign=from-cyberpanel&utm_id=from-cyberpanel" class="action-link">
+                                    <i class="fas fa-book"></i>
+                                    {% trans "Learn More" %}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Port 143</strong> - {% trans "IMAP" %}
+                            </td>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': Port143 == 'Active', 'error': Port143 != 'Active'}">
+                                    <i ng-if="Port143 == 'Active'" class="fas fa-check-circle"></i>
+                                    <i ng-if="Port143 != 'Active'" class="fas fa-times-circle"></i>
+                                    {$ Port143 $}
+                                </span>
+                            </td>
+                            <td>
+                                <a target="_blank" href="https://cyberpanel.net/blog/test-smtp-connection/?utm_source=cyberpanel&utm_medium=cyberpanel&utm_campaign=from-cyberpanel&utm_id=from-cyberpanel" class="action-link">
+                                    <i class="fas fa-book"></i>
+                                    {% trans "Learn More" %}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Port 995</strong> - {% trans "POP3S" %}
+                            </td>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': Port995 == 'Active', 'error': Port995 != 'Active'}">
+                                    <i ng-if="Port995 == 'Active'" class="fas fa-check-circle"></i>
+                                    <i ng-if="Port995 != 'Active'" class="fas fa-times-circle"></i>
+                                    {$ Port995 $}
+                                </span>
+                            </td>
+                            <td>
+                                <a target="_blank" href="https://cyberpanel.net/blog/test-smtp-connection/?utm_source=cyberpanel&utm_medium=cyberpanel&utm_campaign=from-cyberpanel&utm_id=from-cyberpanel" class="action-link">
+                                    <i class="fas fa-book"></i>
+                                    {% trans "Learn More" %}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Port 993</strong> - {% trans "IMAPS" %}
+                            </td>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': Port993 == 'Active', 'error': Port993 != 'Active'}">
+                                    <i ng-if="Port993 == 'Active'" class="fas fa-check-circle"></i>
+                                    <i ng-if="Port993 != 'Active'" class="fas fa-times-circle"></i>
+                                    {$ Port993 $}
+                                </span>
+                            </td>
+                            <td>
+                                <a target="_blank" href="https://cyberpanel.net/blog/test-smtp-connection/?utm_source=cyberpanel&utm_medium=cyberpanel&utm_campaign=from-cyberpanel&utm_id=from-cyberpanel" class="action-link">
+                                    <i class="fas fa-book"></i>
+                                    {% trans "Learn More" %}
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Website Level Email Issues -->
+        <div class="content-section" ng-controller="emailDebuggerDomainLevel">
+            <h2 class="section-title">
+                {% trans "Website Level Email Issues" %}
+                <span ng-hide="cyberpanelLoading" class="loading-spinner"></span>
+            </h2>
+
+            <div class="form-group">
+                <label class="form-label" for="websiteSelect">{% trans "Select Website" %}</label>
+                <select ng-model="websiteName" class="form-select" ng-change="debugEmailForSite()" id="websiteSelect">
+                    <option value="">{% trans "Choose a website..." %}</option>
+                    {% for items in websiteList %}
+                        <option>{{ items }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div ng-hide="ReportStatus">
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="status-badge" ng-class="{'success': status == 1, 'warning': status != 1}">
+                                    <i ng-if="status == 1" class="fas fa-check-circle"></i>
+                                    <i ng-if="status != 1" class="fas fa-exclamation-triangle"></i>
+                                    {$ message $}
+                                </span>
+                            </td>
+                            <td>
+                                <button ng-click="fixMailSSL()" ng-disabled='status==1' class="action-link" style="margin-right: 10px;">
+                                    <i class="fas fa-wrench"></i>
+                                    {% trans "Fix Now" %}
+                                </button>
+                                <button ng-click="fixMailSSL()" class="action-link">
+                                    <i class="fas fa-hammer"></i>
+                                    {% trans "Force Fix" %}
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

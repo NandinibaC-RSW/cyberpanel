@@ -1,0 +1,521 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Assign Package - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern page styles matching new design */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2f3640;
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: #8893a7;
+    }
+    
+    /* Card styles */
+    .content-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e8e9ff;
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2f3640;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5b5fcf;
+        border-radius: 2px;
+    }
+    
+    /* Form styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e8e9ff;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #2f3640;
+        background: white;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:hover {
+        border-color: #5b5fcf;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5b5fcf;
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: #5b5fcf;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #4a4fc4;
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        box-shadow: 0 4px 12px rgba(220,53,69,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background: #f8f9ff;
+        color: #5b5fcf;
+        border: 1px solid #e8e9ff;
+    }
+    
+    .btn-secondary:hover {
+        background: #eef0ff;
+        border-color: #5b5fcf;
+    }
+    
+    /* Table styles */
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    
+    .modern-table th {
+        text-align: left;
+        padding: 12px 15px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        border-bottom: 2px solid #e8e9ff;
+        background: #f8f9ff;
+    }
+    
+    .modern-table td {
+        padding: 12px 15px;
+        font-size: 13px;
+        color: #2f3640;
+        border-bottom: 1px solid #f0f0ff;
+    }
+    
+    .modern-table tr:hover {
+        background: #f8f9ff;
+    }
+    
+    .package-details {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .package-detail-item {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+    }
+    
+    .package-detail-item strong {
+        color: #64748b;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+    
+    .package-detail-item span {
+        color: #2f3640;
+        font-weight: 500;
+    }
+    
+    /* Modal styles */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .modal-header {
+        background: #f8f9ff;
+        border-bottom: 1px solid #e8e9ff;
+        border-radius: 12px 12px 0 0;
+        padding: 20px 25px;
+    }
+    
+    .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2f3640;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .modal-body {
+        padding: 25px;
+    }
+    
+    .modal-footer {
+        background: #f8f9ff;
+        border-top: 1px solid #e8e9ff;
+        border-radius: 0 0 12px 12px;
+        padding: 15px 25px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #5b5fcf;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .alert-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        color: #1565c0;
+    }
+    
+    /* Form row */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .package-details {
+            flex-direction: column;
+            gap: 8px;
+        }
+    }
+</style>
+<script>
+// Define delete function immediately to ensure it's available
+function deleteAssignment(url) {
+    console.log('Delete assignment clicked with URL:', url);
+    
+    // Store URL globally
+    window.deleteAssignmentURL = url;
+    
+    // Get Angular scope and set the URL
+    var element = document.querySelector('[ng-controller="AssignPackage"]');
+    if (element) {
+        var scope = angular.element(element).scope();
+        if (scope) {
+            scope.$apply(function() {
+                scope.deleteURL = url;
+                console.log('Set scope.deleteURL to:', url);
+            });
+        }
+    }
+    
+    // Show the modal
+    $('#packagedelete').modal('show');
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="page-wrapper" ng-controller="AssignPackage">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{% trans "Assign Package" %}</h1>
+            <p class="page-subtitle">{% trans "Assign Docker packages to users to control their container resources" %}</p>
+        </div>
+
+        <!-- Assign Package Form -->
+        <div class="content-card">
+            <h2 class="card-title">
+                {% trans "Create Assignment" %}
+                <span ng-hide="cyberpanelLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <form name="assignmentForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "User" %}</label>
+                        <select ng-model="userSelection" class="form-control">
+                            <option value="">-- {% trans "Select a user" %} --</option>
+                            {% for admin in adminNames %}
+                                <option>{{ admin }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Docker Package" %}</label>
+                        <select ng-model="packageSelection" id="packageSelection" class="form-control">
+                            <option value="">-- {% trans "Select a package" %} --</option>
+                            {% for package in DockerPackages %}
+                                <option value="{{ package.id }}">{{ package.Name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="button" ng-click="AddAssignment()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    {% trans "Assign Package" %}
+                </button>
+            </form>
+        </div>
+
+        <!-- Existing Assignments -->
+        <div class="content-card">
+            <h2 class="card-title">{% trans "Package Assignments" %}</h2>
+            
+            {% if assignpackage %}
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "User" %}</th>
+                        <th>{% trans "Package Name" %}</th>
+                        <th>{% trans "Package Details" %}</th>
+                        <th>{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pack in assignpackage %}
+                    <tr>
+                        <td>{{ pack.user.userName }}</td>
+                        <td>{{ pack.package.Name }}</td>
+                        <td>
+                            <div class="package-details">
+                                <div class="package-detail-item">
+                                    <strong>CPUs:</strong>
+                                    <span>{{ pack.package.CPUs }}</span>
+                                </div>
+                                <div class="package-detail-item">
+                                    <strong>Memory:</strong>
+                                    <span>{{ pack.package.Ram }}MB</span>
+                                </div>
+                                <div class="package-detail-item">
+                                    <strong>Disk:</strong>
+                                    <span>{{ pack.package.DiskSpace }}</span>
+                                </div>
+                                <div class="package-detail-item">
+                                    <strong>Bandwidth:</strong>
+                                    <span>{{ pack.package.Bandwidth }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-danger" 
+                                    onclick="deleteAssignment('{% url 'AssignPackage' %}?DeleteID={{ pack.id }}')">
+                                <i class="fas fa-trash"></i> {% trans "Delete" %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>{% trans "No package assignments have been created yet. Assign a package to a user above." %}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Delete Confirmation Modal -->
+        <div id="packagedelete" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    {% trans "Delete Assignment" %}
+                    <span ng-hide="cyberpanelLoading" class="loading-spinner"></span>
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 14px; color: var(--text-primary, #2f3640);">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--warning-color, #ff9800); margin-right: 8px;"></i>
+                    {% trans "Are you sure you want to delete this package assignment?" %}
+                </p>
+                <p style="font-size: 13px; color: var(--text-secondary, #8893a7); margin-top: 10px;">
+                    {% trans "The user will no longer have access to this Docker package." %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    {% trans "Cancel" %}
+                </button>
+                <button type="button" class="btn btn-danger" ng-click="ConfirmDelete()">
+                    <i class="fas fa-trash"></i>
+                    {% trans "Delete" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script>
+// Ensure Angular controller has the necessary functions
+$(document).ready(function() {
+    setTimeout(function() {
+        var element = document.querySelector('[ng-controller="AssignPackage"]');
+        if (element) {
+            var scope = angular.element(element).scope();
+            if (scope) {
+                // Add ConfirmDelete function if it doesn't exist
+                if (!scope.ConfirmDelete) {
+                    scope.ConfirmDelete = function() {
+                        console.log('ConfirmDelete called from scope');
+                        var url = scope.deleteURL || window.deleteAssignmentURL;
+                        console.log('Delete URL:', url);
+                        if (url) {
+                            $('#packagedelete').modal('hide');
+                            setTimeout(function() {
+                                window.location.href = url;
+                            }, 300);
+                        } else {
+                            console.error('No delete URL set');
+                        }
+                    };
+                }
+                
+                if (!scope.$$phase) {
+                    scope.$apply();
+                }
+            }
+        }
+    }, 500);
+    
+    // Add manual click handler for the delete button in modal
+    $('#packagedelete').on('shown.bs.modal', function() {
+        console.log('Modal shown, setting up delete button handler');
+        
+        var deleteBtn = $(this).find('.btn-danger[ng-click="ConfirmDelete()"]');
+        deleteBtn.off('click.manual').on('click.manual', function(e) {
+            console.log('Manual delete button clicked');
+            
+            var element = document.querySelector('[ng-controller="AssignPackage"]');
+            if (element) {
+                var scope = angular.element(element).scope();
+                if (scope && scope.ConfirmDelete) {
+                    scope.$apply(function() {
+                        scope.ConfirmDelete();
+                    });
+                } else {
+                    // Fallback: use the global URL
+                    var url = window.deleteAssignmentURL;
+                    if (url) {
+                        $('#packagedelete').modal('hide');
+                        setTimeout(function() {
+                            window.location.href = url;
+                        }, 300);
+                    }
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

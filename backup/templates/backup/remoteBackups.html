@@ -1,0 +1,695 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'backup/backup.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Transfer Websites from Remote Server - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 30% 70%, rgba(91, 95, 207, 0.1) 0%, transparent 50%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4547a9);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+        color: white;
+    }
+    
+    .btn-primary:disabled {
+        background: var(--text-secondary, #cbd5e1);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-secondary {
+        background: var(--bg-primary, #fff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--accent-shadow-light, rgba(91, 95, 207, 0.2));
+    }
+    
+    .btn-success {
+        background: var(--success-color, #10b981);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-success:hover {
+        background: var(--success-hover, #059669);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--success-shadow, rgba(16, 185, 129, 0.4));
+    }
+    
+    .btn-danger {
+        background: var(--danger-color, #ef4444);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-danger:hover {
+        background: var(--danger-hover, #dc2626);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--danger-shadow, rgba(239, 68, 68, 0.4));
+    }
+    
+    .main-card {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05)), var(--shadow-lg, 0 10px 40px rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        background: var(--bg-primary, #fff);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-shadow-light, rgba(91, 95, 207, 0.1));
+    }
+    
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideInRight 0.3s ease-out;
+    }
+    
+    .alert-success {
+        background: var(--success-light, #d1fae5);
+        color: var(--success-text, #065f46);
+        border: 1px solid var(--success-border, #a7f3d0);
+    }
+    
+    .alert-danger {
+        background: var(--danger-light, #fee2e2);
+        color: var(--danger-text, #991b1b);
+        border: 1px solid var(--danger-border, #fecaca);
+    }
+    
+    .alert p {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .remote-table {
+        width: 100%;
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-top: 1rem;
+    }
+    
+    .remote-table thead {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+    }
+    
+    .remote-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .remote-table td {
+        padding: 1rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-light, #f3f4f6);
+    }
+    
+    .remote-table tbody tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .remote-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .search-box {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary, #94a3b8);
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.875rem 1rem 0.875rem 3rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-shadow-light, rgba(91, 95, 207, 0.1));
+        background: var(--bg-primary, #fff);
+    }
+    
+    .terminal-section {
+        background: var(--text-primary, #1e293b);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-top: 2rem;
+        box-shadow: var(--shadow-md, 0 4px 20px rgba(0,0,0,0.1));
+    }
+    
+    .terminal-header {
+        background: var(--text-secondary, #334155);
+        padding: 0.75rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .terminal-title {
+        color: var(--bg-secondary, #e2e8f0);
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .terminal-dots {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .terminal-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .terminal-dot.red {
+        background: var(--danger-color, #ef4444);
+    }
+    
+    .terminal-dot.yellow {
+        background: var(--warning-color, #f59e0b);
+    }
+    
+    .terminal-dot.green {
+        background: var(--success-color, #10b981);
+    }
+    
+    .terminal-body {
+        padding: 1.5rem;
+        height: 350px;
+        overflow-y: auto;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: var(--bg-secondary, #e2e8f0);
+    }
+    
+    .terminal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-color, #e8e9ff);
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+    
+    .php-badge {
+        background: var(--accent-light, #e0e7ff);
+        color: var(--accent-color, #5b5fcf);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .package-badge {
+        background: var(--border-light, #f3f4f6);
+        color: var(--text-primary, #1e293b);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+    
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .terminal-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-buttons button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="remoteBackupControl">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-server"></i>
+            {% trans "Remote Backups" %}
+        </h1>
+        <p class="page-subtitle">{% trans "Import websites from remote CyberPanel servers via SSH" %}</p>
+        <div class="header-actions">
+            <a href="https://cyberpanel.net/docs/transfer-website-from-another-server-using-remote-transfer/" 
+               target="_blank" 
+               class="btn-secondary">
+                <i class="fas fa-book"></i>
+                {% trans "Remote Transfer Guide" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Connection Card -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-network-wired"></i>
+                {% trans "Remote Server Connection" %}
+                <span ng-hide="backupLoading" class="loading-spinner"></span>
+            </h2>
+        </div>
+        <div class="card-body">
+            <form action="/" method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-map-marker-alt" style="margin-right: 0.5rem;"></i>
+                                {% trans "Remote Server IP Address" %}
+                            </label>
+                            <input type="text" class="form-control" ng-model="IPAddress" 
+                                   placeholder="192.168.1.100" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-key" style="margin-right: 0.5rem;"></i>
+                                {% trans "Root Password" %}
+                            </label>
+                            <input ng-change="passwordEnter()" type="password" class="form-control" 
+                                   ng-model="password" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div ng-hide="backupButton" class="action-buttons">
+                    <button type="button" ng-disabled="fetchAccountsBtn" 
+                            ng-click="fetchAccountsFromRemoteServer()" class="btn-primary">
+                        <i class="fas fa-cloud-download-alt"></i>
+                        {% trans "Fetch Accounts" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div ng-hide="notificationsBox">
+        <div ng-hide="errorMessage" class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>{$ error_message $}</p>
+        </div>
+        <div ng-hide="couldNotConnect" class="alert alert-danger">
+            <i class="fas fa-times-circle"></i>
+            <p>{% trans "Could not connect, please refresh this page." %}</p>
+        </div>
+        <div ng-hide="accountsFetched" class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <p>{% trans "Accounts Successfully Fetched from remote server." %}</p>
+        </div>
+        <div ng-hide="backupProcessStarted" class="alert alert-success">
+            <i class="fas fa-play-circle"></i>
+            <p>{% trans "Backup Process successfully started." %}</p>
+        </div>
+        <div ng-hide="backupCancelled" class="alert alert-success">
+            <i class="fas fa-stop-circle"></i>
+            <p>{% trans "Backup successfully cancelled." %}</p>
+        </div>
+    </div>
+
+    <!-- Accounts Table -->
+    <div ng-hide="accountsInRemoteServerTable" class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-list"></i>
+                {% trans "Available Websites on Remote Server" %}
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" ng-model="accountsSearch" 
+                       placeholder="{% trans 'Search websites...' %}" 
+                       class="search-input">
+            </div>
+            
+            <div class="table-responsive">
+                <table class="remote-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Website" %}</th>
+                            <th>{% trans "PHP Version" %}</th>
+                            <th>{% trans "Package" %}</th>
+                            <th>{% trans "Email" %}</th>
+                            <th style="text-align: center;">
+                                <div class="checkbox-wrapper">
+                                    <input ng-model="webSiteStatus" 
+                                           ng-change="allChecked(webSiteStatus)" 
+                                           type="checkbox" value="">
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="record in records | filter:accountsSearch">
+                            <td>
+                                <i class="fas fa-globe" style="color: var(--accent-color, #5b5fcf); margin-right: 0.5rem;"></i>
+                                <strong ng-bind="record.website"></strong>
+                            </td>
+                            <td>
+                                <span class="php-badge" ng-bind="record.php"></span>
+                            </td>
+                            <td>
+                                <span class="package-badge" ng-bind="record.package"></span>
+                            </td>
+                            <td>
+                                <i class="fas fa-envelope" style="color: var(--text-secondary, #94a3b8); margin-right: 0.5rem;"></i>
+                                <span ng-bind="record.email"></span>
+                            </td>
+                            <td style="text-align: center;">
+                                <div class="checkbox-wrapper">
+                                    <input ng-model="webSiteStatus" 
+                                           ng-change="addRemoveWebsite(record.website,webSiteStatus)" 
+                                           type="checkbox" value="">
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div ng-hide="transferBoxBtn" class="action-buttons">
+                <button type="button" ng-disabled="startTransferbtn" 
+                        ng-click="startTransfer()" class="btn-success">
+                    <i class="fas fa-exchange-alt"></i>
+                    {% trans "Start Transfer" %}
+                </button>
+                <button type="button" ng-disabled="stopTransferbtn" 
+                        ng-click="cancelRemoteBackup()" class="btn-danger">
+                    <i class="fas fa-times"></i>
+                    {% trans "Cancel Transfer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Progress Terminal -->
+    <div ng-hide="backupStatus" class="terminal-section">
+        <div class="terminal-header">
+            <div class="terminal-title">
+                <i class="fas fa-terminal"></i>
+                {% trans "Transfer Progress" %}
+            </div>
+            <div class="terminal-dots">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+            </div>
+        </div>
+        <div class="terminal-body">
+            <div class="terminal-grid">
+                <div>
+                    <h4 style="color: var(--text-secondary, #94a3b8); margin-bottom: 1rem; font-size: 0.875rem;">
+                        {% trans "Backup Progress" %}
+                    </h4>
+                    <div ng-bind="requestData" style="white-space: pre-wrap;"></div>
+                </div>
+                <div>
+                    <h4 style="color: var(--text-secondary, #94a3b8); margin-bottom: 1rem; font-size: 0.875rem;">
+                        {% trans "Restore Progress" %}
+                    </h4>
+                    <div ng-bind="restoreData" style="white-space: pre-wrap;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

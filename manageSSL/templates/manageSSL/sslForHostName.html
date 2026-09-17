@@ -1,0 +1,329 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Issue SSL For Hostname - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* SSL Hostname Page Specific Styles */
+    .ssl-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .ssl-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .ssl-section {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    .ssl-docs-link {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        color: var(--accent-color, #5b5fcf);
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+    }
+    
+    .ssl-docs-link:hover {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 2px 4px var(--accent-shadow, rgba(91,95,207,0.3));
+        text-decoration: none;
+    }
+    
+    .ssl-description {
+        color: var(--text-muted, #8893a7);
+        font-size: 14px;
+        margin-bottom: 25px;
+        line-height: 1.5;
+    }
+    
+    .deprecation-notice {
+        background: var(--info-light, #e3f2fd);
+        border: 1px solid var(--info-border, #bbdefb);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 25px;
+        color: var(--info-text, #1976d2);
+        font-size: 14px;
+    }
+    
+    .deprecation-notice a {
+        color: var(--info-text, #1976d2);
+        font-weight: 600;
+        text-decoration: underline;
+    }
+    
+    .form-container {
+        background: var(--bg-secondary, #fafbff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        padding: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-primary, white);
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-shadow-light, rgba(91,95,207,0.1));
+    }
+    
+    /* Windows selectbox fixes */
+    select.form-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f3640' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+        padding-right: 40px;
+        line-height: 1.5;
+        min-height: 44px;
+        color: var(--text-primary, #2f3640);
+    }
+    
+    /* Windows-specific fixes */
+    @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+        select.form-control {
+            color: var(--text-primary, #2f3640) !important;
+            background-color: var(--bg-secondary, white) !important;
+        }
+    }
+    
+    /* Fix for Windows Edge and Chrome */
+    select.form-control::-ms-expand {
+        display: none;
+    }
+    
+    select.form-control:focus {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--accent-color, #5b5fcf);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4b4fbf);
+        border-color: var(--accent-hover, #4b4fbf);
+        box-shadow: 0 3px 8px var(--accent-shadow, rgba(91,95,207,0.3));
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+        background: var(--text-disabled, #94a3b8);
+        border-color: var(--text-disabled, #94a3b8);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .alert {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .alert-success {
+        background: var(--success-light, #f0f9ff);
+        border: 1px solid var(--info-border, #bae6fd);
+        color: var(--info-text, #0c4a6e);
+    }
+    
+    .alert-danger {
+        background: var(--danger-light, #fef2f2);
+        border: 1px solid var(--danger-border, #fecaca);
+        color: var(--danger-text, #991b1b);
+    }
+    
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        margin-left: 8px;
+    }
+    
+    /* Grid Layout */
+    .ssl-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    @media (min-width: 768px) {
+        .ssl-grid {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .ssl-wrapper {
+            padding: 15px;
+        }
+        
+        .ssl-section {
+            padding: 20px;
+        }
+        
+        .form-container {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ssl-wrapper">
+    <div class="ssl-container" ng-controller="sslIssueForHostNameCtrl">
+        <!-- Header Section -->
+        <div class="ssl-section">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                <h2 class="section-title">SSL FOR HOSTNAME</h2>
+                <a href="https://cyberpanel.net/KnowledgeBase/home/cyberpanel-on-ssl/" target="_blank" class="ssl-docs-link">
+                    <i class="fas fa-book"></i>
+                    {% trans "SSL Docs" %}
+                </a>
+            </div>
+            <p class="ssl-description">{% trans "Let's Encrypt SSL for hostname to access CyberPanel on verified SSL." %}</p>
+            
+            <div ng-hide="success" class="deprecation-notice">
+                <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                Note: This feature is deprecated in favour of <a href="/base/onboarding">setup-wizard</a>.
+            </div>
+        </div>
+
+        <!-- SSL Form Section -->
+        <div class="ssl-section">
+            <h3 class="section-title">
+                ISSUE SSL CERTIFICATE
+                <img ng-hide="manageSSLLoading" src="{% static 'images/loading.gif' %}" class="loading-spinner">
+            </h3>
+            
+            <div class="form-container">
+                <div class="form-group">
+                    <label class="form-label">{% trans "Select Website" %}</label>
+                    <select ng-change="showbtn()" ng-model="virtualHost" class="form-control">
+                        <option value="">-- Select a website --</option>
+                        {% for items in websiteList %}
+                            <option>{{ items }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div ng-hide="issueSSLBtn" class="form-group">
+                    <button type="button" ng-click="issueSSL()" ng-disabled="sslIssuing" class="btn-primary">
+                        <i class="fas fa-lock" ng-hide="sslIssuing"></i>
+                        <i class="fas fa-spinner fa-spin" ng-show="sslIssuing"></i>
+                        <span ng-hide="sslIssuing">{% trans "Issue SSL" %}</span>
+                        <span ng-show="sslIssuing">{% trans "Issuing SSL..." %}</span>
+                    </button>
+                </div>
+
+                <!-- Success/Error Messages -->
+                <div ng-show="sslIssuing" class="alert alert-info">
+                    <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>
+                    <strong>{% trans "Issuing SSL..." %}</strong> {% trans "This can take a few minutes. Please keep this page open." %}
+                </div>
+
+                <div ng-hide="canNotIssue" class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                    <strong>{% trans "Cannot issue SSL." %}</strong> {% trans "Error message:" %} {$ errorMessage $}
+                </div>
+
+                <div ng-hide="sslIssued" class="alert alert-success">
+                    <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                    <strong>{% trans "SSL Issued Successfully!" %}</strong><br>
+                    {% trans "You can now access CyberPanel at:" %} <strong>https://{$ sslDomain $}:8090</strong>
+                </div>
+
+                <div ng-hide="couldNotConnect" class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                    <strong>{% trans "Connection Error" %}</strong><br>
+                    {% trans "Could not connect to server. Please refresh this page." %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_scripts %}
+<script src="{% static 'manageSSL/manageSSL.js' %}"></script>
+{% endblock %}

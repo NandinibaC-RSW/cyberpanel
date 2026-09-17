@@ -1,0 +1,570 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'mailServer/mailServer.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "DKIM Manager - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        .modern-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 0;
+        }
+        
+        .docs-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary, #fff);
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 8px;
+            color: #5b5fcf;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            margin-left: 1rem;
+        }
+        
+        .docs-link:hover {
+            background: #5b5fcf;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.3);
+        }
+        
+        .main-card {
+            background: var(--bg-primary, white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05)), var(--shadow-lg, 0 10px 40px rgba(0,0,0,0.08));
+            border: 1px solid var(--border-primary, #e8e9ff);
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-secondary, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: var(--bg-primary, #fff);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #5b5fcf;
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        .btn-primary {
+            background: #5b5fcf;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            background: #4547a9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-success {
+            background: var(--success-light, #d1fae5);
+            color: var(--success-text, #065f46);
+            border: 1px solid var(--success-border, #a7f3d0);
+        }
+        
+        .alert-danger {
+            background: var(--danger-light, #fee2e2);
+            color: var(--danger-text, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .alert-info {
+            background: var(--info-light, #dbeafe);
+            color: var(--info-text, #1e40af);
+            border: 1px solid var(--info-border, #bfdbfe);
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-primary, #e8e9ff);
+            border-top-color: #5b5fcf;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .install-notice {
+            background: var(--bg-secondary, #f8f9ff);
+            border: 2px solid var(--border-primary, #e8e9ff);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .install-notice h3 {
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .install-link {
+            color: #5b5fcf;
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 2px solid #5b5fcf;
+            transition: all 0.3s ease;
+        }
+        
+        .install-link:hover {
+            color: #4547a9;
+            border-color: #4547a9;
+        }
+        
+        .terminal-box {
+            background: #1e293b;
+            color: #10b981;
+            font-family: monospace;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .keys-table {
+            width: 100%;
+            background: var(--bg-primary, white);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-primary, #e8e9ff);
+            margin-top: 1.5rem;
+        }
+        
+        .keys-table thead {
+            background: var(--bg-secondary, #f8f9ff);
+        }
+        
+        .keys-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        }
+        
+        .keys-table td {
+            padding: 1rem;
+            vertical-align: top;
+        }
+        
+        .key-textarea {
+            width: 100%;
+            background: var(--bg-secondary, #f8f9ff);
+            border: 1px solid var(--border-primary, #e8e9ff);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            resize: vertical;
+            min-height: 150px;
+        }
+        
+        .key-textarea:focus {
+            outline: none;
+            border-color: #5b5fcf;
+            background: var(--bg-primary, #fff);
+        }
+        
+        .generate-notice {
+            background: var(--warning-light, #fef3c7);
+            border: 1px solid var(--warning-border, #fde68a);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .generate-notice h3 {
+            color: var(--warning-text, #92400e);
+            margin-bottom: 1rem;
+        }
+        
+        .generate-link {
+            color: #5b5fcf;
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 2px solid #5b5fcf;
+            transition: all 0.3s ease;
+        }
+        
+        .generate-link:hover {
+            color: #4547a9;
+            border-color: #4547a9;
+        }
+        
+        .info-box {
+            background: var(--accent-light, #e0e7ff);
+            border: 1px solid var(--accent-border, #c7d2fe);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            color: var(--info-dark, #3730a3);
+        }
+        
+        .info-box i {
+            color: #5b5fcf;
+            margin-right: 0.5rem;
+        }
+        
+        .install-icon {
+            color: #5b5fcf;
+        }
+        
+        .progress-title {
+            color: var(--text-primary, #1e293b);
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .terminal-pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .table-domain {
+            width: 20%;
+        }
+        
+        .table-private-key {
+            width: 40%;
+        }
+        
+        .table-public-key {
+            width: 40%;
+        }
+        
+        .domain-badge {
+            padding: 0.5rem 1rem;
+            background: var(--accent-light, #e0e7ff);
+            color: #5b5fcf;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .key-hint {
+            color: var(--text-secondary, #64748b);
+            margin-top: 0.5rem;
+            display: block;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+
+
+    <div class="modern-container" ng-controller="dkimManager">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-shield-alt"></i>
+                {% trans "DKIM Manager" %}
+                <a target="_blank" rel="noopener" href="https://cyberpanel.net/KnowledgeBase/home/dkim-set-up-and-configurations/" class="docs-link">
+                    <i class="fas fa-book"></i>
+                    {% trans "DKIM Docs" %}
+                </a>
+            </h1>
+            <p class="page-subtitle">{% trans "Generate and manage DKIM keys for email authentication and security" %}</p>
+        </div>
+
+        {% if openDKIMInstalled == 0 %}
+            <div class="main-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-download"></i>
+                        {% trans "OpenDKIM Installation" %}
+                        <span ng-show="manageDKIMLoading" class="loading-spinner"></span>
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="install-notice">
+                        <i class="fas fa-exclamation-circle fa-3x mb-3 install-icon"></i>
+                        <h3>{% trans "OpenDKIM is not installed" %}</h3>
+                        <p class="mb-3">{% trans "OpenDKIM is required to manage DKIM keys for your domains" %}</p>
+                        <a href="" ng-click="installOpenDKIM()" class="install-link">
+                            <i class="fas fa-download"></i>
+                            {% trans "Install OpenDKIM Now" %}
+                        </a>
+                    </div>
+
+                    <!-- Alert Messages -->
+                    <div ng-hide="openDKIMNotifyBox">
+                        <div ng-hide="openDKIMError" class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% trans "Error message:" %} {$ errorMessage $}
+                        </div>
+
+                        <div ng-hide="couldNotConnect" class="alert alert-danger">
+                            <i class="fas fa-times-circle"></i>
+                            {% trans "Could not connect. Please refresh this page." %}
+                        </div>
+
+                        <div ng-hide="openDKIMSuccessfullyInstalled" class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            {% trans "OpenDKIM successfully installed, refreshing page in 3 seconds..." %}
+                        </div>
+                    </div>
+
+                    <!-- Installation Log -->
+                    <div ng-hide="openDKIMInstallBox">
+                        <h3 class="progress-title">
+                            <i class="fas fa-terminal"></i>
+                            {% trans "Installation Progress" %}
+                        </h3>
+                        <div class="terminal-box">
+                            <pre ng-bind="requestData" class="terminal-pre"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="main-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-key"></i>
+                        {% trans "DKIM Key Management" %}
+                        <span ng-show="manageDKIMLoading" class="loading-spinner"></span>
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form action="/" method="post">
+                        <div class="form-section">
+                            <div class="info-box">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans "DKIM adds a digital signature to your emails, helping prevent spoofing and improving deliverability" %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label">{% trans "Select Website" %}</label>
+                                        <select ng-change="fetchKeys()" ng-model="domainName" class="form-control" aria-label="{% trans 'Select Website' %}">
+                                            <option value="">{% trans "Choose a website..." %}</option>
+                                            {% for items in websiteList %}
+                                                <option value="{{ items }}">{{ items }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- No Keys Available -->
+                        <div ng-hide="noKeysAvailable" class="generate-notice">
+                            <i class="fas fa-key fa-3x mb-3" style="color: #ffa000;"></i>
+                            <h3>{% trans "Keys not available for this domain" %}</h3>
+                            <p class="mb-3">{% trans "DKIM keys need to be generated for this domain to enable email authentication" %}</p>
+                            <a href="" ng-click="createDomainDKIMKeys()" class="generate-link">
+                                <i class="fas fa-plus-circle"></i>
+                                {% trans "Generate DKIM Keys" %}
+                            </a>
+                        </div>
+
+                        <!-- Domain Keys Display -->
+                        <div ng-hide="domainRecords">
+                            <table class="keys-table">
+                                <thead>
+                                <tr>
+                                    <th class="table-domain">{% trans "Domain" %}</th>
+                                    <th class="table-private-key">{% trans "Private Key" %}</th>
+                                    <th class="table-public-key">{% trans "Public Key" %}</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>
+                                        <span class="domain-badge">
+                                            <i class="fas fa-globe"></i>
+                                            <span ng-bind="domainName"></span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <textarea ng-bind="privateKey" rows="10" class="key-textarea" readonly aria-label="{% trans 'Private Key' %}"></textarea>
+                                        <small class="key-hint">
+                                            <i class="fas fa-lock"></i>
+                                            {% trans "Keep this private key secure" %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <textarea ng-bind="publicKey" rows="10" class="key-textarea" readonly aria-label="{% trans 'Public Key' %}"></textarea>
+                                        <small class="key-hint">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans "Add this as a TXT record in your DNS" %}
+                                        </small>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Alert Messages -->
+                        <div class="form-section">
+                            <div ng-hide="dkimSuccess" class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                {$ dkimSuccessMessage $}
+                            </div>
+
+                            <div ng-hide="dkimError" class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {$ errorMessage $}
+                            </div>
+
+                            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i>
+                                {% trans "Could not connect to server. Please refresh this page." %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

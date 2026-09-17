@@ -1,0 +1,514 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'dns/dns.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Reset DNS Configurations - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern Reset DNS Configurations Styles */
+    .reset-dns-config {
+        background: transparent;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    
+    .reset-dns-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    /* Header Section */
+    .reset-dns-header {
+        margin-bottom: 40px;
+        text-align: center;
+    }
+    
+    .reset-dns-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .reset-dns-title i {
+        color: var(--accent-color, #5b5fcf);
+        font-size: 36px;
+    }
+    
+    .reset-dns-subtitle {
+        font-size: 16px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto 20px;
+    }
+    
+    .docs-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: var(--bg-hover, #f8f9ff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .docs-link:hover {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.2));
+    }
+    
+    /* Warning Card */
+    .warning-card {
+        background: var(--warning-bg, #fff8e1);
+        border: 1px solid var(--warning-border, #ffe082);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .warning-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-secondary, white);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: var(--warning-color, #ffa000);
+        font-size: 24px;
+        box-shadow: 0 2px 8px var(--shadow-light, rgba(0,0,0,0.05));
+    }
+    
+    .warning-content {
+        flex: 1;
+    }
+    
+    .warning-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 8px;
+    }
+    
+    .warning-text {
+        font-size: 14px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.6;
+    }
+    
+    .warning-list {
+        margin-top: 12px;
+        padding-left: 20px;
+    }
+    
+    .warning-list li {
+        font-size: 14px;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 6px;
+    }
+    
+    /* Main Action Card */
+    .reset-action-card {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-secondary, #fff) 100%);
+        padding: 30px;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .card-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 28px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    /* Action Section */
+    .action-section {
+        padding: 40px;
+        text-align: center;
+    }
+    
+    .action-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--accent-color, #5b5fcf);
+        font-size: 40px;
+        box-shadow: 0 4px 12px var(--accent-focus, rgba(91,95,207,0.1));
+    }
+    
+    .action-description {
+        font-size: 16px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.6;
+        margin-bottom: 32px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .btn-reset {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 40px;
+        background: var(--danger-color, #ef4444);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-reset:hover {
+        background: var(--danger-hover, #dc2626);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px var(--danger-shadow, rgba(239,68,68,0.3));
+    }
+    
+    .btn-reset:disabled {
+        background: var(--bg-disabled, #cbd5e1);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Progress Section */
+    .progress-section {
+        padding: 40px;
+        background: var(--bg-primary, #fafbff);
+        border-top: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .progress-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        border: 3px solid var(--border-color, #e8e9ff);
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Log Output */
+    .log-output {
+        background: var(--code-bg, #1e293b);
+        color: var(--code-text, #e2e8f0);
+        border-radius: 12px;
+        padding: 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0,0,0,0.1));
+    }
+    
+    .log-output::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .log-output::-webkit-scrollbar-track {
+        background: var(--code-scrollbar-track, #2d3748);
+        border-radius: 4px;
+    }
+    
+    .log-output::-webkit-scrollbar-thumb {
+        background: var(--code-scrollbar-thumb, #4a5568);
+        border-radius: 4px;
+    }
+    
+    .log-output::-webkit-scrollbar-thumb:hover {
+        background: var(--code-scrollbar-hover, #5a6578);
+    }
+    
+    /* Alert Messages */
+    .alert-section {
+        margin-top: 30px;
+    }
+    
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #ffebee);
+        border: 1px solid var(--danger-border, #ffcdd2);
+        color: var(--danger-text, #c62828);
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        color: var(--success-text, #2e7d32);
+    }
+    
+    .alert i {
+        font-size: 20px;
+    }
+    
+    .alert-content {
+        flex: 1;
+    }
+    
+    /* Success State */
+    .success-state {
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--success-bg, #e8f5e9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--success-text, #2e7d32);
+        font-size: 40px;
+        animation: successPulse 0.5s ease-out;
+    }
+    
+    @keyframes successPulse {
+        0% { transform: scale(0.8); opacity: 0; }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .success-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 12px;
+    }
+    
+    .success-text {
+        font-size: 16px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.6;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .reset-dns-header {
+            text-align: left;
+        }
+        
+        .reset-dns-title {
+            font-size: 24px;
+            justify-content: flex-start;
+        }
+        
+        .warning-card {
+            flex-direction: column;
+        }
+        
+        .action-section {
+            padding: 20px;
+        }
+        
+        .btn-reset {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="reset-dns-config" ng-controller="ResetDNSconf">
+    <div class="reset-dns-container">
+        <div class="reset-dns-header">
+            <h1 class="reset-dns-title">
+                <i class="fas fa-undo-alt"></i>
+                {% trans "Reset DNS Configurations" %}
+            </h1>
+            <p class="reset-dns-subtitle">
+                {% trans "Reset your DNS configurations to their default state. This will restore all DNS settings to their initial values." %}
+            </p>
+            <a href="https://cyberpanel.net/KnowledgeBase/home/manage-dns-in-cyberpanel/" target="_blank" class="docs-link">
+                <i class="fas fa-book"></i>
+                {% trans "DNS Documentation" %}
+            </a>
+        </div>
+
+        <!-- Warning Card -->
+        <div class="warning-card">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="warning-content">
+                <div class="warning-title">{% trans "Important Notice" %}</div>
+                <div class="warning-text">
+                    {% trans "Resetting DNS configurations will:" %}
+                    <ul class="warning-list">
+                        <li>{% trans "Restore default PowerDNS settings" %}</li>
+                        <li>{% trans "Reset all DNS server configurations" %}</li>
+                        <li>{% trans "Keep existing DNS zones and records intact" %}</li>
+                        <li>{% trans "May require service restart" %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Action Card -->
+        <div class="reset-action-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    {% trans "DNS Configuration Reset" %}
+                </h2>
+            </div>
+
+            <!-- Initial State -->
+            <div class="action-section" ng-hide="installationDetailsForm">
+                <div class="action-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <p class="action-description">
+                    {% trans "Click the button below to start the DNS configuration reset process. This action will restore your DNS settings to their default state while preserving your zones and records." %}
+                </p>
+                <button type="button" ng-click="resetDNS()" class="btn-reset">
+                    <i class="fas fa-undo"></i>
+                    {% trans "Reset DNS Configuration" %}
+                </button>
+            </div>
+
+            <!-- Progress State -->
+            <div class="progress-section" ng-hide="InstallBox">
+                <h3 class="progress-title">
+                    <span class="loading-spinner" ng-hide="Loading"></span>
+                    {% trans "Resetting DNS Configuration..." %}
+                </h3>
+                <div class="log-output" ng-model="requestData">{$ requestData $}</div>
+            </div>
+
+            <!-- Alert Messages -->
+            <div class="alert-section" ng-hide="NotifyBox">
+                <div ng-hide="failedToStartInallation" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div class="alert-content">
+                        <strong>{% trans "Failed to start reset process" %}</strong><br>
+                        {% trans "Error message:" %} {$ errorMessage $}
+                    </div>
+                </div>
+
+                <div ng-hide="couldNotConnect" class="alert alert-danger">
+                    <i class="fas fa-network-wired"></i>
+                    <div class="alert-content">
+                        {% trans "Could not connect to server. Please refresh this page." %}
+                    </div>
+                </div>
+
+                <div ng-hide="installationFailed" class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i>
+                    <div class="alert-content">
+                        <strong>{% trans "Reset process failed" %}</strong><br>
+                        {$ errorMessage $}
+                    </div>
+                </div>
+
+                <div ng-hide="modSecSuccessfullyInstalled" class="success-state">
+                    <div class="success-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h3 class="success-title">{% trans "DNS Configuration Reset Complete!" %}</h3>
+                    <p class="success-text">
+                        {% trans "Your DNS configurations have been successfully reset to their default state. The DNS service is now running with the default settings." %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script>
+// Enhance the reset process with visual feedback
+$(document).ready(function() {
+    // Initialize visibility states
+    var scope = angular.element($('[ng-controller="ResetDNSconf"]')).scope();
+    if (scope) {
+        scope.$apply(function() {
+            scope.Loading = true;
+            scope.NotifyBox = true;
+            scope.InstallBox = true;
+        });
+    }
+});
+</script>
+{% endblock %}

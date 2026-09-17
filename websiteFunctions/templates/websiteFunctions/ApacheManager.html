@@ -1,0 +1,924 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Apache Manager - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        /* Modern page styles matching new design with dark mode support */
+        .page-wrapper {
+            background: transparent;
+            padding: 20px;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Container Styling */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            background: transparent;
+        }
+        
+        /* Page Title Section */
+        #page-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] #page-title {
+            background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3), 0 10px 10px -5px rgba(0,0,0,0.24);
+        }
+        
+        #page-title::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+        
+        #page-title h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        #page-title p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            line-height: 1.6;
+        }
+        
+        /* Main Panel */
+        .panel {
+            background: var(--bg-secondary, white);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .panel-body {
+            padding: 0;
+        }
+        
+        /* Title Hero */
+        .title-hero {
+            background: var(--bg-hover, #f8f9ff);
+            padding: 25px 30px;
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary, #2f3640);
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .title-hero img {
+            width: 24px;
+            height: 24px;
+        }
+        
+        /* Card Styling */
+        .card {
+            background: var(--bg-secondary, white);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            margin: 20px;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #2f3640);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-text {
+            color: var(--text-secondary, #64748b);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        
+        /* Form Styling */
+        .form-horizontal {
+            background: var(--bg-hover, #f8f9ff);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color, #e8e9ff);
+            margin: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-control {
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: var(--bg-secondary, white);
+            color: var(--text-primary, #2f3640);
+        }
+        
+        .form-control:focus {
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+            outline: none;
+        }
+        
+        /* Select dropdown styles */
+        select.form-control {
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+            padding-right: 40px;
+            line-height: 1.5;
+            min-height: 44px;
+        }
+        
+        [data-theme="dark"] select.form-control {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e4e4e7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        }
+
+        /* Windows-specific fixes */
+        @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+            select.form-control {
+                color: var(--text-primary, #2f3640) !important;
+                background-color: var(--bg-secondary, white) !important;
+            }
+        }
+
+        /* Fix for Windows Edge and Chrome */
+        select.form-control::-ms-expand {
+            display: none;
+        }
+
+        select.form-control option {
+            color: var(--text-primary, #2f3640);
+            background-color: var(--bg-secondary, white);
+            padding: 8px;
+        }
+
+        select.form-control:focus {
+            color: var(--text-primary, #2f3640);
+            background-color: var(--bg-secondary, white);
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            min-height: 400px;
+            background: var(--bg-secondary, white);
+            color: var(--text-primary, #2f3640);
+        }
+        
+        label {
+            font-weight: 600;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        [data-theme="dark"] .btn-primary {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+        
+        .btn-link {
+            background: transparent;
+            color: white;
+            box-shadow: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            text-decoration: none;
+        }
+        
+        .btn-lg {
+            padding: 14px 32px;
+            font-size: 16px;
+        }
+        
+        /* Progress Bar */
+        .progress {
+            height: 20px;
+            border-radius: 9999px;
+            background: var(--border-color, #e8e9ff);
+            overflow: hidden;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.4s ease;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        [data-theme="dark"] .progress-bar {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+        }
+        
+        /* Modal Styling */
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            background: var(--bg-secondary, white);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom: none;
+            padding: 20px 25px;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        [data-theme="dark"] .modal-header {
+            background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+        }
+        
+        .modal-title {
+            font-weight: 600;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            background: var(--bg-secondary, white);
+            color: var(--text-primary, #2f3640);
+        }
+        
+        .modal-header .close {
+            color: white;
+            opacity: 0.8;
+            font-size: 24px;
+        }
+        
+        .modal-header .close:hover {
+            opacity: 1;
+        }
+        
+        /* Loading Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        img[src*="loading.gif"] {
+            animation: spin 1s linear infinite;
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            #page-title {
+                padding: 25px;
+            }
+            
+            #page-title h2 {
+                font-size: 24px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+            
+            .form-horizontal {
+                padding: 20px;
+                margin: 15px;
+            }
+        }
+    </style>
+
+    {% if apachemanager %}
+        <div class="container">
+            <div id="page-title">
+                <h2>
+                    <i class="fas fa-server" style="margin-right: 10px;"></i>
+                    {% trans "Apache Manager" %}
+                    <a target="_blank" href="https://cyberpanel.net/KnowledgeBase/home/cyberpanel-apache-manager/" 
+                       class="btn btn-link" title="Documentation" style="margin-left: auto;">
+                        <i class="fas fa-book"></i>
+                        {% trans "Docs" %}
+                    </a>
+                </h2>
+                <p>{% trans "Switch between Apache (as reverse proxy) and OpenLiteSpeed. Configure Apache settings and tune PHP-FPM for optimal performance." %}</p>
+            </div>
+
+
+            <div ng-controller="ApacheManager" class="panel">
+                <div class="panel-body">
+                    <h3 class="title-hero">
+                        <i class="fas fa-globe" style="color: var(--accent-color, #5b5fcf);"></i>
+                        <span id="domainNamePage">{{ domainName }}</span>
+                        <img ng-hide="cyberpanelloading" src="{% static 'images/loading.gif' %}">
+                    </h3>
+
+                    <div class="card card-body">
+                        
+                        <h5 ng-show="!apacheOLS" class="card-title">{{ domainName }} is currently using Apache as Reverse
+                            Proxy to
+                            OpenLiteSpeed. <img
+                                    style="height: 25px" ng-hide="cyberpanelloading"
+                                    src="{% static 'images/loading.gif' %}"></h5>
+                        <!-- Using Apache -->
+                        <div ng-show="!apacheOLS" class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label for="example-select">PHP</label>
+                                    <select ng-model="phpSelection" class="form-control" id="phpApacheSelect">
+                                        {% for php in phps %}
+                                            <option value="{{ php }}">{{ php }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div> <!-- end row -->
+                        <a data-toggle="modal" data-target="#bs-example-modal-lg" ng-show="!apacheOLS"
+                           ng-click="switchServer(2)" href="#" class="btn btn-primary">Switch to pure
+                            OpenLiteSpeed.</a>
+
+
+                        <div ng-show="!apacheOLS" class="col-md-12" style="margin-top: 30px;">
+                            <form class="form-horizontal">
+                                <h3 style="margin-bottom: 20px; color: var(--text-primary, #2f3640); font-weight: 600; display: flex; align-items: center; gap: 10px;" ng-show="!apacheOLS">
+                                    <i class="fas fa-code" style="color: var(--accent-color, #5b5fcf);"></i>
+                                    Apache Configurations
+                                </h3>
+                                <div class="form-group">
+                                    <div class="col-sm-12">
+                                        <textarea ng-model="configData" rows="20" class="form-control" placeholder="Apache configuration will be loaded here..."></textarea>
+                                    </div>
+                                </div>
+                                <div ng-hide="saveConfigBtn" class="form-group">
+                                    <div class="col-sm-12">
+                                        <button type="button" ng-click="saveApacheConfig()" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-save"></i>
+                                            {% trans "Save Apache Configurations" %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <hr>
+
+                            <!--  Tune FPM -->
+
+                            <div class="card card-body">
+                                <h3 style="margin-bottom: 2%" ng-show="!apacheOLS">PHP-FPM Configurations <img
+                                        style="height: 25px" ng-hide="cyberpanelloading"
+                                        src="{% static 'images/loading.gif' %}"></h3>
+                                <!-- Using Apache -->
+                                <form ng-show="!apacheOLS">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="billing-town-city">pm.max_children</label>
+                                                <input class="form-control" type="text"
+                                                       ng-model="pmMaxChildren"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="billing-town-city">pm.start_servers</label>
+                                                <input class="form-control" type="text"
+                                                       ng-model="pmStartServers"/>
+                                            </div>
+                                        </div>
+                                    </div> <!-- end row -->
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="billing-town-city">pm.min_spare_servers</label>
+                                                <input class="form-control" type="text"
+                                                       ng-model="pmMinSpareServers"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="billing-town-city">pm.max_spare_servers</label>
+                                                <input class="form-control" type="text"
+                                                       ng-model="pmMaxSpareServers"/>
+                                            </div>
+                                        </div>
+                                    </div> <!-- end row -->
+                                </form>
+                                <a ng-show="!apacheOLS" ng-click="tuneSettings()"
+                                   href="#" class="btn btn-primary">Tune PHP-FPM Settings.</a>
+                                <!-- Using OpenLiteSpeed -->
+                                <p ng-show="!pureOLS" class="card-text">{{ domainName }} is currently using pure
+                                    OpenLiteSpeed, PHP-FPM
+                                    is
+                                    not used with OpenLiteSpeed, thus tuning is disabled.</p>
+                                <!-- Using OpenLiteSpeed -->
+                                <p ng-show="!lswsEnt" class="card-text">{{ domainName }} is using LiteSpeed Enterprise.
+                                    PHP-FPM is not
+                                    used
+                                    with LiteSpeed
+                                    Enterprise.</p>
+                            </div> <!-- end card-->
+
+                            <!--  Modal content for the above example -->
+                            <div class="modal fade" id="bs-example-modal-lg" tabindex="-1" role="dialog"
+                                 aria-labelledby="myLargeModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="myLargeModalLabel">{$ functionStatus $} <img
+                                                    style="height: 25px"
+                                                    ng-hide="cyberpanelloading"
+                                                    src="{% static 'images/loading.gif' %}">
+                                            </h4>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                    aria-hidden="true">×
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="progress">
+                                                <div ng-style="functionProgress"
+                                                     class="progress-bar progress-bar-striped bg-info"
+                                                     role="progressbar"
+                                                     aria-valuenow="50" aria-valuemin="0"
+                                                     aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </div><!-- /.modal-content -->
+                                </div><!-- /.modal-dialog -->
+                            </div><!-- /.modal -->
+
+                            <!--  Tune FPM End -->
+
+                        </div>
+                        <!-- Using OpenLiteSpeed -->
+                        <p ng-show="!pureOLS" class="card-text">{{ domainName }} is currently using pure
+                            OpenLiteSpeed.</p>
+                        <div ng-show="!pureOLS" class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label for="example-select">PHP</label>
+                                    <select ng-model="phpSelection" class="form-control" id="phpOLSSelect">
+                                        {% for php in apachePHPs %}
+                                            <option value="{{ php }}">{{ php }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div> <!-- end row -->
+                        <a data-toggle="modal" data-target="#bs-example-modal-lg" ng-show="!pureOLS"
+                           ng-click="switchServer(1)" href="#" class="btn btn-primary">Switch to OpenLiteSpeed +
+                            Apache
+                            as reverse proxy.</a>
+                        <!-- Using OpenLiteSpeed -->
+                        <p ng-hide="lswsEnt" class="card-text">{{ domainName }} is using LiteSpeed Enterprise. When
+                            LiteSpeed
+                            Enterprise is active switching is not required.</p>
+                    </div> <!-- end card-->
+
+                    <!--  Modal content for the above example -->
+                    <div class="modal fade" id="bs-example-modal-lg" tabindex="-1" role="dialog"
+                         aria-labelledby="myLargeModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="myLargeModalLabel">{$ functionStatus $} <img
+                                            style="height: 25px"
+                                            ng-hide="cyberpanelloading"
+                                            src="{% static 'images/loading.gif' %}">
+                                    </h4>
+                                    <button type="button" class="close" data-dismiss="modal"
+                                            aria-hidden="true">×
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="progress">
+                                        <div ng-style="functionProgress"
+                                             class="progress-bar progress-bar-striped bg-info"
+                                             role="progressbar"
+                                             aria-valuenow="50" aria-valuemin="0"
+                                             aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div><!-- /.modal-content -->
+                        </div><!-- /.modal-dialog -->
+                    </div><!-- /.modal -->
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+    {% else %}
+        <style>
+            /* Marketing Section Styles */
+            .marketing-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background: transparent;
+                min-height: 100vh;
+            }
+            
+            .marketing-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 60px 40px;
+                border-radius: 16px;
+                margin-bottom: 40px;
+                box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            [data-theme="dark"] .marketing-header {
+                background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+                box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3), 0 10px 10px -5px rgba(0,0,0,0.24);
+            }
+            
+            .marketing-header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+                animation: pulse 4s ease-in-out infinite;
+            }
+            
+            .marketing-header h1 {
+                font-size: 48px;
+                font-weight: 800;
+                margin-bottom: 20px;
+                letter-spacing: -1px;
+                position: relative;
+                z-index: 1;
+            }
+            
+            .marketing-header .subtitle {
+                font-size: 24px;
+                font-weight: 600;
+                opacity: 0.95;
+                margin-bottom: 30px;
+                position: relative;
+                z-index: 1;
+            }
+            
+            .marketing-header p {
+                font-size: 18px;
+                line-height: 1.8;
+                opacity: 0.9;
+                max-width: 800px;
+                margin: 0 auto;
+                position: relative;
+                z-index: 1;
+            }
+            
+            .feature-section {
+                background: var(--bg-secondary, white);
+                border-radius: 16px;
+                padding: 40px;
+                margin-bottom: 30px;
+                box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+                border: 1px solid var(--border-color, #e8e9ff);
+            }
+            
+            .feature-section h2 {
+                color: var(--text-primary, #2f3640);
+                font-size: 32px;
+                font-weight: 700;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .feature-section h3 {
+                color: var(--text-primary, #2f3640);
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                margin-top: 30px;
+            }
+            
+            .feature-section p {
+                color: var(--text-secondary, #64748b);
+                font-size: 16px;
+                line-height: 1.8;
+                margin-bottom: 20px;
+            }
+            
+            .feature-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .feature-list li {
+                background: var(--bg-hover, #f8f9ff);
+                padding: 20px;
+                margin-bottom: 15px;
+                border-radius: 12px;
+                border: 1px solid var(--border-color, #e8e9ff);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .feature-list li:hover {
+                transform: translateX(10px);
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            }
+            
+            .feature-list li::before {
+                content: '✓';
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 50%;
+                font-weight: bold;
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+            
+            [data-theme="dark"] .feature-list li::before {
+                background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            }
+            
+            .video-container {
+                background: var(--bg-secondary, white);
+                border-radius: 16px;
+                padding: 30px;
+                margin-bottom: 30px;
+                box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+                border: 1px solid var(--border-color, #e8e9ff);
+                text-align: center;
+            }
+            
+            .video-container iframe {
+                border-radius: 12px;
+                box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                max-width: 100%;
+            }
+            
+            .pricing-section {
+                background: var(--bg-secondary, white);
+                border-radius: 16px;
+                padding: 30px;
+                box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+                border: 1px solid var(--border-color, #e8e9ff);
+            }
+            
+            @media (max-width: 768px) {
+                .marketing-header h1 {
+                    font-size: 32px;
+                }
+                
+                .marketing-header .subtitle {
+                    font-size: 20px;
+                }
+                
+                .feature-section {
+                    padding: 25px;
+                }
+            }
+        </style>
+        <div class="marketing-container">
+            <div class="marketing-header">
+                <h1>OpenLiteSpeed + Apache</h1>
+                <div class="subtitle">Revolutionary Hybrid Web Server by CyberPanel</div>
+                <p>
+                    Combine blazing-fast performance with unparalleled feature versatility. Our groundbreaking hybrid web server 
+                    offers the best of both worlds in a single, seamless package.
+                </p>
+            </div>
+            
+            <div class="feature-section">
+                <h2>
+                    <i class="fas fa-rocket" style="color: var(--accent-color, #5b5fcf);"></i>
+                    Unmatched Speed with OpenLiteSpeed
+                </h2>
+                <p>
+                    Harness the raw power of OpenLiteSpeed, the industry-leading, high-performance web server that
+                    ensures lightning-fast response times and unparalleled efficiency. OpenLiteSpeed is renowned for its
+                    remarkable performance capabilities, enabling your websites to handle a massive influx of traffic
+                    without compromising on speed or reliability.
+                </p>
+            </div>
+            
+            <div class="feature-section">
+                <h2>
+                    <i class="fas fa-cogs" style="color: var(--accent-color, #5b5fcf);"></i>
+                    Unrivaled Features with Apache
+                </h2>
+                <p>
+                    While OpenLiteSpeed excels in speed and efficiency, Apache is favored by many web developers for its 
+                    extensive feature set and compatibility. Our innovative hybrid approach allows you to harness the full 
+                    potential of Apache as a backend, granting access to an impressive array of modules, scripts, and configurations.
+                </p>
+            </div>
+            
+            <div class="feature-section">
+                <h2>
+                    <i class="fas fa-merge" style="color: var(--accent-color, #5b5fcf);"></i>
+                    The Perfect Fusion
+                </h2>
+                <p>
+                    By merging OpenLiteSpeed and Apache, CyberPanel has created a truly game-changing web server
+                    solution that combines the unparalleled speed of OpenLiteSpeed with the feature-rich environment of
+                    Apache. The result is a synergistic combination that sets new industry standards.
+                </p>
+                
+                <h3>Key Features and Benefits:</h3>
+                <ol class="feature-list">
+                    <li>
+                        <strong>Lightning-Fast Performance:</strong> Experience unrivaled speed and responsiveness, ensuring your
+                        websites load at blazing speeds, delighting visitors and improving search engine rankings.
+                    </li>
+                    <li>
+                        <strong>Versatile Feature Set:</strong> Harness the extensive features of Apache while benefiting from the speed
+                        and efficiency of OpenLiteSpeed, providing unmatched flexibility and compatibility.
+                    </li>
+                    <li>
+                        <strong>Enhanced Security:</strong> CyberPanel's OpenLiteSpeed + Apache configuration includes robust security
+                        measures to safeguard your websites and data against potential threats.
+                    </li>
+                    <li>
+                        <strong>Scalability and Stability:</strong> Enjoy the ability to handle high traffic loads effortlessly, ensuring
+                        your websites remain stable and responsive under any circumstances.
+                    </li>
+                    <li>
+                        <strong>Easy Management:</strong> CyberPanel's user-friendly interface makes it simple to manage and configure
+                        the OpenLiteSpeed + Apache hybrid web server, even for less experienced users.
+                    </li>
+                    <li>
+                        <strong>Cost-Effective Solution:</strong> Optimize your web hosting infrastructure with CyberPanel's innovative
+                        hybrid web server, eliminating the need for costly hardware upgrades while boosting overall performance.
+                    </li>
+                </ol>
+            </div>
+            
+            <div class="video-container">
+                <h3 style="color: var(--text-primary, #2f3640); font-size: 24px; font-weight: 600; margin-bottom: 20px;">
+                    <i class="fas fa-play-circle" style="color: var(--accent-color, #5b5fcf);"></i>
+                    Watch Our Demo
+                </h3>
+                <iframe width="788" height="443" src="https://www.youtube.com/embed/ts5wR9G2FsE"
+                        title="YouTube video player" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen></iframe>
+            </div>
+            
+            <div class="pricing-section">
+                <stripe-pricing-table pricing-table-id="prctbl_1PhTRPRs6rG0dTDlJZMzTw0k"
+                                      publishable-key="pk_live_51PgodkRs6rG0dTDl3jCUgxjyjI983GmCdHjzuLfZIsssmDLgKgnXnwQghVCctKMNFIC5K4oMcviTFrHf1ytsYZGa00AGySiWlF">
+                </stripe-pricing-table>
+            </div>
+        </div>
+    {% endif %}
+
+
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'databases/databases.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "PHPMYAdmin - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        /* PHPMyAdmin Page Styles with Dark Mode Support */
+        .container {
+            background: var(--bg-primary, #f0f0ff);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #page-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #page-title h2 {
+            color: var(--text-primary, #2f3640);
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        #page-title p {
+            color: var(--text-secondary, #8893a7);
+            font-size: 16px;
+        }
+
+        .panel {
+            background: var(--bg-secondary, white);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .panel-body {
+            padding: 30px;
+        }
+
+        .title-hero {
+            color: var(--text-primary, #2f3640);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .example-box-wrapper {
+            background: transparent;
+            text-align: center;
+        }
+
+        .example-box-wrapper p {
+            color: var(--text-secondary, #8893a7);
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: white !important;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover, #4b4fbf);
+            box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.3));
+            transform: translateY(-2px);
+        }
+
+        .btn img {
+            width: 16px;
+            height: 16px;
+            margin-left: 8px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+    </style>
+
+
+    <div ng-controller="phpMyAdmin" class="container">
+        <div id="page-title">
+            <h2>{% trans "PHPMYAdmin" %}</h2>
+            <p>{% trans "Access your databases via PHPMYAdmin" %}</p>
+        </div>
+
+        <div class="panel">
+            <div class="panel-body">
+                <h3 class="title-hero">
+                    {% trans "PHPMYAdmin" %}
+                </h3>
+                <div class="example-box-wrapper">
+
+                    <p>{% trans "Auto-login for PHPMYAdmin is now supported. Click the button below to generate auto-access for PHPMYAdmin" %}</p>
+                    <br>
+                    <a ng-click="generateAccess()" href="#">
+                        <button id="phpMyAdminlogin" class="btn btn-primary">Access Now <img ng-hide="cyberPanelLoading" src="{% static 'images/loading.gif' %}"></button>
+                    </a>
+
+                </div>
+            </div>
+        </div>
+         <!-- Here we are making the phpmyadmin page autoload in current tab -->
+        <script type="text/javascript">
+			$(document).ready(function(){$(function(){$('#phpMyAdminlogin').click();});});
+		</script>
+    </div>
+{% endblock %}

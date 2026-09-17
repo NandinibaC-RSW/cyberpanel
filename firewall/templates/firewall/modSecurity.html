@@ -1,0 +1,651 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "ModSecurity - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    .modern-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .modsec-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .page-subtitle {
+        font-size: 1.125rem;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+    
+    .docs-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .docs-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    /* Install Panel */
+    .install-panel {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+        text-align: center;
+        padding: 3rem;
+    }
+    
+    .install-icon {
+        font-size: 4rem;
+        color: #5b5fcf;
+        margin-bottom: 1.5rem;
+    }
+    
+    .install-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+    }
+    
+    .install-subtitle {
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 2rem;
+    }
+    
+    .btn-install {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 1rem 3rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 1.125rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-install:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    /* Installation Progress */
+    .install-progress {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+        padding: 2rem;
+    }
+    
+    .progress-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .progress-icon {
+        font-size: 2rem;
+        color: #5b5fcf;
+        animation: spin 2s linear infinite;
+    }
+    
+    .progress-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+    }
+    
+    .log-textarea {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 0.875rem;
+        background: var(--bg-tertiary, #1e293b);
+        color: var(--text-accent, #5b5fcf);
+        resize: vertical;
+        min-height: 300px;
+    }
+    
+    /* Configuration Panel */
+    .config-panel {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .panel-header {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .panel-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .panel-icon {
+        width: 32px;
+        height: 32px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .panel-content {
+        padding: 2rem;
+    }
+    
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .form-label {
+        flex: 0 0 200px;
+        font-weight: 600;
+        color: var(--text-secondary, #334155);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .form-control {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.9375rem;
+        transition: all 0.3s ease;
+        background: var(--bg-secondary, #f8f9ff);
+        color: var(--text-primary, #1e293b);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #22c55e;
+        background: var(--bg-primary, white);
+        box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+    }
+    
+    .select-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+    
+    /* Custom Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+    
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--bg-tertiary, #cbd5e1);
+        transition: .4s;
+        border-radius: 26px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+    
+    .switch-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    /* Alerts */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: fadeInUp 0.3s ease-out;
+    }
+    
+    .alert-success {
+        background: var(--alert-success-bg, #e8e6ff);
+        color: var(--alert-success-text, #5856d6);
+        border: 1px solid var(--alert-success-border, #d4d4ff);
+    }
+    
+    .alert-danger {
+        background: var(--alert-error-bg, #fee2e2);
+        color: var(--alert-error-text, #991b1b);
+        border: 1px solid var(--alert-error-border, #fecaca);
+    }
+    
+    .alert-icon {
+        font-size: 1.25rem;
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: var(--alert-info-bg, #f0f9ff);
+        border: 1px solid var(--alert-info-border, #bae6fd);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .info-icon {
+        color: var(--alert-info-text, #0284c7);
+        font-size: 1.25rem;
+    }
+    
+    .info-text {
+        color: var(--alert-info-text, #075985);
+        font-size: 0.875rem;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-color, #f3f3f3);
+        border-top: 2px solid #5b5fcf;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modern-container {
+            padding: 1rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .form-group {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .form-label {
+            flex: none;
+        }
+        
+        .panel-content {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<div class="modern-container" ng-controller="modSec">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="page-title">
+                <div class="modsec-icon">
+                    <i class="fas fa-shield-alt fa-2x"></i>
+                </div>
+                {% trans "ModSecurity WAF" %}
+            </div>
+            <p class="page-subtitle">
+                {% trans "Configure ModSecurity Web Application Firewall to protect your websites from common attacks and vulnerabilities." %}
+            </p>
+            <a href="https://community.cyberpanel.net/t/2-mod-security-configurations/135" target="_blank" class="docs-link">
+                <i class="fas fa-book"></i>
+                {% trans "ModSecurity Documentation" %}
+            </a>
+        </div>
+    </div>
+    
+    {% if modSecInstalled == 0 %}
+        <!-- Installation Panel -->
+        <div class="install-panel">
+            <i class="fas fa-shield-alt install-icon"></i>
+            <h2 class="install-title">{% trans "ModSecurity Not Installed" %}</h2>
+            <p class="install-subtitle">
+                {% trans "Install ModSecurity to add an extra layer of protection to your web applications." %}
+            </p>
+            <button ng-click="installModSec()" class="btn-install">
+                <i class="fas fa-download"></i>
+                {% trans "Install ModSecurity" %}
+            </button>
+        </div>
+        
+        <!-- Installation Progress (Hidden by default) -->
+        <div ng-hide="modeSecInstallBox" class="install-progress" style="margin-top: 2rem;">
+            <div class="progress-header">
+                <i class="fas fa-cog progress-icon"></i>
+                <h3 class="progress-title">{% trans "Installing ModSecurity..." %}</h3>
+            </div>
+            <textarea ng-model="requestData" class="log-textarea" readonly></textarea>
+        </div>
+        
+        <!-- Status Messages -->
+        <div ng-hide="modSecNotifyBox" style="margin-top: 2rem;">
+            <div ng-hide="failedToStartInallation" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Failed to start installation. Error message:" %} {$ errorMessage $}</span>
+            </div>
+            
+            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Could not connect. Please refresh this page." %}</span>
+            </div>
+            
+            <div ng-hide="installationFailed" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Installation failed." %} {$ errorMessage $}</span>
+            </div>
+            
+            <div ng-hide="modSecSuccessfullyInstalled" class="alert alert-success">
+                <i class="fas fa-check-circle alert-icon"></i>
+                <span>{% trans "ModSecurity successfully installed, refreshing page in 3 seconds..." %}</span>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- Configuration Panel -->
+        <div class="config-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <div class="panel-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    {% trans "ModSecurity Configuration" %}
+                </div>
+                <div ng-show="modsecLoading" class="loading-spinner"></div>
+            </div>
+            
+            <div class="panel-content">
+                <div class="info-box">
+                    <i class="fas fa-info-circle info-icon"></i>
+                    <span class="info-text">
+                        {% trans "Configure ModSecurity settings below. Changes will be applied immediately after saving." %}
+                    </span>
+                </div>
+                
+                <form>
+                    {% if OLS %}
+                    <div class="form-group">
+                        <label class="form-label">{% trans "ModSecurity Status" %}</label>
+                        <div class="switch-wrapper">
+                            <label class="switch">
+                                <input type="checkbox" id="modsecurity_status">
+                                <span class="slider"></span>
+                            </label>
+                            <span>{% trans "Enable ModSecurity engine" %}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Audit Engine" %}</label>
+                        <div class="switch-wrapper">
+                            <label class="switch">
+                                <input type="checkbox" id="SecAuditEngine">
+                                <span class="slider"></span>
+                            </label>
+                            <span>{% trans "Enable audit logging" %}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Rule Engine" %}</label>
+                        <div class="switch-wrapper">
+                            <label class="switch">
+                                <input type="checkbox" id="SecRuleEngine">
+                                <span class="slider"></span>
+                            </label>
+                            <span>{% trans "Enable rule processing" %}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Debug Log Level" %}</label>
+                        <select ng-model="SecDebugLogLevel" class="form-control select-control">
+                            <option value="0">0 - {% trans "No logging" %}</option>
+                            <option value="1">1 - {% trans "Errors only" %}</option>
+                            <option value="2">2 - {% trans "Warnings" %}</option>
+                            <option value="3">3 - {% trans "Notices" %}</option>
+                            <option value="4">4 - {% trans "Details" %}</option>
+                            <option value="5">5 - {% trans "Debug" %}</option>
+                            <option value="6">6 - {% trans "Extra debug" %}</option>
+                            <option value="7">7 - {% trans "Very detailed" %}</option>
+                            <option value="8">8 - {% trans "Developer debug" %}</option>
+                            <option value="9">9 - {% trans "Maximum debug" %}</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Audit Log Parts" %}</label>
+                        <input type="text" class="form-control" ng-model="SecAuditLogParts" 
+                               placeholder="ABIJDEFHZ" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Relevant Status" %}</label>
+                        <input type="text" class="form-control" ng-model="SecAuditLogRelevantStatus" 
+                               placeholder="^(?:5|4\d[^4])" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Audit Log Type" %}</label>
+                        <input type="text" class="form-control" ng-model="SecAuditLogType" 
+                               placeholder="Serial" required>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 2rem;">
+                        <label class="form-label"></label>
+                        <button type="button" ng-click="saveModSecConfigurations()" class="btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% trans "Save Configuration" %}
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Status Messages -->
+                <div ng-hide="failedToSave" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                    <span>{% trans "Failed to save ModSecurity configurations. Error message:" %} {$ errorMessage $}</span>
+                </div>
+                
+                <div ng-hide="successfullySaved" class="alert alert-success">
+                    <i class="fas fa-check-circle alert-icon"></i>
+                    <span>{% trans "ModSecurity configurations successfully saved." %}</span>
+                </div>
+                
+                <div ng-hide="couldNotConnect" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                    <span>{% trans "Could not connect. Please refresh this page." %}</span>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

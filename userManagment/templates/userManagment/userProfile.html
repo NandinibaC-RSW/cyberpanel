@@ -1,0 +1,393 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Account Details - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    body {
+        background-color: var(--bg-primary, #f0f0ff);
+    }
+    
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-heading, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    .content-card {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    .profile-intro {
+        background: linear-gradient(135deg, var(--accent-color, #5b5fcf) 0%, var(--accent-hover, #7b7fd0) 100%);
+        color: white;
+        padding: 2.5rem;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .profile-intro-content {
+        overflow: hidden;
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-secondary, white);
+        border-radius: 50%;
+        display: inline-block;
+        float: left;
+        margin-right: 1.5rem;
+        text-align: center;
+        line-height: 80px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .profile-avatar i {
+        font-size: 32px;
+        color: var(--accent-color, #5b5fcf);
+        vertical-align: middle;
+        line-height: 1;
+    }
+    
+    .profile-details {
+        overflow: hidden;
+        padding-top: 0.5rem;
+    }
+    
+    .profile-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-role {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+    }
+    
+    .profile-body {
+        padding: 2.5rem;
+    }
+    
+    .info-section {
+        margin-bottom: 2rem;
+    }
+    
+    .info-section h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border-color, #e8e9ff);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-row {
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color, #f0f0ff);
+        overflow: hidden;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        float: left;
+        width: 200px;
+        color: var(--text-secondary, #8893a7);
+        font-weight: 600;
+        font-size: 13px;
+        line-height: 1.5;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-value {
+        margin-left: 220px;
+        color: var(--text-primary, #2f3640);
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.375rem 1rem;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    .status-active {
+        background: var(--success-bg, #f0fdf4);
+        border: 1px solid var(--success-border, #bbf7d0);
+        color: var(--success-text, #166534);
+    }
+    
+    .limit-badge {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    .info-icon {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        margin-right: 0.5rem;
+        color: var(--accent-color, #5b5fcf);
+        text-align: center;
+    }
+    
+    .stats-grid {
+        margin-top: 2rem;
+        overflow: hidden;
+    }
+    
+    .stats-grid:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+    
+    .stat-card {
+        background: var(--bg-hover, #f8f9ff);
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid var(--border-color, #e8e9ff);
+        transition: all 0.3s ease;
+        float: left;
+        width: 30%;
+        margin-right: 5%;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card:last-child {
+        margin-right: 0;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.1);
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        color: var(--accent-color, #5b5fcf);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        color: var(--text-secondary, #8893a7);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    @media (max-width: 768px) {
+        .info-label {
+            float: none;
+            width: auto;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-value {
+            margin-left: 0;
+        }
+        
+        .stat-card {
+            float: none;
+            width: 100%;
+            margin-right: 0;
+        }
+        
+        .profile-intro {
+            padding: 1.5rem;
+        }
+        
+        .profile-body {
+            padding: 1.5rem;
+        }
+        
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            margin-right: 1rem;
+        }
+        
+        .profile-avatar i {
+            font-size: 24px;
+        }
+        
+        .profile-name {
+            font-size: 1.3rem;
+        }
+        
+        .content-card {
+            padding: 20px;
+        }
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{% trans "Account Details" %}</h1>
+        </div>
+
+        <div class="content-card">
+            <div class="profile-intro">
+                <div class="profile-intro-content">
+                    <div class="profile-avatar">
+                        <i class="fa fa-user"></i>
+                    </div>
+                    <div class="profile-details">
+                        <h2 class="profile-name">{{ firstName }} {{ lastName }}</h2>
+                        <p class="profile-role">
+                            <i class="fa fa-shield-alt"></i> {{ accountACL }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-body">
+                <div class="info-section">
+                    <h3>{% trans "Personal Information" %}</h3>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fa fa-user info-icon"></i>
+                            {% trans "Full Name" %}
+                        </div>
+                        <div class="info-value">{{ firstName }} {{ lastName }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fa fa-at info-icon"></i>
+                            {% trans "Username" %}
+                        </div>
+                        <div class="info-value">{{ userName }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fa fa-envelope info-icon"></i>
+                            {% trans "Email Address" %}
+                        </div>
+                        <div class="info-value">{{ email }}</div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h3>{% trans "Account Details" %}</h3>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fa fa-shield-alt info-icon"></i>
+                            {% trans "Access Level" %}
+                        </div>
+                        <div class="info-value">
+                            <span class="status-badge status-active">{{ accountACL }}</span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fa fa-globe info-icon"></i>
+                            {% trans "Websites Limit" %}
+                        </div>
+                        <div class="info-value">
+                            {% if websitesLimit == "0" %}
+                                <span class="limit-badge">
+                                    <i class="fa fa-infinity"></i> {% trans "Unlimited" %}
+                                </span>
+                            {% else %}
+                                <span class="limit-badge">
+                                    {{ websitesLimit }} {% trans "Websites" %}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fa fa-check-circle stat-icon"></i>
+                        <div class="stat-value">{% trans "Active" %}</div>
+                        <div class="stat-label">{% trans "Account Status" %}</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-calendar stat-icon"></i>
+                        <div class="stat-value">{{ type|default:"User" }}</div>
+                        <div class="stat-label">{% trans "Account Type" %}</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa fa-server stat-icon"></i>
+                        <div class="stat-value">{{ websitesLimit }}</div>
+                        <div class="stat-label">{% trans "Site Limit" %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

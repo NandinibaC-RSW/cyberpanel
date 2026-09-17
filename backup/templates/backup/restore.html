@@ -1,0 +1,488 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'backup/backup.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Restore Website - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    .modern-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--bg-secondary, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+    }
+    
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 1.5rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .info-box {
+        background: var(--accent-light, #e0e7ff);
+        border: 1px solid var(--accent-border, #c7d2fe);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .info-box i {
+        font-size: 1.5rem;
+        color: #5b5fcf;
+    }
+    
+    .info-box p {
+        margin: 0;
+        color: var(--info-dark, #3730a3);
+        font-size: 0.925rem;
+    }
+    
+    .btn-primary {
+        background: #5b5fcf;
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary:hover {
+        background: #4547a9;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(91, 95, 207, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: var(--bg-primary, #fff);
+        color: #5b5fcf;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-secondary, #f8f9ff);
+        border-color: #5b5fcf;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.2);
+    }
+    
+    .main-card {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05)), var(--shadow-lg, 0 10px 40px rgba(0,0,0,0.08));
+        border: 1px solid var(--border-primary, #e8e9ff);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-secondary, #f8f9ff) 0%, var(--bg-hover, #f0f1ff) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        background: var(--bg-primary, #fff);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5b5fcf;
+        box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+    }
+    
+    .restore-progress-card {
+        background: var(--warning-light, #fff3cd);
+        border: 1px solid var(--warning-border, #ffeaa7);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .progress-status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    
+    .status-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .status-icon {
+        width: 40px;
+        height: 40px;
+        background: #f39c12;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulse 2s infinite;
+    }
+    
+    .status-details h4 {
+        margin: 0;
+        color: var(--warning-text, #856404);
+        font-size: 1rem;
+    }
+    
+    .status-details p {
+        margin: 0;
+        color: var(--warning-text, #856404);
+        font-size: 0.875rem;
+        opacity: 0.8;
+    }
+    
+    .backup-select-card {
+        background: var(--bg-secondary, #f8f9ff);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .backup-icon {
+        font-size: 3rem;
+        color: #5b5fcf;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideInRight 0.3s ease-out;
+    }
+    
+    .alert-success {
+        background: var(--success-light, #d1fae5);
+        color: var(--success-text, #065f46);
+        border: 1px solid var(--success-border, #a7f3d0);
+    }
+    
+    .alert-danger {
+        background: var(--danger-light, #fee2e2);
+        color: var(--danger-text, #991b1b);
+        border: 1px solid var(--danger-border, #fecaca);
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-primary, #e8e9ff);
+        border-top-color: #5b5fcf;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+    
+    .progress-table {
+        width: 100%;
+        background: var(--bg-primary, white);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .progress-table th {
+        background: var(--bg-secondary, #f8f9ff);
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .progress-table td {
+        padding: 0.75rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-light, #f3f4f6);
+    }
+    
+    .file-badge {
+        background: var(--accent-light, #e0e7ff);
+        color: #5b5fcf;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        font-family: monospace;
+    }
+    
+    .status-text {
+        font-weight: 600;
+        color: #f39c12;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="restoreWebsiteControl">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-undo-alt"></i>
+            {% trans "Restore Website" %}
+        </h1>
+        <p class="page-subtitle">{% trans "Restore your websites from backups created by CyberPanel" %}</p>
+        <div class="header-actions">
+            <a href="https://cyberpanel.net/KnowledgeBase/home/backup-restore/" target="_blank" class="btn-secondary">
+                <i class="fas fa-book"></i>
+                {% trans "Backup Documentation" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+        <i class="fas fa-info-circle"></i>
+        <p>{% trans "This tool detects all backups under" %} <strong>/home/backup</strong>. {% trans "Backups should be generated from CyberPanel's backup generation tool." %}</p>
+    </div>
+
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-folder-open"></i>
+                {% trans "Select Backup to Restore" %}
+                <span ng-hide="restoreLoading" class="loading-spinner"></span>
+            </h2>
+        </div>
+        <div class="card-body">
+            <form action="/" method="post">
+                <div class="backup-select-card">
+                    <div class="backup-icon">
+                        <i class="fas fa-archive"></i>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-database" style="margin-right: 0.5rem;"></i>
+                            {% trans "Available Backups" %}
+                        </label>
+                        <select ng-change="fetchDetails()" ng-model="backupFile" class="form-control">
+                            <option value="">{% trans "Choose a backup file..." %}</option>
+                            {% for items in backups %}
+                                <option>{{ items }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div ng-hide="restoreButton" style="text-align: center; margin-top: 2rem;">
+                        <button type="button" ng-click="restoreBackup()" id="restoreBackup" class="btn-primary">
+                            <i class="fas fa-sync-alt"></i>
+                            {% trans "Start Restoration" %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Restore Progress -->
+                <div ng-hide="runningRestore" class="restore-progress-card">
+                    <div class="progress-status">
+                        <div class="status-info">
+                            <div class="status-icon">
+                                <i class="fas fa-sync-alt fa-spin" style="color: white;"></i>
+                            </div>
+                            <div class="status-details">
+                                <h4>{% trans "Restoration in Progress" %}</h4>
+                                <p>{% trans "Please wait while your website is being restored..." %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <table class="progress-table" style="margin-top: 1.5rem;">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Condition" %}</th>
+                                <th>{% trans "File Name" %}</th>
+                                <th>
+                                    {% trans "Status" %}
+                                    <span ng-hide="restoreFinished" class="loading-spinner" style="width: 16px; height: 16px; margin-left: 0.5rem;"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{$ running $}</td>
+                                <td><span class="file-badge">{$ fileName $}</span></td>
+                                <td><span class="status-text">{$ status $}</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Alert Messages -->
+                <div ng-hide="backupError" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {% trans "Error message:" %} {$ errorMessage $}
+                </div>
+
+                <div ng-hide="siteExists" class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {% trans "Site related to this backup already exists." %}
+                </div>
+
+                <div ng-hide="couldNotConnect" class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i>
+                    {% trans "Could not connect to server. Please refresh this page." %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

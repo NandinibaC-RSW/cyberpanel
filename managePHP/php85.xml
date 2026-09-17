@@ -1,0 +1,281 @@
+<?xml version="1.0" ?>
+<php>
+     <name>php85</name>
+
+     <extension>
+         <extensionName>lsphp85-debuginfo</extensionName>
+         <extensionDescription>Debug information for package lsphp85</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-igbinary-debuginfo</extensionName>
+         <extensionDescription>Debug information for package lsphp85-pecl-igbinary</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-mcrypt-debuginfo</extensionName>
+         <extensionDescription>lsphp85 lsphp85-pecl-mcrypt-debuginfo Extension</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-bcmath</extensionName>
+         <extensionDescription>A extension for PHP applications for using the bcmath library.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-common</extensionName>
+         <extensionDescription>Common files for PHP.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-dba</extensionName>
+         <extensionDescription>A database abstraction layer extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-devel</extensionName>
+         <extensionDescription>Files needed for building PHP extensions.</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-enchant</extensionName>
+         <extensionDescription>Enchant spelling extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-gd</extensionName>
+         <extensionDescription>A dynamic image creation extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-gmp</extensionName>
+         <extensionDescription>A extension for PHP applications for using the GNU Multiple Precision Arithmetic Library.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-imap</extensionName>
+         <extensionDescription>IMAP extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-intl</extensionName>
+         <extensionDescription>Internationalization extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-json</extensionName>
+         <extensionDescription>lsphp85 Json PHP Extension</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-ldap</extensionName>
+         <extensionDescription>LDAP extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-mbstring</extensionName>
+         <extensionDescription>Multibyte string extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-mysqlnd</extensionName>
+         <extensionDescription>MySQL Native Driver for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-odbc</extensionName>
+         <extensionDescription>ODBC extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-opcache</extensionName>
+         <extensionDescription>OPcache extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pdo</extensionName>
+         <extensionDescription>PHP Data Objects extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pear</extensionName>
+         <extensionDescription>PHP Extension and Application Repository.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-apcu</extensionName>
+         <extensionDescription>APCu - APC User Cache extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-apcu-devel</extensionName>
+         <extensionDescription>Development files for APCu - APC User Cache extension for PHP applications.</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-apcu-panel</extensionName>
+         <extensionDescription>APCu - APC User Cache extension for PHP applications.</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-igbinary</extensionName>
+         <extensionDescription>Igbinary extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-igbinary-devel</extensionName>
+         <extensionDescription>Development files for Igbinary extension for PHP applications.</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-mcrypt</extensionName>
+         <extensionDescription>lsphp85 lsphp85-pecl-mcrypt Extension.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-memcache</extensionName>
+         <extensionDescription>Memcache extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-memcached</extensionName>
+         <extensionDescription>Memcached extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-msgpack</extensionName>
+         <extensionDescription>MessagePack extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-msgpack-devel</extensionName>
+         <extensionDescription>Development files for MessagePack extension for PHP applications.</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-redis</extensionName>
+         <extensionDescription>Redis extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pgsql</extensionName>
+         <extensionDescription>PostgreSQL extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-process</extensionName>
+         <extensionDescription>Process control extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pspell</extensionName>
+         <extensionDescription>PSpell extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-recode</extensionName>
+         <extensionDescription>Recode extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-snmp</extensionName>
+         <extensionDescription>SNMP extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-soap</extensionName>
+         <extensionDescription>SOAP extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-tidy</extensionName>
+         <extensionDescription>Tidy extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-xml</extensionName>
+         <extensionDescription>XML extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-xmlrpc</extensionName>
+         <extensionDescription>XML-RPC extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-zip</extensionName>
+         <extensionDescription>ZIP extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-mcrypt</extensionName>
+         <extensionDescription>Mcrypt extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-dbg</extensionName>
+         <extensionDescription>php85-dbg lsphp85-package</extensionDescription>
+         <status>0</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-ioncube</extensionName>
+         <extensionDescription>IonCube Loader extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-pecl-imagick</extensionName>
+         <extensionDescription>ImageMagick extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+     <extension>
+         <extensionName>lsphp85-sodium</extensionName>
+         <extensionDescription>Sodium extension for PHP applications.</extensionDescription>
+         <status>1</status>
+     </extension>
+
+</php>

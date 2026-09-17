@@ -1,0 +1,573 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Manage PowerDNS - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Manage PowerDNS Specific Styles */
+    .powerdns-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .powerdns-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-light, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-header .icon {
+        width: 48px;
+        height: 48px;
+        background: #5856d6;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .page-header p {
+        font-size: 15px;
+        color: var(--text-secondary, #64748b);
+        margin: 0;
+    }
+    
+    .docs-link {
+        background: #3b82f6;
+        color: white !important;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .docs-link:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+        text-decoration: none;
+    }
+    
+    /* Content Section */
+    .content-section {
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-light, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: #5856d6;
+        border-radius: 2px;
+    }
+    
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 25px;
+        padding: 0 15px;
+    }
+    
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+        display: block;
+        text-transform: none;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-primary, white);
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #5856d6;
+        box-shadow: 0 0 0 3px rgba(88,86,214,0.1);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-primary, white);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #5856d6;
+        box-shadow: 0 0 0 3px rgba(88,86,214,0.1);
+    }
+    
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+    
+    .toggle-switch input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        cursor: pointer;
+        z-index: 2;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--border-color, #e8e9ff);
+        transition: .3s;
+        border-radius: 26px;
+        pointer-events: none;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    input:checked + .toggle-slider {
+        background-color: #5856d6;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+    
+    /* Status Box */
+    .status-box {
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .status-icon {
+        width: 48px;
+        height: 48px;
+        background: #5856d6;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+    }
+    
+    .status-info {
+        flex: 1;
+    }
+    
+    .status-label {
+        font-size: 14px;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 5px;
+    }
+    
+    .status-toggle {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    /* Save Button */
+    .save-btn {
+        background: #5856d6;
+        color: white;
+        border: none;
+        padding: 12px 32px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .save-btn:hover {
+        background: #4644c0;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(88,86,214,0.4);
+    }
+    
+    /* Alert Messages */
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+    }
+    
+    .alert-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    
+    .alert-success {
+        background: var(--alert-success-bg, #d1fae5);
+        color: var(--alert-success-color, #065f46);
+        border: 1px solid var(--alert-success-border, #a7f3d0);
+    }
+    
+    .alert-success .alert-icon {
+        color: #10b981;
+    }
+    
+    .alert-danger {
+        background: var(--alert-danger-bg, #fee2e2);
+        color: var(--alert-danger-color, #991b1b);
+        border: 1px solid var(--alert-danger-border, #fecaca);
+    }
+    
+    .alert-danger .alert-icon {
+        color: #ef4444;
+    }
+    
+    /* Loading Spinner */
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid var(--border-color, #e8e9ff);
+        border-top-color: #5856d6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Configuration Cards */
+    .config-card {
+        background: var(--bg-secondary, #f8f9ff);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .config-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .config-card-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--bg-primary, white);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5856d6;
+        font-size: 16px;
+    }
+    
+    /* Help Text */
+    .help-text {
+        font-size: 13px;
+        color: var(--text-muted, #94a3b8);
+        margin-top: 5px;
+        font-style: italic;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .powerdns-wrapper {
+            padding: 15px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .content-section {
+            padding: 20px;
+        }
+        
+        .status-box {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="powerdns-wrapper">
+    <div class="powerdns-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <div class="icon">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                {% trans "Manage PowerDNS" %}
+            </h1>
+            <p>{% trans "Enable or disable DNS services and configure DNS operation mode" %}</p>
+            <div style="margin-top: 20px;">
+                <a target="_blank" href="https://cyberpanel.net/KnowledgeBase/home/dns-management-cyberpanel/" class="docs-link">
+                    <i class="fas fa-book"></i>
+                    {% trans "Services Docs" %}
+                </a>
+            </div>
+        </div>
+
+        {% if status %}
+        <div ng-controller="powerDNS">
+            <!-- Status Section -->
+            <div class="content-section">
+                <h2 class="section-title">
+                    {% trans "PowerDNS Status" %}
+                    <span ng-hide="pdnsLoading" class="loading-spinner"></span>
+                </h2>
+                
+                <div class="status-box">
+                    <div class="status-icon">
+                        <i class="fas fa-power-off"></i>
+                    </div>
+                    <div class="status-info">
+                        <div class="status-label">{% trans "Service Status" %}</div>
+                        <div class="status-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="pdnsStatus">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span style="font-weight: 600; color: var(--text-primary, #2f3640);">{% trans "Enable/Disable PowerDNS" %}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div class="content-section">
+                <h2 class="section-title">{% trans "DNS Configuration" %}</h2>
+                
+                <form>
+
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Select Function Mode" %}</label>
+                        <select ng-change="modeChange()" ng-model="dnsMode" class="form-select">
+                            <option>Default</option>
+                            <option>MASTER</option>
+                            <option>SLAVE</option>
+                        </select>
+                        <div class="help-text">{% trans "Choose how PowerDNS should operate - Default, Master, or Slave mode" %}</div>
+                    </div>
+
+                    <!-- Slave Mode Configuration -->
+                    <div ng-hide="masterServerHD" class="config-card">
+                        <div class="config-card-title">
+                            <div class="config-card-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            {% trans "Slave Mode Configuration" %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Slave Server" %}</label>
+                            <input type="text" class="form-control" ng-init="slaveServerNS='{{ slaveServerNS }}'" ng-model="slaveServerNS" placeholder="ns1.example.com" required>
+                            <div class="help-text">{% trans "Enter the hostname of the slave server" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Master Server IP" %}</label>
+                            <input type="text" class="form-control" ng-init="masterServerIP='{{ masterServerIP }}'" ng-model="masterServerIP" placeholder="192.168.1.100" required>
+                            <div class="help-text">{% trans "Enter the IP address of the master server" %}</div>
+                        </div>
+                    </div>
+
+                    <!-- Master Mode Configuration -->
+                    <div ng-hide="slaveIPs" class="config-card">
+                        <div class="config-card-title">
+                            <div class="config-card-icon">
+                                <i class="fas fa-network-wired"></i>
+                            </div>
+                            {% trans "Master Mode Configuration" %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Slave Server 1" %}</label>
+                            <input type="text" class="form-control" ng-init="slaveServer='{{ slaveServer }}'" ng-model="slaveServer" placeholder="ns2.example.com" required>
+                            <div class="help-text">{% trans "Enter the hostname of the first slave server" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Slave Server IP" %}</label>
+                            <input type="text" class="form-control" ng-init="slaveServerIP='{{ slaveServerIP }}'" ng-model="slaveServerIP" placeholder="192.168.1.101" required>
+                            <div class="help-text">{% trans "Enter the IP address of the first slave server" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Slave Server 2 (Optional)" %}</label>
+                            <input type="text" class="form-control" ng-init="slaveServer2='{{ slaveServer2 }}'" ng-model="slaveServer2" placeholder="ns3.example.com">
+                            <div class="help-text">{% trans "Enter the hostname of the second slave server (optional)" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Slave Server IP 2 (Optional)" %}</label>
+                            <input type="text" class="form-control" ng-init="slaveServerIP2='{{ slaveServerIP2 }}'" ng-model="slaveServerIP2" placeholder="192.168.1.102">
+                            <div class="help-text">{% trans "Enter the IP address of the second slave server (optional)" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Slave Server 3 (Optional)" %}</label>
+                            <input type="text" class="form-control" ng-init="slaveServer3='{{ slaveServer3 }}'" ng-model="slaveServer3" placeholder="ns4.example.com">
+                            <div class="help-text">{% trans "Enter the hostname of the third slave server (optional)" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Slave Server IP 3 (Optional)" %}</label>
+                            <input type="text" class="form-control" ng-init="slaveServerIP3='{{ slaveServerIP3 }}'" ng-model="slaveServerIP3" placeholder="192.168.1.103">
+                            <div class="help-text">{% trans "Enter the IP address of the third slave server (optional)" %}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px;">
+                        <button type="button" ng-click="saveStatus('powerdns')" class="save-btn">
+                            <i class="fas fa-save"></i>
+                            {% trans "Save changes" %}
+                        </button>
+                    </div>
+
+                    <!-- Alert Messages -->
+                    <div style="margin-top: 20px;">
+                        <div ng-hide="failedToFetch" class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle alert-icon"></i>
+                            <span>{% trans "Error message: " %} {$ errorMessage $}</span>
+                        </div>
+
+                        <div ng-hide="changesApplied" class="alert alert-success">
+                            <i class="fas fa-check-circle alert-icon"></i>
+                            <span>{% trans "Changes successfully applied." %}</span>
+                        </div>
+
+                        <div ng-hide="couldNotConnect" class="alert alert-danger">
+                            <i class="fas fa-wifi alert-icon"></i>
+                            <span>{% trans "Could not connect. Please refresh this page." %}</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="content-section">
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Only administrator can manage services." %}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Initialize toggle switch
+    setTimeout(function() {
+        $('#pdnsStatus').bootstrapToggle({
+            on: 'Enabled',
+            off: 'Disabled',
+            onstyle: 'success',
+            offstyle: 'secondary',
+            size: 'normal'
+        });
+    }, 100);
+});
+</script>
+
+
+{% endblock %}

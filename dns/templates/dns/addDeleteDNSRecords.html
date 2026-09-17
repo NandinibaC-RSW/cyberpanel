@@ -1,0 +1,1161 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "DNS Records Manager - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern DNS Manager Styles with Dark Mode Support */
+    /* Commented out hardcoded :root variables - now using base template variables for proper dark mode support
+    :root {
+        --primary-color: #5b5fcf;
+        --primary-hover: #4a4fc4;
+        --primary-light: #eef0ff;
+        --secondary-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #ffa000;
+        --success-color: #10b981;
+        
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9ff;
+        --bg-tertiary: #fafbff;
+        --bg-hover: #f8f9ff;
+        --bg-light: #f1f5f9;
+        --bg-gradient: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+        
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --text-light: #cbd5e1;
+        
+        --border-color: #e8e9ff;
+        --border-light: #e2e8f0;
+        --border-hover: #5b5fcf;
+        
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+        --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+        --shadow-primary: 0 4px 12px rgba(91,95,207,0.2);
+        --shadow-success: 0 2px 8px rgba(16,185,129,0.3);
+        
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 10px;
+        --radius-xl: 12px;
+        --radius-2xl: 16px;
+        
+        --transition-base: all 0.2s ease;
+    } */
+    
+    .dns-manager {
+        background: transparent;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    
+    .dns-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* Header Styles */
+    .dns-header {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .dns-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 8px;
+    }
+    
+    .dns-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.6;
+    }
+    
+    .docs-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: var(--bg-secondary, #f8f9ff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .docs-link:hover {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-primary, #ffffff);
+        transform: translateY(-1px);
+        box-shadow: var(--accent-shadow, 0 4px 12px rgba(91,95,207,0.2));
+    }
+    
+    /* PowerDNS Disabled State */
+    .powerdns-disabled {
+        background: var(--warning-light, #fff8e1);
+        border: 1px solid var(--warning-border, #ffe082);
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .powerdns-disabled i {
+        font-size: 48px;
+        color: var(--warning-color, #ffa000);
+        margin-bottom: 20px;
+    }
+    
+    .powerdns-disabled h3 {
+        font-size: 20px;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 20px;
+    }
+    
+    /* Main Content Card */
+    .dns-content-card {
+        background: var(--bg-primary, #ffffff);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05)), var(--shadow-lg, 0 10px 40px rgba(0,0,0,0.08));
+        border: 1px solid var(--border-primary, #e8e9ff);
+        overflow: hidden;
+    }
+    
+    /* Domain Selector */
+    .domain-selector-section {
+        padding: 30px;
+        background: linear-gradient(135deg, var(--bg-secondary, #f8f9ff) 0%, var(--bg-primary, #fff) 100%);
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .domain-selector-wrapper {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .domain-selector-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        display: block;
+    }
+    
+    .domain-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--border-primary, #e8e9ff);
+        border-radius: 10px;
+        font-size: 15px;
+        color: var(--text-primary, #1e293b);
+        background: var(--bg-primary, #ffffff);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .domain-select:hover {
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .domain-select:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    /* Records Section */
+    .records-section {
+        padding: 0;
+    }
+    
+    /* Record Type Tabs */
+    .record-type-tabs {
+        background: var(--bg-secondary, #fafbff);
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+        padding: 0 30px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .record-type-tabs ul {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        min-width: max-content;
+    }
+    
+    .record-type-tabs li {
+        position: relative;
+    }
+    
+    .record-type-tabs a {
+        display: flex;
+        align-items: center;
+        padding: 20px 24px;
+        color: var(--text-secondary, #64748b);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        position: relative;
+        white-space: nowrap;
+    }
+    
+    .record-type-tabs li.active a {
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    .record-type-tabs li.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 3px 3px 0 0;
+    }
+    
+    .record-type-tabs a:hover {
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    /* Record Type Badge */
+    .record-type-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: var(--border-primary, #e8e9ff);
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-right: 10px;
+        transition: all 0.2s ease;
+    }
+    
+    .record-type-tabs li.active .record-type-badge {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-primary, #ffffff);
+    }
+    
+    /* Add Record Form */
+    .add-record-form {
+        padding: 30px;
+        background: var(--bg-secondary, #fafbff);
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .record-form-grid {
+        display: grid;
+        gap: 16px;
+        align-items: end;
+    }
+    
+    /* Different grid layouts for different record types */
+    .record-form-grid.grid-3 {
+        grid-template-columns: 1fr 200px 1fr 120px;
+    }
+    
+    .record-form-grid.grid-4 {
+        grid-template-columns: 1fr 180px 180px 1fr 120px;
+    }
+    
+    .form-field {
+        position: relative;
+    }
+    
+    .form-field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-field input,
+    .form-field select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-light, #e2e8f0);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #1e293b);
+        background: var(--bg-primary, #ffffff);
+        transition: all 0.2s ease;
+    }
+    
+    .form-field input:hover,
+    .form-field select:hover {
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .form-field input:focus,
+    .form-field select:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    .form-field input[disabled] {
+        background: var(--bg-hover, #f1f5f9);
+        cursor: not-allowed;
+    }
+    
+    /* Add Button */
+    .btn-add-record {
+        padding: 10px 20px;
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-primary, #ffffff);
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 42px;
+    }
+    
+    .btn-add-record:hover {
+        background: var(--accent-hover, #4a4fc4);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+    }
+    
+    /* Records Table */
+    .records-table-section {
+        padding: 30px;
+    }
+    
+    .records-table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .records-table-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .records-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 10px;
+        background: var(--border-primary, #e8e9ff);
+        color: var(--accent-color, #5b5fcf);
+        border-radius: 14px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    
+    /* Modern Table */
+    .modern-dns-table {
+        width: 100%;
+        background: var(--bg-primary, #ffffff);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .modern-dns-table thead {
+        background: var(--bg-secondary, #f8f9ff);
+    }
+    
+    .modern-dns-table th {
+        padding: 16px 20px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-primary, #e8e9ff);
+    }
+    
+    .modern-dns-table td {
+        padding: 12px 20px;
+        font-size: 14px;
+        color: var(--text-primary, #1e293b);
+        border-bottom: 1px solid var(--border-light, #f0f0f0);
+    }
+    
+    .modern-dns-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .modern-dns-table tbody tr:hover {
+        background: var(--bg-secondary, #fafbff);
+    }
+    
+    /* Type Badge in Table */
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        background: var(--border-primary, #e8e9ff);
+        color: var(--accent-color, #5b5fcf);
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Editable Input Fields */
+    .editable-input {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: 'Courier New', monospace;
+        background: transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .editable-input:hover {
+        background: var(--bg-secondary, #f8f9ff);
+        border-color: var(--border-primary, #e8e9ff);
+    }
+    
+    .editable-input:focus {
+        outline: none;
+        background: var(--bg-primary, #ffffff);
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    /* Action Buttons */
+    .record-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .btn-action {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .btn-save {
+        background: var(--success-color, #10b981);
+        color: var(--bg-primary, #ffffff);
+    }
+    
+    .btn-save:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: var(--success-shadow, 0 2px 8px rgba(16,185,129,0.3));
+    }
+    
+    .btn-delete {
+        background: transparent;
+        color: var(--danger-color, #ef4444);
+        padding: 8px;
+    }
+    
+    .btn-delete:hover {
+        background: var(--danger-light, #fee2e2);
+        border-radius: 6px;
+    }
+    
+    /* Loading State */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--border-primary, #e8e9ff);
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 30px;
+        color: var(--text-muted, #94a3b8);
+    }
+    
+    .empty-state i {
+        font-size: 48px;
+        color: var(--text-muted, #cbd5e1);
+        margin-bottom: 20px;
+    }
+    
+    .empty-state-text {
+        font-size: 16px;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 8px;
+    }
+    
+    .empty-state-subtext {
+        font-size: 14px;
+        color: var(--text-muted, #94a3b8);
+    }
+    
+    /* Alerts */
+    .dns-alerts {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 400px;
+    }
+    
+    .dns-alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideIn 0.3s ease-out;
+        box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1));
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .dns-alert-success {
+        background: var(--success-light, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        color: var(--success-text, #2e7d32);
+    }
+    
+    .dns-alert-error {
+        background: var(--danger-light, #ffebee);
+        border: 1px solid var(--danger-border, #ffcdd2);
+        color: var(--danger-text, #c62828);
+    }
+    
+    /* Tooltips */
+    .tooltip-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .tooltip-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        background: var(--border-primary, #e8e9ff);
+        color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        font-size: 10px;
+        cursor: help;
+        margin-left: 6px;
+    }
+    
+    /* Hide record type sections by default */
+    .aRecord, .aaaaRecord, .cNameRecord, .mxRecord, .txtRecord,
+    .spfRecord, .nsRecord, .soaRecord, .srvRecord, .caaRecord {
+        display: none;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .record-form-grid {
+            grid-template-columns: 1fr !important;
+        }
+        
+        .btn-add-record {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .dns-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .modern-dns-table {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .record-type-tabs {
+            padding: 0 16px;
+        }
+        
+        .record-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="dns-manager" ng-controller="addModifyDNSRecords">
+    <div class="dns-container">
+        <div class="dns-header">
+            <div>
+                <h1 class="dns-title">{% trans "DNS Records Manager" %}</h1>
+                <p class="dns-subtitle">{% trans "Manage DNS records for your domains with an intuitive interface" %}</p>
+            </div>
+            <a href="https://cyberpanel.net/KnowledgeBase/home/manage-dns-in-cyberpanel/" target="_blank" class="docs-link">
+                <i class="fas fa-book"></i>
+                {% trans "DNS Documentation" %}
+            </a>
+        </div>
+
+        {% if not status %}
+        <div class="powerdns-disabled">
+            <i class="fas fa-exclamation-circle"></i>
+            <h3>{% trans "PowerDNS is disabled" %}</h3>
+            <p style="margin-bottom: 24px; color: var(--text-secondary, #64748b);">{% trans "You need to enable PowerDNS to manage DNS records" %}</p>
+            <a href="{% url 'managePowerDNS' %}" class="btn-add-record" style="display: inline-flex;">
+                <i class="fas fa-power-off"></i>
+                {% trans "Enable PowerDNS" %}
+            </a>
+        </div>
+        {% else %}
+        
+        <div class="dns-content-card">
+            <!-- Domain Selector -->
+            <div class="domain-selector-section">
+                <div class="domain-selector-wrapper">
+                    <label class="domain-selector-label">
+                        <i class="fas fa-globe" style="margin-right: 6px;"></i>
+                        {% trans "Select Domain" %}
+                    </label>
+                    <select ng-change="fetchRecords()" ng-model="selectedZone" class="domain-select">
+                        <option value="">-- {% trans "Choose a domain to manage DNS records" %} --</option>
+                        {% for items in domainsList %}
+                        <option>{{ items }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Records Section -->
+            <div class="records-section" ng-hide="addRecordsBox">
+                <!-- Record Type Tabs -->
+                <div class="record-type-tabs">
+                    <ul>
+                        <li ng-click="fetchRecordsTabs('aRecord')" id="aRecord">
+                            <a href="">
+                                <span class="record-type-badge">A</span>
+                                {% trans "A Record" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('aaaaRecord')" id="aaaaRecord">
+                            <a href="">
+                                <span class="record-type-badge">AAAA</span>
+                                {% trans "IPv6" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('cNameRecord')" id="cNameRecord">
+                            <a href="">
+                                <span class="record-type-badge">CNAME</span>
+                                {% trans "Alias" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('mxRecord')" id="mxRecord">
+                            <a href="">
+                                <span class="record-type-badge">MX</span>
+                                {% trans "Mail" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('txtRecord')" id="txtRecord">
+                            <a href="">
+                                <span class="record-type-badge">TXT</span>
+                                {% trans "Text" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('spfRecord')" id="spfRecord">
+                            <a href="">
+                                <span class="record-type-badge">SPF</span>
+                                {% trans "SPF" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('nsRecord')" id="nsRecord">
+                            <a href="">
+                                <span class="record-type-badge">NS</span>
+                                {% trans "Nameserver" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('soaRecord')" id="soaRecord">
+                            <a href="">
+                                <span class="record-type-badge">SOA</span>
+                                {% trans "Start of Authority" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('srvRecord')" id="srvRecord">
+                            <a href="">
+                                <span class="record-type-badge">SRV</span>
+                                {% trans "Service" %}
+                            </a>
+                        </li>
+                        <li ng-click="fetchRecordsTabs('caaRecord')" id="caaRecord">
+                            <a href="">
+                                <span class="record-type-badge">CAA</span>
+                                {% trans "CAA" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Add Record Forms -->
+                <div class="add-record-form">
+                    <!-- A Record -->
+                    <div class="aRecord">
+                        <div class="record-form-grid grid-3">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input placeholder="{% trans 'subdomain' %}" type="text" ng-model="recordName">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}
+                                    <span class="tooltip-wrapper">
+                                        <span class="tooltip-icon">?</span>
+                                    </span>
+                                </label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "IPv4 Address" %}</label>
+                                <input placeholder="192.168.1.1" type="text" ng-model="recordContentA">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('A')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add A Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AAAA Record -->
+                    <div class="aaaaRecord">
+                        <div class="record-form-grid grid-3">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input placeholder="{% trans 'subdomain' %}" type="text" ng-model="recordName">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "IPv6 Address" %}</label>
+                                <input placeholder="2001:db8::1" type="text" ng-model="recordContentAAAA">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('AAAA')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add AAAA Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CNAME Record -->
+                    <div class="cNameRecord">
+                        <div class="record-form-grid grid-3">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input placeholder="{% trans 'alias' %}" type="text" ng-model="recordName">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "Target Domain" %}</label>
+                                <input placeholder="example.com" type="text" ng-model="recordContentCNAME">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('CNAME')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add CNAME Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MX Record -->
+                    <div class="mxRecord">
+                        <div class="record-form-grid grid-4">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input placeholder="@" type="text" ng-model="recordName">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "Priority" %}</label>
+                                <input placeholder="10" type="number" ng-model="priority">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "Mail Server" %}</label>
+                                <input placeholder="mail.example.com" type="text" ng-model="recordContentMX">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('MX')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add MX Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TXT Record -->
+                    <div class="txtRecord">
+                        <div class="record-form-grid grid-3">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input placeholder="@" type="text" ng-model="recordName">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "Text Value" %}</label>
+                                <input placeholder="v=spf1 include:_spf.example.com ~all" type="text" ng-model="recordContentTXT">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('TXT')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add TXT Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SPF Record -->
+                    <div class="spfRecord">
+                        <div class="record-form-grid grid-3">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input placeholder="@" type="text" ng-model="recordName">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "SPF Policy" %}</label>
+                                <input placeholder="v=spf1 ip4:192.168.1.0/24 -all" type="text" ng-model="recordContentSPF">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('SPF')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add SPF Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- NS Record -->
+                    <div class="nsRecord">
+                        <div class="record-form-grid grid-3">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input type="text" ng-model="selectedZone" disabled>
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "Nameserver" %}</label>
+                                <input placeholder="ns1.example.com" type="text" ng-model="recordContentNS">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('NS')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add NS Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SOA Record -->
+                    <div class="soaRecord">
+                        <div class="record-form-grid grid-3">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input type="text" ng-model="selectedZone" disabled>
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "SOA Value" %}</label>
+                                <input placeholder="ns1.example.com. admin.example.com. 2023010101 3600 1800 604800 86400" type="text" ng-model="recordContentSOA">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('SOA')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add SOA Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SRV Record -->
+                    <div class="srvRecord">
+                        <div class="record-form-grid grid-4">
+                            <div class="form-field">
+                                <label>{% trans "Service Name" %}</label>
+                                <input placeholder="_service._proto.name" type="text" ng-model="recordName">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "Priority" %}</label>
+                                <input placeholder="10" type="number" ng-model="priority">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "Target" %}</label>
+                                <input placeholder="10 60 5060 server.example.com" type="text" ng-model="recordContentSRV">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('SRV')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add SRV Record" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CAA Record -->
+                    <div class="caaRecord">
+                        <div class="record-form-grid grid-3">
+                            <div class="form-field">
+                                <label>{% trans "Name" %}</label>
+                                <input placeholder="@" type="text" ng-model="recordName">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "TTL" %}</label>
+                                <input placeholder="3600" type="number" min="0" max="86400" ng-model="ttl">
+                            </div>
+                            <div class="form-field">
+                                <label>{% trans "CAA Value" %}</label>
+                                <input placeholder='0 issue "letsencrypt.org"' type="text" ng-model="recordContentCAA">
+                            </div>
+                            <button type="button" ng-click="addDNSRecord('CAA')" class="btn-add-record">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add CAA Record" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Records Table -->
+                <div class="records-table-section" ng-hide="currentRecords">
+                    <div class="records-table-header">
+                        <h3 class="records-table-title">
+                            {% trans "DNS Records" %}
+                            <span class="records-count">{$ records.length $}</span>
+                        </h3>
+                        <span ng-hide="recordsLoading" class="loading-spinner"></span>
+                    </div>
+
+                    <div ng-show="records.length > 0">
+                        <table class="modern-dns-table">
+                            <thead>
+                                <tr>
+                                    <th width="80">{% trans "Type" %}</th>
+                                    <th>{% trans "Name" %}</th>
+                                    <th width="100">{% trans "TTL" %}</th>
+                                    <th>{% trans "Value" %}</th>
+                                    <th width="100">{% trans "Priority" %}</th>
+                                    <th width="140">{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="record in records track by $index">
+                                    <td>
+                                        <span class="type-badge">{$ record.type $}</span>
+                                    </td>
+                                    <td>
+                                        <input ng-change="setupContent(record.id, 'name', nameNow)"
+                                               ng-model="nameNow" type="text" class="editable-input"
+                                               ng-value="record.name">
+                                    </td>
+                                    <td>
+                                        <input ng-change="setupContent(record.id, 'ttl', ttlNow)"
+                                               ng-model="ttlNow" type="number" class="editable-input"
+                                               ng-value="record.ttl">
+                                    </td>
+                                    <td>
+                                        <input ng-change="setupContent(record.id, 'content', contentNow)"
+                                               ng-model="contentNow" type="text" class="editable-input"
+                                               ng-value="record.content">
+                                    </td>
+                                    <td>
+                                        <input ng-change="setupContent(record.id, 'priority', priorityNow)"
+                                               type="number" class="editable-input" ng-model="priorityNow"
+                                               ng-value="record.priority">
+                                    </td>
+                                    <td>
+                                        <div class="record-actions">
+                                            <button type="button" ng-click="saveNow(record.id)" class="btn-action btn-save">
+                                                <i class="fas fa-save"></i>
+                                                {% trans "Save" %}
+                                            </button>
+                                            <button type="button" ng-click="deleteRecord(record.id)" class="btn-action btn-delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div ng-show="records.length === 0" class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <div class="empty-state-text">{% trans "No records found" %}</div>
+                        <div class="empty-state-subtext">{% trans "Add your first DNS record using the form above" %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Container -->
+        <div class="dns-alerts" id="dnsAlertsContainer">
+            <!-- Alerts will be dynamically inserted here -->
+        </div>
+        
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script>
+// DNS Alert System
+var dnsAlertSystem = {
+    showAlert: function(message, type, duration) {
+        var alertClass = type === 'success' ? 'dns-alert-success' : 'dns-alert-error';
+        var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        duration = duration || 5000;
+        
+        var alertHtml = '<div class="dns-alert ' + alertClass + '" style="display:none;">' +
+                       '<i class="fas ' + icon + '"></i>' +
+                       '<span>' + message + '</span>' +
+                       '</div>';
+        
+        var $alert = $(alertHtml);
+        $('#dnsAlertsContainer').append($alert);
+        $alert.fadeIn(300);
+        
+        setTimeout(function() {
+            $alert.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, duration);
+    }
+};
+
+// Initialize and enhance Angular controller
+$(document).ready(function() {
+    $('.aRecord').show();
+    
+    // Wait for Angular to initialize
+    setTimeout(function() {
+        var scope = angular.element($('[ng-controller="addModifyDNSRecords"]')).scope();
+        if (scope) {
+            // Override the visibility control to use our alert system
+            scope.$watch('recordsFetched', function(newVal, oldVal) {
+                if (!newVal && oldVal) {
+                    dnsAlertSystem.showAlert('Records successfully fetched for <strong>' + scope.domainFeteched + '</strong>', 'success');
+                }
+            });
+            
+            scope.$watch('recordAdded', function(newVal, oldVal) {
+                if (!newVal && oldVal) {
+                    dnsAlertSystem.showAlert('Record Successfully Added', 'success');
+                }
+            });
+            
+            scope.$watch('recordDeleted', function(newVal, oldVal) {
+                if (!newVal && oldVal) {
+                    dnsAlertSystem.showAlert('Record Successfully Deleted', 'success');
+                }
+            });
+            
+            scope.$watch('canNotFetchRecords', function(newVal, oldVal) {
+                if (!newVal && oldVal) {
+                    dnsAlertSystem.showAlert('Cannot fetch records. Error message: ' + scope.errorMessage, 'error');
+                }
+            });
+            
+            scope.$watch('couldNotAddRecord', function(newVal, oldVal) {
+                if (!newVal && oldVal) {
+                    dnsAlertSystem.showAlert('Cannot add record. Error message: ' + scope.errorMessage, 'error');
+                }
+            });
+            
+            scope.$watch('couldNotDeleteRecords', function(newVal, oldVal) {
+                if (!newVal && oldVal) {
+                    dnsAlertSystem.showAlert('Cannot delete record. Error message: ' + scope.errorMessage, 'error');
+                }
+            });
+            
+            scope.$watch('couldNotConnect', function(newVal, oldVal) {
+                if (!newVal && oldVal) {
+                    dnsAlertSystem.showAlert('Could not connect to server. Please refresh this page.', 'error');
+                }
+            });
+        }
+    }, 100);
+});
+</script>
+{% endblock %}

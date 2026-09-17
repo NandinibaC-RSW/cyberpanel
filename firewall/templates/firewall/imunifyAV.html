@@ -1,0 +1,108 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'firewall/firewall.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "ImunifyAV - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+
+    <div class="container">
+        <div id="page-title">
+            <h2>{% trans "ImunifyAV" %} - <a target="_blank"
+                                              href="https://cyberpanel.net/KnowledgeBase/home/install-and-use-imunify-on-cyberpanel/"
+                                              style="height: 23px;line-height: 21px;"
+                                              class="btn btn-border btn-alt border-red btn-link font-red"
+                                              title=""><span>{% trans "Imunify Docs" %}</span></a></h2>
+            <p>{% trans "Access ImunifyAV" %}</p>
+        </div>
+
+        <div class="panel">
+            <div class="panel-body">
+                <h3 class="title-hero">
+                    {% trans "ImunifyAV" %}
+                </h3>
+                <div class="example-box-wrapper">
+
+                    <p>{% trans "ImunifyAV is now integrated via their new API. You can manage Imunify by clicking below. You can use your server root credentials to access Imunify." %}</p>
+                    <br>
+                    <a target="_blank" href="/imunifyav">
+                        <button class="btn btn-primary">Access Now
+                        </button>
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+        <div ng-controller="installImunifyAV" class="panel">
+            <div class="panel-body">
+                <h3 class="title-hero">
+                    {% trans "ImunifyAV Not Working?" %} <img ng-hide="installDockerStatus"
+                                                    src="{% static 'images/loading.gif' %}">
+                </h3>
+                <div class="example-box-wrapper">
+
+                    <p>{% trans "If for some reason ImunifyAV is not working, you can re-install it using the form below." %}</p><br>
+                    <!------ LSWS Switch box ----------------->
+
+                    <div class="alert alert-info">
+                        <div class="bg-black alert-icon">
+                            <i class="glyph-icon icon-comment"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h4 class="alert-title">We will run following commands again:</h4>
+                            <br>
+                            <p><code>mkdir /usr/local/CyberCP/public/imunifyav</code></p>
+                            <br>
+                            <p><code>wget https://repo.imunify360.cloudlinux.com/defence360/imav-deploy.sh</code></p>
+                            <br>
+                            <p><code>bash imav-deploy.sh</code></p>
+                            <br>
+
+                            <p>If you can still not access ImunifyAV after re-installation, just run
+                                the above commands on your server terminal.</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2%" ng-hide="installBoxGen" class="col-md-12">
+
+                        <form action="/" id="" class="form-horizontal bordered-row">
+
+                            <div class="form-group">
+                                <div style="margin-top: 2%;" class="col-sm-12">
+                                            <textarea ng-model="requestData" rows="15"
+                                                      class="form-control">{{ requestData }}</textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+
+                    <!----- LSWS Switch box ----------------->
+                    <br>
+
+                    <form action="/" id="" class="form-horizontal bordered-row">
+
+                        <div ng-hide="dockerInstallBTN" ng-hide="installationDetailsForm" class="form-group">
+                            <label class="col-sm-3 control-label"></label>
+                            <div class="col-sm-6">
+                                <button type="button" class="btn btn-primary"
+                                        ng-click="submitinstallImunify()">
+                                    Install Now
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
+

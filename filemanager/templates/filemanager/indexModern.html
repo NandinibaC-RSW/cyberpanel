@@ -1,0 +1,1433 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+    {% trans "File Manager - CyberPanel" %}
+{% endblock %}
+
+{% block header_scripts %}
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<style>
+    /* Modern File Manager Styles */
+    .fm-container {
+        background: #f8f9ff;
+        min-height: calc(100vh - 80px);
+        padding: 20px;
+    }
+    
+    /* Glass morphism effect */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+    }
+    
+    /* Toolbar */
+    .fm-toolbar {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        border-radius: 20px;
+        padding: 16px 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(88, 86, 214, 0.08);
+        border: 1px solid rgba(88, 86, 214, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .fm-toolbar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(88, 86, 214, 0.2), transparent);
+    }
+    
+    .fm-toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+    }
+    
+    .fm-toolbar-group:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: -14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1px;
+        height: 24px;
+        background: #e5e7eb;
+    }
+    
+    .fm-btn {
+        background: rgba(88, 86, 214, 0.08);
+        color: #5856d6;
+        border: 1px solid transparent;
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .fm-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(88, 86, 214, 0.1);
+        transition: left 0.3s ease;
+    }
+    
+    .fm-btn:hover:not(:disabled)::before {
+        left: 0;
+    }
+    
+    .fm-btn:hover:not(:disabled) {
+        background: rgba(88, 86, 214, 0.12);
+        border-color: rgba(88, 86, 214, 0.2);
+        transform: translateY(-1px);
+    }
+    
+    .fm-btn:active:not(:disabled) {
+        transform: translateY(0);
+    }
+    
+    .fm-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    
+    .fm-btn i {
+        font-size: 14px;
+    }
+    
+    .fm-btn.primary {
+        background: #5856d6;
+        color: white;
+        border-color: #5856d6;
+        box-shadow: 0 2px 8px rgba(88, 86, 214, 0.3);
+    }
+    
+    .fm-btn.primary:hover {
+        background: #4543c5;
+        border-color: #4543c5;
+        box-shadow: 0 4px 12px rgba(88, 86, 214, 0.4);
+    }
+    
+    .fm-btn.danger {
+        background: rgba(255, 107, 107, 0.1);
+        color: #ff6b6b;
+        border-color: transparent;
+    }
+    
+    .fm-btn.danger:hover {
+        background: #ff6b6b;
+        color: white;
+        border-color: #ff6b6b;
+        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+    }
+    
+    /* Path Breadcrumb */
+    .fm-path {
+        background: white;
+        border-radius: 16px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        overflow-x: auto;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-height: 56px;
+        max-height: 56px;
+    }
+    
+    .fm-path-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #94a3b8;
+        text-decoration: none;
+        transition: color 0.2s ease;
+        white-space: nowrap;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+    
+    .fm-path-item:hover {
+        color: #5856d6;
+    }
+    
+    .fm-path-separator {
+        color: #cbd5e1;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    
+    /* Breadcrumb scrollbar */
+    .fm-path::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .fm-path::-webkit-scrollbar-track {
+        background: #f3f4f6;
+        border-radius: 2px;
+    }
+    
+    .fm-path::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 2px;
+    }
+    
+    .fm-path::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    /* Main Layout */
+    .fm-main {
+        display: flex;
+        gap: 20px;
+        height: calc(100vh - 300px);
+    }
+    
+    /* Sidebar Tree */
+    .fm-sidebar {
+        width: 280px;
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        overflow-y: auto;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    
+    .fm-sidebar[style*="display: none"] {
+        margin-right: 0 !important;
+    }
+    
+    .fm-sidebar.collapsed {
+        width: 60px;
+        padding: 10px;
+    }
+    
+    .fm-tree-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f3f1ff;
+    }
+    
+    .fm-tree-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2f3640;
+    }
+    
+    .fm-tree {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .fm-tree-item {
+        margin-bottom: 2px;
+    }
+    
+    .fm-tree-link {
+        display: flex;
+        align-items: center;
+        padding: 10px 12px;
+        color: #64748b;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        gap: 10px;
+        cursor: pointer;
+    }
+    
+    .fm-tree-link:hover {
+        background: #f3f1ff;
+        color: #5856d6;
+    }
+    
+    .fm-tree-link.active {
+        background: #5856d6;
+        color: white;
+    }
+    
+    .fm-tree-icon {
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .fm-tree-expand {
+        margin-left: auto;
+        font-size: 12px;
+        transition: transform 0.2s ease;
+    }
+    
+    .fm-tree-expand.expanded {
+        transform: rotate(90deg);
+    }
+    
+    .fm-tree-children {
+        list-style: none;
+        padding-left: 30px;
+        margin: 5px 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+    
+    .fm-tree-children.expanded {
+        max-height: 1000px;
+    }
+    
+    /* File Grid/List */
+    .fm-content {
+        flex: 1;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        min-height: 0;
+    }
+    
+    .fm-content-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(88, 86, 214, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(to bottom, rgba(248, 249, 255, 0.5), transparent);
+    }
+    
+    .fm-view-toggle {
+        display: flex;
+        background: rgba(88, 86, 214, 0.08);
+        border-radius: 12px;
+        padding: 3px;
+        gap: 2px;
+        border: 1px solid rgba(88, 86, 214, 0.1);
+    }
+    
+    .fm-view-btn {
+        background: transparent;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 9px;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+    }
+    
+    .fm-view-btn:hover:not(.active) {
+        color: #5856d6;
+        background: rgba(88, 86, 214, 0.05);
+    }
+    
+    .fm-view-btn.active {
+        background: white;
+        color: #5856d6;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        font-weight: 600;
+    }
+    
+    .fm-search {
+        position: relative;
+        width: 280px;
+    }
+    
+    .fm-search input {
+        width: 100%;
+        padding: 8px 36px 8px 36px;
+        border: 1px solid rgba(88, 86, 214, 0.15);
+        border-radius: 10px;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        background: rgba(248, 249, 255, 0.5);
+        color: #374151;
+    }
+    
+    .fm-search input::placeholder {
+        color: #9ca3af;
+    }
+    
+    .fm-search input:focus {
+        outline: none;
+        border-color: #5856d6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(88, 86, 214, 0.1);
+    }
+    
+    .fm-search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 14px;
+        pointer-events: none;
+    }
+    
+    .fm-search input:focus ~ .fm-search-icon {
+        color: #5856d6;
+    }
+    
+    /* Grid View */
+    .fm-grid {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 15px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        flex: 1;
+        min-height: 0;
+        align-content: start;
+        grid-auto-rows: max-content;
+        position: relative;
+        contain: layout style;
+        scroll-behavior: smooth;
+    }
+    
+    .fm-grid-item {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        border-radius: 14px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(88, 86, 214, 0.08);
+        position: relative;
+        overflow: hidden;
+        min-height: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        contain: layout;
+    }
+    
+    .fm-grid-item:hover {
+        background: white;
+        box-shadow: 0 8px 24px rgba(88, 86, 214, 0.15);
+        transform: translateY(-3px);
+        border-color: rgba(88, 86, 214, 0.2);
+    }
+    
+    .fm-grid-item.selected {
+        border-color: #5856d6;
+        background: linear-gradient(135deg, #f3f1ff 0%, #e8e5ff 100%);
+        box-shadow: 0 4px 12px rgba(88, 86, 214, 0.2);
+    }
+    
+    .fm-grid-item-icon {
+        font-size: 42px;
+        margin-bottom: 12px;
+        color: #5856d6;
+        transition: transform 0.3s ease;
+    }
+    
+    .fm-grid-item:hover .fm-grid-item-icon {
+        transform: scale(1.1);
+    }
+    
+    .fm-grid-item-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #2f3640;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .fm-grid-item-size {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+    
+    .fm-grid-item-checkbox {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 18px;
+        height: 18px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        accent-color: #5856d6;
+        cursor: pointer;
+    }
+    
+    .fm-grid-item:hover .fm-grid-item-checkbox,
+    .fm-grid-item.selected .fm-grid-item-checkbox {
+        opacity: 1;
+    }
+    
+    .fm-grid-item-checkbox:checked {
+        transform: scale(1.1);
+    }
+    
+    /* List View */
+    .fm-list {
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .fm-list-header {
+        display: grid;
+        grid-template-columns: 40px 1fr 150px 150px 100px;
+        padding: 15px 20px;
+        background: #f8f9ff;
+        font-weight: 600;
+        font-size: 13px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .fm-list-item {
+        display: grid;
+        grid-template-columns: 40px 1fr 150px 150px 100px;
+        padding: 15px 20px;
+        border-bottom: 1px solid #f3f1ff;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .fm-list-item:hover {
+        background: #f8f9ff;
+    }
+    
+    .fm-list-item.selected {
+        background: #f3f1ff;
+    }
+    
+    .fm-list-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+    
+    .fm-list-name {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+        color: #2f3640;
+    }
+    
+    .fm-list-icon {
+        font-size: 20px;
+        color: #5856d6;
+    }
+    
+    .fm-list-size,
+    .fm-list-modified,
+    .fm-list-permissions {
+        color: #64748b;
+        font-size: 14px;
+    }
+    
+    /* Empty State */
+    .fm-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 40px;
+        text-align: center;
+    }
+    
+    .fm-empty-icon {
+        font-size: 80px;
+        color: #cbd5e1;
+        margin-bottom: 20px;
+    }
+    
+    .fm-empty-text {
+        font-size: 18px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 10px;
+    }
+    
+    .fm-empty-subtext {
+        font-size: 14px;
+        color: #94a3b8;
+    }
+    
+    /* Context Menu */
+    .fm-context-menu {
+        position: fixed;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        padding: 8px;
+        min-width: 200px;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .fm-context-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #2f3640;
+        font-size: 14px;
+    }
+    
+    .fm-context-item:hover {
+        background: #f3f1ff;
+        color: #5856d6;
+    }
+    
+    .fm-context-item.danger {
+        color: #ff6b6b;
+    }
+    
+    .fm-context-item.danger:hover {
+        background: #fff5f5;
+        color: #ff5252;
+    }
+    
+    .fm-context-divider {
+        height: 1px;
+        background: #f3f1ff;
+        margin: 8px 0;
+    }
+    
+    /* Upload Zone */
+    .fm-upload-zone {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(88, 86, 214, 0.95);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+    
+    .fm-upload-zone.active {
+        display: flex;
+    }
+    
+    .fm-upload-content {
+        text-align: center;
+        color: white;
+    }
+    
+    .fm-upload-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+    }
+    
+    .fm-upload-text {
+        font-size: 24px;
+        font-weight: 600;
+    }
+    
+    /* Animations */
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .fm-animate-in {
+        animation: slideIn 0.3s ease forwards;
+    }
+    
+    /* Force grid redraw on navigation */
+    .fm-grid.navigating {
+        opacity: 0.8;
+        transition: opacity 0.2s ease;
+    }
+    
+    /* Ensure smooth rendering for large grids */
+    .fm-grid[ng-show="true"] {
+        display: grid !important;
+    }
+    
+    /* Prevent layout shift during navigation */
+    .fm-grid.ng-hide-add,
+    .fm-grid.ng-hide-remove {
+        transition: none !important;
+    }
+    
+    /* Stabilize grid during updates */
+    .fm-grid:not(.ng-hide) {
+        min-height: calc(100vh - 300px);
+    }
+    
+    /* Loading States */
+    .fm-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .fm-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f1ff;
+        border-top: 4px solid #5856d6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Fix for large file lists */
+    .fm-content > * {
+        min-height: 0;
+    }
+    
+    /* Container for grid/list views */
+    .fm-view-container {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        position: relative;
+        contain: layout style;
+        isolation: isolate;
+    }
+    
+    /* Tooltips */
+    [data-tooltip] {
+        position: relative;
+    }
+    
+    [data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-5px);
+        background: #1f2937;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 1000;
+    }
+    
+    [data-tooltip]::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #1f2937;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 1000;
+    }
+    
+    [data-tooltip]:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    
+    [data-tooltip]:hover::before {
+        opacity: 1;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .fm-sidebar {
+            display: none;
+        }
+        
+        .fm-search {
+            width: 200px;
+        }
+        
+        .fm-toolbar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .fm-path {
+            padding: 10px 15px;
+            min-height: 48px;
+            max-height: 48px;
+            gap: 10px;
+        }
+        
+        .fm-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        .fm-list-header,
+        .fm-list-item {
+            grid-template-columns: 30px 1fr 80px;
+        }
+        
+        .fm-list-modified,
+        .fm-list-permissions {
+            display: none;
+        }
+        
+        #header {
+            left: 0;
+        }
+        
+        .fm-path {
+            padding: 10px 15px;
+        }
+    }
+    
+    /* Tooltips */
+    .fm-tooltip {
+        position: relative;
+    }
+    
+    .fm-tooltip::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #2f3640;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        margin-bottom: 5px;
+    }
+    
+    .fm-tooltip:hover::after {
+        opacity: 1;
+    }
+</style>
+
+<!-- Angular File Upload CSS -->
+<style>
+    .my-drop-zone {
+        border: 3px dashed #5856d6;
+        border-radius: 12px;
+        background: #f8f9ff;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .my-drop-zone.nv-file-over {
+        background: #f3f1ff;
+        border-color: #4543c5;
+        transform: scale(1.02);
+    }
+    
+    .upload-modal .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .upload-modal .modal-header {
+        background: #5856d6;
+        color: white;
+        border-radius: 16px 16px 0 0;
+        padding: 20px 30px;
+        border: none;
+    }
+    
+    .upload-modal .modal-title {
+        font-weight: 600;
+        font-size: 18px;
+    }
+    
+    .upload-modal .close {
+        color: white;
+        opacity: 0.8;
+        font-size: 24px;
+    }
+    
+    .upload-modal .close:hover {
+        opacity: 1;
+    }
+    
+    .upload-table {
+        margin-top: 20px;
+    }
+    
+    .upload-table th {
+        background: #f8f9ff;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        padding: 12px;
+        border: none;
+    }
+    
+    .upload-table td {
+        padding: 12px;
+        vertical-align: middle;
+        border-color: #f3f1ff;
+    }
+    
+    .upload-progress {
+        height: 6px;
+        background: #f3f1ff;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .upload-progress .progress-bar {
+        background: #5856d6;
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div ng-controller="newFileManagerCtrl" class="fm-container">
+    <span style="display: none" id="domainNameInitial">{{ domainName }}</span>
+    
+    <!-- Toolbar -->
+    <div class="fm-toolbar fm-animate-in">
+        <div class="fm-toolbar-group">
+            <button class="fm-btn" onclick="toggleSidebar()" data-tooltip="{% trans 'Toggle Sidebar' %}" style="background: rgba(88, 86, 214, 0.15);">
+                <i class="fas fa-bars"></i>
+            </button>
+            <button class="fm-btn" ng-click="navigateBack()" data-tooltip="{% trans 'Go Back' %}">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <button class="fm-btn" ng-click="navigateHome()" data-tooltip="{% trans 'Home' %}">
+                <i class="fas fa-home"></i>
+            </button>
+            <button class="fm-btn" ng-click="fetchForTableSecondary(null,'refresh')" data-tooltip="{% trans 'Refresh' %}">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        
+        <div class="fm-toolbar-group">
+            <button class="fm-btn primary" ng-click="showUploadBox()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                {% trans "Upload" %}
+            </button>
+            <button class="fm-btn" ng-click="showCreateFileModal()">
+                <i class="fas fa-file-plus"></i>
+                {% trans "New File" %}
+            </button>
+            <button class="fm-btn" ng-click="showCreateFolderModal()">
+                <i class="fas fa-folder-plus"></i>
+                {% trans "New Folder" %}
+            </button>
+        </div>
+        
+        <div class="fm-toolbar-group">
+            <button class="fm-btn" ng-click="showCopyModal()" ng-disabled="allFilesAndFolders.length < 1">
+                <i class="fas fa-copy"></i>
+                {% trans "Copy" %}
+            </button>
+            <button class="fm-btn" ng-click="showMoveModal()" ng-disabled="allFilesAndFolders.length < 1">
+                <i class="fas fa-cut"></i>
+                {% trans "Move" %}
+            </button>
+            <button class="fm-btn" ng-click="showRenameModal()" ng-disabled="allFilesAndFolders.length !== 1">
+                <i class="fas fa-edit"></i>
+                {% trans "Rename" %}
+            </button>
+            <button class="fm-btn danger" ng-click="showDeleteModal()" ng-disabled="allFilesAndFolders.length < 1">
+                <i class="fas fa-trash"></i>
+                {% trans "Delete" %}
+            </button>
+        </div>
+        
+        <div class="fm-toolbar-group">
+            <button class="fm-btn" ng-click="showCompressionModal()" ng-disabled="allFilesAndFolders.length < 1">
+                <i class="fas fa-file-archive"></i>
+                {% trans "Compress" %}
+            </button>
+            <button class="fm-btn" ng-click="showExtractionModal()" ng-disabled="allFilesAndFolders.length !== 1">
+                <i class="fas fa-file-export"></i>
+                {% trans "Extract" %}
+            </button>
+            <button class="fm-btn" ng-click="showHTMLEditorModal(1)" ng-disabled="allFilesAndFolders.length !== 1">
+                <i class="fas fa-code"></i>
+                {% trans "Edit" %}
+            </button>
+        </div>
+        
+        <div class="fm-toolbar-group">
+            <button class="fm-btn" ng-click="fixPermissions()" data-tooltip="{% trans 'Fix Permissions' %}">
+                <i class="fas fa-wrench"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Path Breadcrumb -->
+    <div class="fm-path fm-animate-in" style="animation-delay: 0.1s">
+        <a href="#" class="fm-path-item" ng-click="navigateHome()">
+            <i class="fas fa-home"></i>
+            <span>{% trans "Home" %}</span>
+        </a>
+        <span class="fm-path-separator" ng-if="pathSegments.length > 0">/</span>
+        <span ng-repeat="segment in pathSegments">
+            <a href="#" class="fm-path-item" ng-click="navigateToPath(segment.path)">{$ segment.name $}</a>
+            <span class="fm-path-separator" ng-if="!$last">/</span>
+        </span>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="fm-main fm-animate-in" style="animation-delay: 0.2s">
+        <!-- Sidebar Tree -->
+        <div class="fm-sidebar" id="fmSidebar">
+            <div class="fm-tree-header">
+                <h3 class="fm-tree-title">{% trans "Folders" %}</h3>
+            </div>
+            <ul class="fm-tree">
+                <li class="fm-tree-item" data-path="{$ startingPath $}">
+                    <div class="fm-tree-link">
+                        <i class="fas fa-folder fm-tree-icon"></i>
+                        <span style="cursor: pointer;" onclick="expandDomainTree(this)" ng-click="navigateHome()">{$ startingPath || 'Home' $}</span>
+                        <i class="fas fa-chevron-right fm-tree-expand" onclick="toggleTreeNode(event)"></i>
+                    </div>
+                    <ul class="fm-tree-children" id="treeRoot"></ul>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- File List/Grid -->
+        <div class="fm-content">
+            <div class="fm-content-header">
+                <div class="fm-toolbar-group">
+                    <button class="fm-btn" ng-click="fetchForTableSecondary(null,'refresh')" data-tooltip="{% trans 'Refresh' %}">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="fm-btn" ng-click="selectAll()" data-tooltip="{% trans 'Select All' %}">
+                        <i class="fas fa-check-square"></i>
+                    </button>
+                    <button class="fm-btn" ng-click="unSelectAll()" data-tooltip="{% trans 'Unselect All' %}">
+                        <i class="far fa-square"></i>
+                    </button>
+                </div>
+                
+                <div class="fm-search">
+                    <input type="text" ng-model="searchFilter" placeholder="{% trans 'Search files...' %}" />
+                    <i class="fas fa-search fm-search-icon"></i>
+                </div>
+                
+                <div class="fm-view-toggle">
+                    <button class="fm-view-btn" ng-class="{active: viewMode === 'grid'}" ng-click="setViewMode('grid')">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button class="fm-view-btn" ng-class="{active: viewMode === 'list'}" ng-click="setViewMode('list')">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- View Container -->
+            <div class="fm-view-container">
+                <!-- Loading State -->
+                <div class="fm-loading" ng-show="isLoading">
+                    <div class="fm-spinner"></div>
+                    <p>{% trans "Loading files..." %}</p>
+                </div>
+                
+                
+                <!-- Empty State -->
+                <div class="fm-empty" ng-show="!isLoading && allFilesAndFolders && allFilesAndFolders.length === 0">
+                    <i class="fas fa-folder-open fm-empty-icon"></i>
+                    <p class="fm-empty-text">{% trans "This folder is empty" %}</p>
+                    <p class="fm-empty-subtext">{% trans "Upload files or create new folders to get started" %}</p>
+                </div>
+                
+                <!-- Grid View -->
+                <div class="fm-grid" ng-if="viewMode === 'grid'" ng-show="!isLoading && allFilesAndFolders && allFilesAndFolders.length > 0">
+                <div class="fm-grid-item" 
+                     ng-repeat="file in allFilesAndFolders | filter:searchFilter | orderBy:sortBy:sortReverse track by (file.fileName + file.lastModified)"
+                     ng-class="{selected: isFileSelected(file)}"
+                     ng-click="toggleFileSelection(file, $event)"
+                     ng-dblclick="openFile(file)"
+                     ng-contextmenu="rightClickCallBack($event, file)"
+                     draggable="true"
+                     ng-dragstart="handleDragStart($event, file)"
+                     ng-dragover="handleDragOver($event)"
+                     ng-drop="handleDrop($event, file)">
+                    <input type="checkbox" class="fm-grid-item-checkbox" 
+                           ng-checked="isFileSelected(file)"
+                           ng-click="toggleFileSelection(file, $event)">
+                    <div class="fm-grid-item-icon">
+                        <i class="fas" ng-class="getFileIcon(file)"></i>
+                    </div>
+                    <div class="fm-grid-item-name" title="{$ file.fileName $}">{$ file.fileName $}</div>
+                    <div class="fm-grid-item-size" ng-if="!file.dirCheck">{$ file.fileSize $}</div>
+                </div>
+            </div>
+            
+            <!-- List View -->
+            <div class="fm-list" ng-if="viewMode === 'list'" ng-show="!isLoading">
+                <div class="fm-list-header">
+                    <div></div>
+                    <div>{% trans "Name" %}</div>
+                    <div>{% trans "Size" %}</div>
+                    <div>{% trans "Modified" %}</div>
+                    <div>{% trans "Permissions" %}</div>
+                </div>
+                <div class="fm-list-item" 
+                     ng-repeat="file in allFilesAndFolders | filter:searchFilter | orderBy:sortBy:sortReverse track by (file.fileName + file.lastModified)"
+                     ng-class="{selected: isFileSelected(file)}"
+                     ng-click="toggleFileSelection(file, $event)"
+                     ng-dblclick="openFile(file)"
+                     ng-contextmenu="rightClickCallBack($event, file)">
+                    <input type="checkbox" class="fm-list-checkbox" 
+                           ng-checked="isFileSelected(file)"
+                           ng-click="toggleFileSelection(file, $event)">
+                    <div class="fm-list-name">
+                        <i class="fas fm-list-icon" ng-class="getFileIcon(file)"></i>
+                        <span title="{$ file.fileName $}">{$ file.fileName $}</span>
+                    </div>
+                    <div class="fm-list-size">{$ file.dirCheck ? '' : file.fileSize $}</div>
+                    <div class="fm-list-modified">{$ file.lastModified $}</div>
+                    <div class="fm-list-permissions">{$ file.permissions $}</div>
+                </div>
+            </div>
+            </div> <!-- End fm-view-container -->
+        </div>
+    </div>
+    
+    <!-- Upload Drop Zone Overlay -->
+    <div class="fm-upload-zone" id="uploadDropZone">
+        <div class="fm-upload-content">
+            <i class="fas fa-cloud-upload-alt fm-upload-icon"></i>
+            <p class="fm-upload-text">{% trans "Drop files here to upload" %}</p>
+        </div>
+    </div>
+    
+    <!-- Context Menu -->
+    <div class="fm-context-menu" id="rightClickMenu">
+        <div class="fm-context-item" ng-click="openFile()">
+            <i class="fas fa-external-link-alt"></i>
+            {% trans "Open" %}
+        </div>
+        <div class="fm-context-item" ng-click="showHTMLEditorModal(1)">
+            <i class="fas fa-edit"></i>
+            {% trans "Edit" %}
+        </div>
+        <div class="fm-context-item" ng-click="downloadFile()">
+            <i class="fas fa-download"></i>
+            {% trans "Download" %}
+        </div>
+        <div class="fm-context-divider"></div>
+        <div class="fm-context-item" ng-click="showCopyModal()">
+            <i class="fas fa-copy"></i>
+            {% trans "Copy" %}
+        </div>
+        <div class="fm-context-item" ng-click="showMoveModal()">
+            <i class="fas fa-cut"></i>
+            {% trans "Cut" %}
+        </div>
+        <div class="fm-context-item" ng-click="showRenameModal()">
+            <i class="fas fa-i-cursor"></i>
+            {% trans "Rename" %}
+        </div>
+        <div class="fm-context-divider"></div>
+        <div class="fm-context-item" ng-click="showPermissionsModal()">
+            <i class="fas fa-lock"></i>
+            {% trans "Permissions" %}
+        </div>
+        <div class="fm-context-item" ng-click="showCompressionModal()">
+            <i class="fas fa-file-archive"></i>
+            {% trans "Compress" %}
+        </div>
+        <div class="fm-context-divider"></div>
+        <div class="fm-context-item danger" ng-click="showDeleteModal()">
+            <i class="fas fa-trash"></i>
+            {% trans "Delete" %}
+        </div>
+    </div>
+    
+    <!-- Include all the modals here -->
+    {% include "filemanager/modals.html" %}
+    
+</div>
+{% endblock %}
+
+{% block footer_scripts %}
+<!-- Angular File Upload -->
+<script src="{% static 'filemanager/js/angular-file-upload.min.js' %}"></script>
+
+<!-- ACE Editor -->
+<script src="{% static 'filemanager/js/ace/ace.js' %}" type="text/javascript" charset="utf-8"></script>
+
+<!-- Alertify -->
+<script src="https://cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/alertify.min.js"></script>
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/css/alertify.min.css"/>
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/css/themes/bootstrap.min.css"/>
+
+<!-- Original File Manager JS -->
+<script src="{% static 'filemanager/js/newFileManager.js' %}"></script>
+
+<script>
+// Sidebar and tree functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize sidebar state from localStorage
+    var sidebarHidden = localStorage.getItem('fm-sidebar-hidden') === 'true';
+    if (sidebarHidden) {
+        var sidebar = document.getElementById('fmSidebar');
+        if (sidebar) sidebar.style.display = 'none';
+    }
+    
+    // Auto-load tree directories after Angular has loaded
+    setTimeout(function() {
+        var treeRoot = document.getElementById('treeRoot');
+        if (treeRoot && treeRoot.children.length === 0) {
+            loadTreeDirectories(treeRoot);
+        }
+        
+        // Watch for changes in the file list
+        var scope = angular.element(document.querySelector('[ng-controller="newFileManagerCtrl"]')).scope();
+        if (scope) {
+            scope.$watch('allFilesAndFolders', function(newVal, oldVal) {
+                if (newVal && newVal !== oldVal) {
+                    var treeRoot = document.getElementById('treeRoot');
+                    if (treeRoot) {
+                        loadTreeDirectories(treeRoot);
+                    }
+                }
+            });
+        }
+    }, 1000);
+});
+
+// Define functions in window scope for Angular to access
+window.toggleSidebar = function() {
+    var sidebar = document.getElementById('fmSidebar');
+    if (!sidebar) return;
+    
+    var isHidden = sidebar.style.display === 'none' || window.getComputedStyle(sidebar).display === 'none';
+    sidebar.style.display = isHidden ? 'block' : 'none';
+    
+    // Save state to localStorage
+    localStorage.setItem('fm-sidebar-hidden', !isHidden);
+};
+
+window.toggleTreeNode = function(event) {
+    if (event) {
+        event.stopPropagation();
+        
+        var chevron = event.target;
+        if (!chevron.classList.contains('fm-tree-expand')) return;
+        
+        var treeItem = chevron.closest('.fm-tree-item');
+        if (!treeItem) return;
+        
+        var children = treeItem.querySelector('.fm-tree-children');
+        if (children) {
+            var isExpanded = children.classList.contains('expanded');
+            
+            if (isExpanded) {
+                children.classList.remove('expanded');
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-right');
+            } else {
+                children.classList.add('expanded');
+                chevron.classList.remove('fa-chevron-right');
+                chevron.classList.add('fa-chevron-down');
+                
+                // Load subdirectories if needed
+                if (children.children.length === 0) {
+                    // Trigger Angular scope function to load subdirectories
+                    var scope = angular.element(treeItem).scope();
+                    if (scope && scope.loadTreeSubdirectories) {
+                        var path = treeItem.getAttribute('data-path');
+                        if (path) {
+                            scope.loadTreeSubdirectories(path, children);
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
+// For the domain click to expand
+window.expandDomainTree = function(domainElement) {
+    var treeItem = domainElement.closest('.fm-tree-item');
+    if (!treeItem) return;
+    
+    var chevron = treeItem.querySelector('.fm-tree-expand');
+    var children = treeItem.querySelector('.fm-tree-children');
+    
+    if (children && chevron) {
+        if (!children.classList.contains('expanded')) {
+            children.classList.add('expanded');
+            chevron.classList.remove('fa-chevron-right');
+            chevron.classList.add('fa-chevron-down');
+            
+            // Load subdirectories if the tree is empty
+            if (children.children.length === 0) {
+                loadTreeDirectories(children);
+            }
+        }
+    }
+};
+
+// Function to load directories into the tree
+window.loadTreeDirectories = function(treeContainer) {
+    // Get the Angular scope to access the files data
+    var scope = angular.element(document.querySelector('[ng-controller="newFileManagerCtrl"]')).scope();
+    
+    if (scope && scope.allFilesAndFolders) {
+        // Clear existing content
+        treeContainer.innerHTML = '';
+        
+        // Filter only directories
+        var directories = scope.allFilesAndFolders.filter(function(item) {
+            return item.dirCheck === true;
+        });
+        
+        // Sort directories alphabetically
+        directories.sort(function(a, b) {
+            return a.fileName.localeCompare(b.fileName);
+        });
+        
+        // Create tree items for each directory
+        directories.forEach(function(dir) {
+            var li = document.createElement('li');
+            li.className = 'fm-tree-item';
+            li.setAttribute('data-path', dir.fileName);
+            
+            var linkDiv = document.createElement('div');
+            linkDiv.className = 'fm-tree-link';
+            linkDiv.style.cursor = 'pointer';
+            linkDiv.onclick = function() {
+                // Navigate to this directory
+                if (scope.openFile) {
+                    scope.$apply(function() {
+                        scope.openFile(dir);
+                    });
+                }
+            };
+            
+            var icon = document.createElement('i');
+            icon.className = 'fas fa-folder fm-tree-icon';
+            
+            var span = document.createElement('span');
+            span.textContent = dir.fileName;
+            
+            var chevron = document.createElement('i');
+            chevron.className = 'fas fa-chevron-right fm-tree-expand';
+            chevron.onclick = function(e) {
+                toggleTreeNode(e);
+            };
+            
+            linkDiv.appendChild(icon);
+            linkDiv.appendChild(span);
+            linkDiv.appendChild(chevron);
+            
+            var childrenUl = document.createElement('ul');
+            childrenUl.className = 'fm-tree-children';
+            
+            li.appendChild(linkDiv);
+            li.appendChild(childrenUl);
+            
+            treeContainer.appendChild(li);
+        });
+    }
+};
+</script>
+
+{% endblock %}

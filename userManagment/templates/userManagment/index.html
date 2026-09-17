@@ -1,0 +1,263 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "User Functions - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        body {
+            background-color: #f0f0ff;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #5b5fcf 0%, #7b7fd0 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 15px rgba(91, 95, 207, 0.2);
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .function-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e9ff;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            color: #2f3640;
+            display: block;
+            height: 100%;
+        }
+        
+        .function-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(91, 95, 207, 0.15);
+            text-decoration: none;
+            border-color: #5b5fcf;
+        }
+        
+        .function-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #5b5fcf 0%, #7b7fd0 100%);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: white;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .function-card:hover .function-icon {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(91, 95, 207, 0.4);
+        }
+        
+        .function-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2f3640;
+            margin-bottom: 0.5rem;
+        }
+        
+        .function-description {
+            color: #8893a7;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e9ff;
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2f3640;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 3px solid #5b5fcf;
+            padding-bottom: 0.75rem;
+            display: inline-block;
+        }
+        
+        .badge-primary {
+            background: #5b5fcf;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-left: 1rem;
+        }
+    </style>
+
+    <div class="page-header">
+        <div class="container">
+            <h1>{% trans "User Management" %}</h1>
+            <p>{% trans "Create, modify and manage users with advanced access controls" %}</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section-card">
+            <h2 class="section-title">{% trans "User Functions" %}</h2>
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'viewProfile' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-id-card"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "View Profile" %}</h3>
+                        <p class="function-description">{% trans "View your account details" %}</p>
+                    </a>
+                </div>
+                
+                {% if listUsers %}
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'listUsers' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-users"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "List Users" %}</h3>
+                        <p class="function-description">{% trans "View all system users" %}</p>
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if type != 3 %}
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'createUser' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-user-plus"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "Create User" %}</h3>
+                        <p class="function-description">{% trans "Add new user accounts" %}</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'modifyUsers' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-user-edit"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "Modify User" %}</h3>
+                        <p class="function-description">{% trans "Edit user settings" %}</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'deleteUser' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-user-times"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "Delete User" %}</h3>
+                        <p class="function-description">{% trans "Remove user accounts" %}</p>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if type == 1 %}
+        <div class="section-card">
+            <h2 class="section-title">{% trans "Access Control" %} <span class="badge-primary">Admin</span></h2>
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'createNewACL' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-shield-alt"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "Create ACL" %}</h3>
+                        <p class="function-description">{% trans "Define new access rules" %}</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'deleteACL' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-shield-alt"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "Delete ACL" %}</h3>
+                        <p class="function-description">{% trans "Remove access rules" %}</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'modifyACL' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-shield-alt"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "Modify ACL" %}</h3>
+                        <p class="function-description">{% trans "Edit access permissions" %}</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'changeUserACL' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-user-shield"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "Change User ACL" %}</h3>
+                        <p class="function-description">{% trans "Assign ACL to users" %}</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">{% trans "Advanced Features" %}</h2>
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'resellerCenter' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-store"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "Reseller Center" %}</h3>
+                        <p class="function-description">{% trans "Manage reseller accounts" %}</p>
+                    </a>
+                </div>
+                
+                <div class="col-md-3 mb-4">
+                    <a href="{% url 'apiAccess' %}" class="function-card">
+                        <div class="function-icon">
+                            <i class="fa fa-key"></i>
+                        </div>
+                        <h3 class="function-title">{% trans "API Access" %}</h3>
+                        <p class="function-description">{% trans "Configure API permissions" %}</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

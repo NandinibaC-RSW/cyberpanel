@@ -1,0 +1,730 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'backup/backup.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Schedule Backup - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        body {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .modern-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            border-radius: 20px;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 1.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            border: none;
+            padding: 0.875rem 2.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1.125rem;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(91, 95, 207, 0.4);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #fff;
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.875rem 2.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1.125rem;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover, #f8f9ff);
+            border-color: var(--accent-color, #5b5fcf);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 95, 207, 0.2);
+        }
+        
+        .btn-danger {
+            background: var(--danger-color, #ef4444);
+            color: white;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-hover, #dc2626);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-gray {
+            background: var(--text-secondary, #6b7280);
+            color: white;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-gray:hover {
+            background: var(--text-secondary, #4b5563);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+        }
+        
+        .main-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            flex: 0 0 200px;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 1.0625rem;
+        }
+        
+        .form-control {
+            flex: 1;
+            padding: 1rem 1.125rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 10px;
+            font-size: 1.0625rem;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .data-table thead {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        }
+        
+        .data-table th {
+            padding: 1.125rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 1.0625rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .data-table td {
+            padding: 1.125rem;
+            color: var(--text-secondary, #475569);
+            font-size: 1.125rem;
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+            font-weight: 400;
+        }
+        
+        .data-table tbody tr:hover {
+            background: var(--bg-hover, #f8f9ff);
+        }
+        
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .sites-section {
+            background: var(--bg-hover, #f8f9ff);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-box {
+            background: var(--info-bg, #f0f9ff);
+            border: 1px solid var(--info-border, #bae6fd);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-box-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary, #64748b);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .info-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Override Bootstrap modal styles */
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            border-radius: 16px 16px 0 0;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+        }
+        
+        .modal-body {
+            padding: 2rem;
+        }
+        
+        /* Number input styling */
+        input[type="number"] {
+            width: 100px;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 10px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px rgba(91, 95, 207, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .form-label {
+                flex: none;
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+
+    <div class="modern-container">
+        <!-- Page header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-clock"></i>
+                {% trans "Schedule Backup" %}
+            </h1>
+            <p class="page-subtitle">{% trans "Schedule automated backups to protect your data on localhost or remote server" %}</p>
+            <div class="header-actions">
+                <a href="https://cyberpanel.net/KnowledgeBase/home/schedule-backups-local-or-sftp/"
+                   target="_blank"
+                   class="btn-secondary">
+                    <i class="fas fa-book"></i>
+                    {% trans "Documentation" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Storage and Backup Stats Section -->
+        <div class="main-card" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-pie"></i>
+                    {% trans "Backup Account Overview" %}
+                </h2>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <!-- Storage Stats -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; color: white;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                            <i class="fas fa-hdd" style="font-size: 2rem; opacity: 0.9;"></i>
+                            <div>
+                                <div style="font-size: 0.875rem; opacity: 0.9;">{% trans "Storage Used" %}</div>
+                                <div style="font-size: 1.5rem; font-weight: 700;">{{ storage_info.used_storage }}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.875rem; opacity: 0.9;">{% trans "of" %} {{ storage_info.total_storage }}</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; margin-top: 0.75rem; overflow: hidden;">
+                            <div style="background: rgba(255,255,255,0.9); height: 100%; width: {{ storage_info.usage_percentage }}%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Last Backup -->
+                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 12px; color: white;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-clock" style="font-size: 2rem; opacity: 0.9;"></i>
+                            <div>
+                                <div style="font-size: 0.875rem; opacity: 0.9;">{% trans "Last Backup Run" %}</div>
+                                <div style="font-size: 1.125rem; font-weight: 600;">{{ storage_info.last_backup_run }}</div>
+                                <div style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.25rem;">
+                                    {% if storage_info.last_backup_status == 'success' %}
+                                        <i class="fas fa-check-circle"></i> {% trans "Success" %}
+                                    {% elif storage_info.last_backup_status == 'failed' %}
+                                        <i class="fas fa-exclamation-circle"></i> {% trans "Failed" %}
+                                    {% else %}
+                                        {{ storage_info.last_backup_status }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Backups -->
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 1.5rem; border-radius: 12px; color: white;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-database" style="font-size: 2rem; opacity: 0.9;"></i>
+                            <div>
+                                <div style="font-size: 0.875rem; opacity: 0.9;">{% trans "Total Backups" %}</div>
+                                <div style="font-size: 1.5rem; font-weight: 700;">{{ storage_info.total_backups }}</div>
+                                {% if storage_info.failed_backups > 0 %}
+                                    <div style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.25rem;">
+                                        <i class="fas fa-exclamation-triangle"></i> {{ storage_info.failed_backups }} {% trans "failed" %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Info -->
+                    <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 1.5rem; border-radius: 12px; color: white;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-user-circle" style="font-size: 2rem; opacity: 0.9;"></i>
+                            <div>
+                                <div style="font-size: 0.875rem; opacity: 0.9;">{% trans "Backup Account" %}</div>
+                                <div style="font-size: 1.125rem; font-weight: 600;">{{ ocb_sftp_user }}</div>
+                                <div style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.25rem;">{{ ocb_plan_name }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Logs Section -->
+        {% if storage_info.error_logs %}
+        <div class="main-card" style="margin-bottom: 2rem;">
+            <div class="card-header" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);">
+                <h2 class="card-title" style="color: #991b1b;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {% trans "Recent Backup Errors" %}
+                </h2>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 180px;">{% trans "Date/Time" %}</th>
+                            <th style="width: 150px;">{% trans "Website" %}</th>
+                            <th>{% trans "Error Message" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in storage_info.error_logs %}
+                        <tr>
+                            <td>{{ log.timestamp }}</td>
+                            <td><strong>{{ log.website }}</strong></td>
+                            <td style="color: var(--danger-text, #991b1b);">{{ log.error_message }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <div ng-controller="scheduleBackup">
+            <!-- Create New Schedule Card -->
+            <div class="main-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-plus-circle"></i>
+                        {% trans "Create New Backup Schedule" %}
+                        <img ng-hide="cyberPanelLoading" src="{% static 'images/loading.gif' %}" style="width: 24px; margin-left: 10px;">
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form action="/">
+                        <div style="display: none">
+                            <input type="text" ng-model="selectedAccountAdd" ng-init="selectedAccountAdd='{{ destination }}'" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">{% trans "Name" %}</label>
+                            <input type="text" class="form-control" ng-model="name" placeholder="{% trans 'Enter schedule name' %}" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">{% trans "Select Backup Frequency" %}</label>
+                            <select ng-model="backupFrequency" class="form-control">
+                                <option>Never</option>
+                                <option>Daily</option>
+                                <option>Weekly</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">{% trans "Backup Retention" %}</label>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <input ng-model="backupRetention" type="number" value="0" min="0">
+                                <span style="color: var(--text-secondary, #64748b); font-size: 0.875rem;">{% trans "days (0 for no limit)" %}</span>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button type="button" ng-click="addSchedule()" class="btn-primary">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add Schedule" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Manage Existing Schedules Card -->
+            <div class="main-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-list"></i>
+                        {% trans "Manage Existing Backup Schedules" %}
+                        <img ng-hide="cyberPanelLoading" src="{% static 'images/loading.gif' %}" style="width: 24px; margin-left: 10px;">
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form action="/">
+                        <div class="form-row">
+                            <label class="form-label">{% trans "Select Destination" %}</label>
+                            <select ng-change="fetchJobs()" ng-model="selectedAccount" class="form-control">
+                                <option>{{ destination }}</option>
+                            </select>
+                        </div>
+
+                        <div ng-hide="jobsHidden" class="form-row">
+                            <label class="form-label">{% trans "Select Job" %}</label>
+                            <div style="flex: 1; display: flex; gap: 1rem;">
+                                <select ng-change="fetchWebsites()" ng-model="selectedJob" class="form-control">
+                                    <option ng-repeat="job in jobs track by $index">{$ job $}</option>
+                                </select>
+                                <button ng-hide="driveHidden" type="button" ng-click="deleteAccount()" class="btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                    {% trans "Delete" %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div ng-hide="driveHidden" class="form-row">
+                            <label class="form-label">{% trans "Add Sites for Backup" %}</label>
+                            <div style="flex: 1; display: flex; gap: 1rem;">
+                                <select ng-model="selectedWebsite" class="form-control">
+                                    {% for items in websites %}
+                                        <option>{{ items }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" ng-click="addSite('one')" class="btn-primary" style="padding: 0.5rem 1rem;">
+                                    <i class="fas fa-plus"></i>
+                                    {% trans "Add Site" %}
+                                </button>
+                                <button type="button" ng-click="addSite('all')" class="btn-secondary" style="padding: 0.5rem 1rem;">
+                                    <i class="fas fa-plus-circle"></i>
+                                    {% trans "Add All" %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Info Box -->
+                        <div ng-hide="driveHidden" class="info-box">
+                            <div class="info-box-content">
+                                <div class="info-item">
+                                    <span class="info-label">{% trans "Last Run" %}</span>
+                                    <span class="info-value">{$ lastRun $}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">{% trans "All Sites" %}</span>
+                                    <span class="info-value">{$ allSites $}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">{% trans "Frequency" %} ({$ currently $})</span>
+                                    <select ng-change="changeFrequency()" ng-model="backupFrequency" class="form-control" style="width: 150px;">
+                                        <option>Never</option>
+                                        <option>Daily</option>
+                                        <option>Weekly</option>
+                                    </select>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">{% trans "Current Status" %}</span>
+                                    <span class="info-value">{$ currentStatus $}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sites Table Section -->
+                        <div ng-hide="driveHidden" class="sites-section">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h3 class="section-title">
+                                    <i class="fas fa-globe"></i>
+                                    {% trans "Backed Up Sites" %}
+                                </h3>
+                                <div style="display: flex; gap: 1rem; align-items: center;">
+                                    <button data-toggle="modal" data-target="#backupLogs" type="button" ng-click="fetchLogs()" class="btn-gray">
+                                        <i class="fas fa-file-alt"></i>
+                                        {% trans "View Logs" %}
+                                    </button>
+                                    <select ng-model="recordsToShow" ng-change="fetchWebsites()" class="form-control" style="width: 100px;">
+                                        <option>10</option>
+                                        <option>50</option>
+                                        <option>100</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Sites" %}</th>
+                                        <th style="width: 150px;">{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="website in websites track by $index">
+                                        <td ng-bind="website.name"></td>
+                                        <td>
+                                            <button type="button" ng-click="deleteSite(website.name)" class="btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                                {% trans "Delete" %}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div style="margin-top: 1.5rem; text-align: right;">
+                                <div style="display: inline-flex; align-items: center; gap: 1rem;">
+                                    <span style="color: var(--text-secondary, #64748b); font-size: 0.875rem;">{% trans "Page" %}</span>
+                                    <select ng-model="currentPage" class="form-control" ng-change="fetchWebsites()" style="width: 80px;">
+                                        <option ng-repeat="page in pagination">{$ $index + 1 $}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Logs Modal -->
+            <div id="backupLogs" class="modal fade" role="dialog">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">
+                                <i class="fas fa-file-alt" style="margin-right: 0.5rem;"></i>
+                                {% trans "Backup Logs" %}
+                                <img ng-hide="cyberPanelLoading" src="{% static 'images/loading.gif' %}" style="width: 20px; margin-left: 10px;">
+                            </h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                                <select ng-model="recordsToShowLogs" ng-change="fetchLogs()" class="form-control" style="width: 100px;">
+                                    <option>10</option>
+                                    <option>50</option>
+                                    <option>100</option>
+                                </select>
+                            </div>
+
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 100px;">{% trans "Type" %}</th>
+                                        <th>{% trans "Message" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="log in logs track by $index">
+                                        <td ng-bind="log.type"></td>
+                                        <td ng-bind="log.message"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div style="margin-top: 1.5rem; text-align: right;">
+                                <div style="display: inline-flex; align-items: center; gap: 1rem;">
+                                    <span style="color: var(--text-secondary, #64748b); font-size: 0.875rem;">{% trans "Page" %}</span>
+                                    <select ng-model="currentPageLogs" class="form-control" ng-change="fetchLogs()" style="width: 80px;">
+                                        <option ng-repeat="page in paginationLogs">{$ $index + 1 $}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

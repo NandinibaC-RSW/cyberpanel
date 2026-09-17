@@ -1,0 +1,473 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Docker Sites - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        /* Modern Docker Management Styles */
+        .docker-page-header {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e9ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .docker-page-header h2 {
+            font-size: 16px;
+            margin: 0;
+            color: #2f3640;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .docker-page-header h2 i {
+            margin-right: 10px;
+            color: #5b5fcf;
+        }
+
+        .docker-page-header p {
+            color: #8893a7;
+            margin: 8px 0 0 0;
+            font-size: 14px;
+        }
+
+        .create-docker-btn {
+            background-color: #5b5fcf;
+            border: 1px solid #5b5fcf;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .create-docker-btn:hover {
+            background-color: #4b4fbf;
+            border-color: #4b4fbf;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91,95,207,0.15);
+            text-decoration: none;
+        }
+
+        .create-docker-btn i {
+            margin-right: 6px;
+        }
+
+        /* Container Card Styles */
+        .docker-container-card {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e9ff;
+            overflow: hidden;
+        }
+
+        .docker-container-header {
+            padding: 20px 25px;
+            background: #fafbff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e8e9ff;
+        }
+
+        .docker-container-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #2f3640;
+            display: flex;
+            align-items: center;
+        }
+
+        .docker-container-header h3 i {
+            margin-right: 10px;
+            color: #5b5fcf;
+        }
+
+        .docker-container-body {
+            padding: 25px;
+        }
+
+        /* Info Box Styles */
+        .docker-info-box {
+            background: #fafbff;
+            border: 1px solid #e8e9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .docker-info-box h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #2f3640;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Button Styles */
+        .docker-btn {
+            border: 1px solid transparent;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin: 0 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .docker-btn i {
+            margin-right: 5px;
+        }
+
+        .docker-btn-success {
+            background-color: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .docker-btn-success:hover {
+            background-color: #059669;
+            border-color: #059669;
+        }
+
+        .docker-btn-warning {
+            background-color: #f59e0b;
+            color: white;
+            border-color: #f59e0b;
+        }
+
+        .docker-btn-warning:hover {
+            background-color: #d97706;
+            border-color: #d97706;
+        }
+
+        .docker-btn-danger {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        .docker-btn-danger:hover {
+            background-color: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .docker-btn-primary {
+            background-color: #5b5fcf;
+            color: white;
+            border-color: #5b5fcf;
+        }
+
+        .docker-btn-primary:hover {
+            background-color: #4b4fbf;
+            border-color: #4b4fbf;
+        }
+
+        .docker-btn-info {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .docker-btn-info:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        /* Status Styles */
+        .docker-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .docker-status.running {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .docker-status.stopped {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .docker-status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .docker-status.running .docker-status-indicator {
+            background-color: #10b981;
+        }
+
+        .docker-status.stopped .docker-status-indicator {
+            background-color: #ef4444;
+        }
+
+        /* Table Styles */
+        .docker-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e9ff;
+        }
+
+        .docker-table thead {
+            background: #fafbff;
+        }
+
+        .docker-table th {
+            padding: 12px 20px;
+            text-align: left;
+            font-weight: 600;
+            color: #2f3640;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e8e9ff;
+        }
+
+        .docker-table td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .docker-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .docker-table tbody tr:hover {
+            background: #fafbff;
+        }
+
+        /* Progress Bar */
+        .docker-progress {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .docker-progress-bar {
+            background: #5b5fcf;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .docker-progress-bar.high {
+            background: #ef4444;
+        }
+
+        .docker-progress-bar.medium {
+            background: #f59e0b;
+        }
+
+        /* Code Block */
+        code {
+            padding: 2px 6px;
+            background-color: #e8e9ff;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #5b5fcf;
+            font-size: 90%;
+        }
+
+        /* Logs Textarea */
+        .docker-logs {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #e8e9ff;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            background-color: #fafbff;
+            color: #2f3640;
+            height: 300px;
+            resize: vertical;
+        }
+
+        /* Loading Spinner */
+        .docker-loading {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .docker-loading img {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Responsive Grid */
+        .docker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .docker-page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .create-docker-btn {
+                margin-top: 15px;
+            }
+
+            .docker-container-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .docker-container-header .btn-group {
+                margin-top: 15px;
+            }
+        }
+    </style>
+
+    <div class="container" ng-controller="ListDockersitecontainer">
+        <!-- Page Header -->
+        <div class="docker-page-header">
+            <div>
+                <h2>
+                    <i class="fa fa-cube"></i> {% trans "Containers" %}
+                    <span class="docker-loading" ng-hide="cyberpanelLoading">
+                        <img src="{% static 'images/loading.gif' %}" alt="Loading">
+                    </span>
+                </h2>
+                <p>{% trans "Manage Docker containers on your server" %}</p>
+            </div>
+            <a class="create-docker-btn" href="{% url "CreateDockersite" %}">
+                <i class="fa fa-plus-circle"></i> {% trans "Create Container" %}
+            </a>
+        </div>
+
+        <!-- Container List -->
+        <div ng-hide="conatinerview">
+            <div ng-show="ContainerList.length > 0">
+                <div ng-repeat="web in ContainerList">
+                    <div class="docker-container-card">
+                        <div class="docker-container-header">
+                            <h3>
+                                <i class="fa fa-cube"></i>
+                                <span>{$ web.name $}</span>
+                                <span class="docker-status" ng-class="{'running': web.status === 'running', 'stopped': web.status !== 'running'}">
+                                    <span class="docker-status-indicator"></span>
+                                    {$ web.status $}
+                                </span>
+                            </h3>
+                            <div class="btn-group">
+                                <button class="docker-btn docker-btn-success" ng-click="startContainer(web.id, web.name)" ng-if="web.status !== 'running'">
+                                    <i class="fa fa-play"></i> Start
+                                </button>
+                                <button class="docker-btn docker-btn-warning" ng-click="restartContainer(web.id, web.name)" ng-if="web.status === 'running'">
+                                    <i class="fa fa-refresh"></i> Restart
+                                </button>
+                                <button class="docker-btn docker-btn-danger" ng-click="stopContainer(web.id, web.name)" ng-if="web.status === 'running'">
+                                    <i class="fa fa-stop"></i> Stop
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="docker-container-body">
+                            <div class="docker-grid">
+                                <!-- Resource Usage -->
+                                <div class="docker-info-box">
+                                    <h4><i class="fa fa-bar-chart"></i> Resource Usage</h4>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Memory Usage:</strong> {$ web.memoryUsage $}
+                                        <div class="docker-progress">
+                                            <div class="docker-progress-bar" 
+                                                 ng-class="{'high': web.memoryUsagePercent > 80, 'medium': web.memoryUsagePercent > 60}"
+                                                 ng-style="{'width': web.memoryUsagePercent + '%'}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>CPU Usage:</strong> {$ web.cpuUsagePercent | number:1 $}%
+                                        <div class="docker-progress">
+                                            <div class="docker-progress-bar" 
+                                                 ng-class="{'high': web.cpuUsagePercent > 80, 'medium': web.cpuUsagePercent > 60}"
+                                                 ng-style="{'width': web.cpuUsagePercent + '%'}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Container Info -->
+                                <div class="docker-info-box">
+                                    <h4><i class="fa fa-info-circle"></i> Container Info</h4>
+                                    <p><strong>ID:</strong> <code>{$ web.id.substring(0, 12) $}</code></p>
+                                    <p><strong>Created:</strong> {$ web.created | date:'medium' $}</p>
+                                    <p><strong>Uptime:</strong> {$ web.uptime $}</p>
+                                </div>
+                            </div>
+
+                            <!-- Logs Section -->
+                            <div class="docker-info-box">
+                                <h4>
+                                    <i class="fa fa-file-text-o"></i> Container Logs
+                                    <button class="docker-btn docker-btn-primary" style="float: right; padding: 5px 10px; font-size: 12px;" 
+                                            ng-click="getcontainerlog(web.id)">
+                                        <i class="fa fa-refresh"></i> Refresh
+                                    </button>
+                                </h4>
+                                <textarea class="docker-logs" readonly>{$ web.logs $}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div ng-show="ContainerList.length === 0 && !cyberpanelLoading" class="docker-container-card">
+                <div class="docker-container-body" style="text-align: center; padding: 60px;">
+                    <i class="fa fa-cube" style="font-size: 48px; color: #e8e9ff; margin-bottom: 20px;"></i>
+                    <h3 style="color: #2f3640; margin-bottom: 10px;">No Containers Found</h3>
+                    <p style="color: #8893a7; margin-bottom: 20px;">Get started by creating your first Docker container.</p>
+                    <a class="create-docker-btn" href="{% url "CreateDockersite" %}">
+                        <i class="fa fa-plus-circle"></i> {% trans "Create Container" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

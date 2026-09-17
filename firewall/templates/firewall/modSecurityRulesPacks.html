@@ -1,0 +1,530 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'firewall/firewall.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "ModSecurity Rules Packs - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    .modern-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .modsec-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .page-subtitle {
+        font-size: 1.125rem;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 700px;
+        margin: 0 auto 1rem;
+        line-height: 1.6;
+    }
+    
+    .docs-link {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .docs-link:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+    
+    /* Install Panel */
+    .install-panel {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-light, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+        text-align: center;
+        padding: 3rem;
+    }
+    
+    .install-icon {
+        font-size: 4rem;
+        color: #5b5fcf;
+        margin-bottom: 1.5rem;
+    }
+    
+    .install-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+    }
+    
+    .btn-install {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        padding: 1rem 3rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 1.125rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-install:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    /* Rules Panel */
+    .rules-panel {
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-light, #e8e9ff);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    /* Custom Table */
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .custom-table thead th {
+        background: var(--bg-secondary, #f8f9ff);
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-secondary, #334155);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid var(--border-light, #e8e9ff);
+    }
+    
+    .custom-table tbody td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-light, #e8e9ff);
+        vertical-align: middle;
+    }
+    
+    .custom-table tbody tr:hover {
+        background: var(--bg-secondary, #f8f9ff);
+    }
+    
+    .custom-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .package-name {
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 1rem;
+    }
+    
+    /* Custom Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+    
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--bg-tertiary, #cbd5e1);
+        transition: .4s;
+        border-radius: 26px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+    
+    /* Buttons */
+    .btn-configure {
+        background: var(--bg-secondary, #f8f9ff);
+        border: 2px solid var(--border-light, #e8e9ff);
+        color: #5b5fcf;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-configure:hover:not(:disabled) {
+        background: linear-gradient(135deg, #5b5fcf 0%, #5856d6 100%);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.4);
+    }
+    
+    .btn-configure:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* Alerts */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: fadeInUp 0.3s ease-out;
+    }
+    
+    .alert-success {
+        background: var(--alert-success-bg, #e8e6ff);
+        color: var(--alert-success-text, #5856d6);
+        border: 1px solid var(--alert-success-border, #d4d4ff);
+    }
+    
+    .alert-danger {
+        background: var(--alert-danger-bg, #fee2e2);
+        color: var(--alert-danger-text, #991b1b);
+        border: 1px solid var(--alert-danger-border, #fecaca);
+    }
+    
+    .alert-icon {
+        font-size: 1.25rem;
+    }
+    
+    /* Rule Files Table */
+    .rule-files-section {
+        margin-top: 2rem;
+        background: var(--bg-primary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-light, #e8e9ff);
+        overflow: hidden;
+        padding: 2rem;
+    }
+    
+    .rule-files-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .rule-files-table thead th {
+        background: var(--bg-secondary, #f8f9ff);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-secondary, #334155);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid var(--border-light, #e8e9ff);
+    }
+    
+    .rule-files-table tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light, #e8e9ff);
+        vertical-align: middle;
+    }
+    
+    .rule-files-table tbody tr:hover {
+        background: var(--bg-secondary, #f8f9ff);
+    }
+    
+    .rule-files-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .file-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--bg-tertiary, #f3f3f3);
+        border-top: 2px solid #5b5fcf;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modern-container {
+            padding: 1rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .custom-table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<div ng-controller="modSecRulesPack" class="modern-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="page-title">
+                <div class="modsec-icon">
+                    <i class="fas fa-shield-alt fa-2x"></i>
+                </div>
+                {% trans "ModSecurity Rules Packages" %}
+            </div>
+            <p class="page-subtitle">
+                {% trans "Install and manage ModSecurity rule packages for enhanced web application security." %}
+            </p>
+            <a href="https://community.cyberpanel.net/t/4-mod-security-rules-packages/133" target="_blank" class="docs-link">
+                <i class="fas fa-book"></i>
+                {% trans "ModSec Docs" %}
+            </a>
+        </div>
+    </div>
+
+    {% if modSecInstalled == 0 %}
+        <!-- Install Panel -->
+        <div class="install-panel">
+            <i class="fas fa-shield-alt install-icon"></i>
+            <h2 class="install-title">{% trans "ModSecurity Not Installed" %}</h2>
+            <a href="{% url 'modSecurity' %}" class="btn-install">
+                <i class="fas fa-download"></i>
+                {% trans "Install Now" %}
+            </a>
+        </div>
+    {% else %}
+        <!-- Rules Panel -->
+        <div class="rules-panel">
+            <div ng-show="modsecLoading" style="text-align: center; padding: 2rem;">
+                <div class="loading-spinner"></div>
+            </div>
+            
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40%">{% trans "Package" %}</th>
+                        <th style="width: 30%; text-align: center;">{% trans "Status" %}</th>
+                        <th style="width: 30%; text-align: right;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span class="package-name">OWASP ModSecurity Core Rules</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <label class="switch">
+                                <input type="checkbox" id="owaspInstalled">
+                                <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td style="text-align: right;">
+                            <button ng-disabled="owaspDisable" ng-click="fetchRulesFile('owasp')" class="btn-configure">
+                                <i class="fas fa-cog"></i>
+                                {% trans "Configure" %}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Status Messages -->
+        <div style="max-width: 600px; margin: 2rem auto;">
+            <div ng-hide="installationQuote" class="alert alert-success">
+                <i class="fas fa-check-circle alert-icon"></i>
+                <span>{% trans "Operation successful." %}</span>
+            </div>
+            
+            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Could not connect. Please refresh this page." %}</span>
+            </div>
+            
+            <div ng-hide="installationFailed" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <span>{% trans "Operation failed, Error message:" %} {$ errorMessage $}</span>
+            </div>
+            
+            <div ng-hide="installationSuccess" class="alert alert-success">
+                <i class="fas fa-check-circle alert-icon"></i>
+                <span>{% trans "Operation successful." %}</span>
+            </div>
+        </div>
+        
+        <!-- Rule Files Section -->
+        <div ng-hide="ruleFiles" class="rule-files-section">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 1.5rem;">
+                <i class="fas fa-file-code" style="color: #5b5fcf; margin-right: 0.5rem;"></i>
+                {% trans "Rule Files" %}
+            </h3>
+            
+            <table class="rule-files-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Supplier" %}</th>
+                        <th>{% trans "Filename" %}</th>
+                        <th style="text-align: center;">{% trans "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="record in records track by $index">
+                        <td ng-bind="record.id"></td>
+                        <td ng-bind="record.packName"></td>
+                        <td ng-bind="record.fileName"></td>
+                        <td class="file-status">
+                            <label class="switch">
+                                <input type="checkbox" 
+                                       ng-click="removeRuleFile(record.fileName,record.packName,record.status)" 
+                                       ng-checked="record.status">
+                                <span class="slider"></span>
+                            </label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+
+{% endblock %}

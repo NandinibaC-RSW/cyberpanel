@@ -1,0 +1,5 @@
+user = cyberpanel
+password = SLTUIUxqhulwsh
+dbname = cyberpanel
+query = SELECT destination FROM e_forwardings WHERE source='%s'
+hosts = localhost

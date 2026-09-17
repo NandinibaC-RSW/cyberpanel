@@ -1,0 +1,607 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Install Mautic - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    /* Mautic Installation Page Styles with Dark Mode Support */
+    .mautic-installer {
+        --primary-color: var(--accent-color, #6366f1);
+        --primary-hover: var(--accent-hover, #5558e3);
+        --primary-light: var(--accent-bg, #eef2ff);
+        --secondary-color: var(--purple-color, #8b5cf6);
+        --accent-color-local: var(--accent-color, #ec4899);
+        --success-color-local: var(--success-color, #10b981);
+        --danger-color-local: var(--danger-color, #ef4444);
+        --warning-color-local: var(--warning-color, #f59e0b);
+        --info-color-local: var(--info-color, #3b82f6);
+        
+        --bg-gradient: linear-gradient(135deg, var(--accent-color, #667eea) 0%, var(--purple-color, #764ba2) 100%);
+        --bg-gradient-alt: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --bg-gradient-success: linear-gradient(135deg, var(--success-color, #11998e) 0%, #38ef7d 100%);
+        
+        --bg-light-local: var(--bg-hover, #f8fafc);
+        --bg-card-local: var(--bg-secondary, #ffffff);
+        --bg-hover-local: var(--bg-hover, #f1f5f9);
+        --border-color-local: var(--border-color, #e2e8f0);
+        --border-light-local: var(--border-light, #f1f5f9);
+        
+        --text-primary-local: var(--text-primary, #1e293b);
+        --text-secondary-local: var(--text-secondary, #64748b);
+        --text-muted-local: var(--text-muted, #94a3b8);
+        
+        --shadow-sm: 0 1px 3px var(--shadow-color, rgba(0,0,0,0.12)), 0 1px 2px var(--shadow-color, rgba(0,0,0,0.06));
+        --shadow-md: 0 4px 6px -1px var(--shadow-color, rgba(0,0,0,0.1)), 0 2px 4px -1px var(--shadow-color, rgba(0,0,0,0.06));
+        --shadow-lg: 0 10px 15px -3px var(--shadow-color, rgba(0,0,0,0.1)), 0 4px 6px -2px var(--shadow-color, rgba(0,0,0,0.05));
+        --shadow-xl: 0 20px 25px -5px var(--shadow-color, rgba(0,0,0,0.1)), 0 10px 10px -5px var(--shadow-color, rgba(0,0,0,0.04));
+        
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --radius-full: 9999px;
+        
+        --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Container Styling */
+    .mautic-installer .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        min-height: 100vh;
+        background: linear-gradient(180deg, var(--bg-primary, #f8fafc) 0%, var(--border-color, #e2e8f0) 100%);
+    }
+    
+    /* Page Title Section */
+    .mautic-installer #page-title {
+        background: var(--bg-gradient);
+        color: white;
+        padding: 40px;
+        border-radius: var(--radius-xl);
+        margin-bottom: 30px;
+        box-shadow: var(--shadow-xl);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    #page-title::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.3; }
+    }
+    
+    #page-title h2 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        letter-spacing: -0.5px;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    #page-title p {
+        font-size: 16px;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        line-height: 1.6;
+    }
+    
+    /* Main Panel */
+    .mautic-installer .panel {
+        background: var(--bg-card-local);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color-local);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .mautic-installer .panel-body {
+        padding: 0;
+    }
+    
+    /* Content Box Header */
+    .mautic-installer .title-hero {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-light-local) 100%);
+        padding: 25px 30px;
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary-local);
+        border-bottom: 1px solid var(--border-color-local);
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .title-hero img {
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Form Wrapper */
+    .mautic-installer .example-box-wrapper {
+        padding: 30px;
+    }
+    
+    /* Form Styling */
+    .mautic-installer .form-horizontal {
+        background: var(--bg-light-local);
+        padding: 30px;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color-local);
+    }
+    
+    .mautic-installer .form-group {
+        margin-bottom: 25px;
+        transition: var(--transition-base);
+    }
+    
+    .form-group:hover {
+        transform: translateX(5px);
+    }
+    
+    .mautic-installer .control-label {
+        font-weight: 600;
+        color: var(--text-primary-local);
+        margin-bottom: 8px;
+        font-size: 14px;
+        letter-spacing: 0.3px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .mautic-installer .form-control {
+        border: 2px solid var(--border-color-local);
+        border-radius: var(--radius-md);
+        padding: 12px 16px;
+        font-size: 15px;
+        transition: var(--transition-base);
+        background: var(--bg-secondary, white);
+        color: var(--text-primary-local);
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+    
+    .mautic-installer .form-control::placeholder {
+        color: var(--text-muted-local);
+        font-size: 14px;
+    }
+    
+    /* Enhanced Buttons */
+    .btn {
+        padding: 14px 32px;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        transition: var(--transition-base);
+        border: none;
+        font-size: 15px;
+        letter-spacing: 0.3px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn:active::before {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .btn-primary {
+        background: var(--bg-gradient);
+        color: white;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
+    
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .btn-lg {
+        padding: 16px 40px;
+        font-size: 16px;
+    }
+    
+    .btn-block {
+        width: 100%;
+    }
+    
+    /* Progress Section */
+    .progress {
+        height: 12px;
+        border-radius: var(--radius-full);
+        background: var(--border-color-local);
+        overflow: hidden;
+        margin-top: 15px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .progress-bar {
+        background: var(--bg-gradient);
+        transition: width 0.4s ease;
+        height: 100%;
+        border-radius: var(--radius-full);
+        background-size: 20px 20px;
+        animation: progress-bar-stripes 1s linear infinite;
+    }
+    
+    @keyframes progress-bar-stripes {
+        from { background-position: 0 0; }
+        to { background-position: 20px 0; }
+    }
+    
+    /* Alerts */
+    .alert {
+        border-radius: var(--radius-lg);
+        border: none;
+        padding: 18px 24px;
+        margin-bottom: 20px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .alert h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+    }
+    
+    .alert-success {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        border: 1px solid #6ee7b7;
+    }
+    
+    .alert-success a {
+        color: #065f46;
+        font-weight: 600;
+        text-decoration: underline;
+    }
+    
+    .alert-danger {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #e0e7ff 0%, #cdd4f9 100%);
+        border: 1px solid #c7d2fe;
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 25px;
+        color: var(--primary-color);
+        font-size: 14px;
+        line-height: 1.6;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .info-box i {
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+    
+    /* Warning Box */
+    .warning-box {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #fcd34d;
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 25px;
+        color: #92400e;
+        font-size: 14px;
+        line-height: 1.6;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .warning-box i {
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+    
+    /* Loading Animation */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    #wpInstallLoading {
+        animation: spin 1s linear infinite;
+    }
+    
+    /* Mautic Logo */
+    .mautic-logo {
+        width: 40px;
+        height: 40px;
+        background: var(--bg-secondary, white);
+        border-radius: 8px;
+        padding: 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Feature List */
+    .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-secondary-local);
+        font-size: 14px;
+    }
+    
+    .feature-item i {
+        color: var(--success-color-local);
+        font-size: 16px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+        
+        #page-title {
+            padding: 25px;
+        }
+        
+        #page-title h2 {
+            font-size: 24px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .form-horizontal {
+            padding: 20px;
+        }
+        
+        .control-label {
+            margin-bottom: 10px;
+        }
+        
+        .btn-lg {
+            padding: 12px 28px;
+            font-size: 14px;
+        }
+        
+        .feature-list {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="mautic-installer">
+<div class="container">
+    <div id="page-title">
+        <h2>
+            <span class="mautic-logo">
+                <i class="fas fa-envelope-open-text" style="color: var(--primary-color); font-size: 24px;"></i>
+            </span>
+            {% trans "Install Mautic" %}
+        </h2>
+        <p>{% trans "One-click Mautic Install! Deploy the powerful open-source marketing automation platform." %}</p>
+    </div>
+
+    <div ng-controller="installMauticCTRL" class="panel">
+        <div class="panel-body">
+            <h3 class="title-hero">
+                <i class="fas fa-chart-line" style="color: var(--primary-color);"></i>
+                <span id="domainNamePage">{{ domainName }}</span> - {% trans "Installation Details" %}
+                <img ng-hide="wpInstallLoading" src="{% static 'images/loading.gif' %}" id="wpInstallLoading">
+            </h3>
+            <div class="example-box-wrapper">
+
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>{% trans "Mautic Marketing Automation" %}</strong><br>
+                        {% trans "Mautic provides marketing automation, email marketing, and lead management tools to help you connect with your contacts and customers." %}
+                    </div>
+                </div>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>{% trans "Email Marketing" %}</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>{% trans "Lead Scoring" %}</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>{% trans "Campaign Builder" %}</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>{% trans "Marketing Analytics" %}</span>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>{% trans "Important:" %}</strong> {% trans "Before installing Mautic, we will change the PHP version of the website to PHP 8.1, which is supported by Mautic." %}
+                    </div>
+                </div>
+
+                <form name="websiteCreationForm" action="/" id="createPackages" class="form-horizontal bordered-row">
+
+                    <div ng-hide="installationDetailsForm" class="form-group">
+                        <label class="col-sm-3 control-label">
+                            <i class="fas fa-user"></i>
+                            {% trans "Administrator Username" %}
+                        </label>
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" ng-model="adminUserName" placeholder="admin" required>
+                        </div>
+                    </div>
+
+                    <div ng-hide="installationDetailsForm" class="form-group">
+                        <label class="col-sm-3 control-label">
+                            <i class="fas fa-envelope"></i>
+                            {% trans "Email" %}
+                        </label>
+                        <div class="col-sm-6">
+                            <input type="email" class="form-control" ng-model="email" placeholder="admin@example.com" required>
+                            <small class="form-text text-muted" style="margin-top: 8px; color: var(--text-secondary);">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans "This will be your Mautic administrator email" %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div ng-hide="installationDetailsForm" class="form-group">
+                        <label class="col-sm-3 control-label">
+                            <i class="fas fa-lock"></i>
+                            {% trans "Password" %}
+                        </label>
+                        <div class="col-sm-6">
+                            <input type="password" class="form-control" ng-model="password" placeholder="Strong password required" required>
+                            <small class="form-text text-muted" style="margin-top: 8px; color: var(--text-secondary);">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans "Use a strong password to secure your Mautic admin panel" %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div ng-hide="installationDetailsForm" class="form-group">
+                        <label class="col-sm-3 control-label"></label>
+                        <div class="col-sm-6">
+                            <button type="button" ng-click="installMautic()" class="btn btn-primary btn-lg btn-block">
+                                <i class="fas fa-download"></i>
+                                {% trans "Install Now" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div ng-hide="installationProgress" class="form-group" style="margin-top: 30px;">
+                        <label class="col-sm-2 control-label"></label>
+                        <div class="col-sm-8">
+
+                            <div class="alert alert-success text-center">
+                                <h2>{$ currentStatus $}</h2>
+                            </div>
+
+                            <div class="progress">
+                                <div id="installProgress" class="progress-bar" role="progressbar" aria-valuenow="70" 
+                                     aria-valuemin="0" aria-valuemax="100" style="width:0%">
+                                    <span class="sr-only">70% Complete</span>
+                                </div>
+                            </div>
+
+                            <div ng-hide="installationFailed" class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>{% trans "Installation failed. Error message:" %} {$ errorMessage $}</p>
+                            </div>
+
+                            <div ng-hide="installationSuccessfull" class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <p>
+                                    {% trans "Installation successful. Visit:" %} 
+                                    <a href="{$ installationURL $}" target="_blank" style="font-weight: 600;">
+                                        {$ installationURL $}
+                                    </a>
+                                </p>
+                                <small style="display: block; margin-top: 10px;">
+                                    <i class="fas fa-lightbulb"></i>
+                                    {% trans "Tip: Complete the Mautic setup wizard to configure your marketing automation platform" %}
+                                </small>
+                            </div>
+
+                            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                <i class="fas fa-wifi"></i>
+                                <p>{% trans "Could not connect to server. Please refresh this page." %}</p>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div ng-hide="installationProgress" class="form-group">
+                        <label class="col-sm-3 control-label"></label>
+                        <div class="col-sm-6">
+                            <button type="button" ng-disabled="goBackDisable" ng-click="goBack()" class="btn btn-primary btn-lg btn-block">
+                                <i class="fas fa-arrow-left"></i>
+                                {% trans "Go Back" %}
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+{% endblock %}

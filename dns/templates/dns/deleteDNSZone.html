@@ -1,0 +1,297 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Delete DNS Zone - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    /* Delete DNS Zone Page Styles with Dark Mode Support */
+    .container {
+        background: var(--bg-primary, #f0f0ff);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    #page-title {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    #page-title h2 {
+        color: var(--text-primary, #2f3640);
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    #page-title p {
+        color: var(--text-secondary, #8893a7);
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    #page-title a {
+        margin-left: 15px;
+    }
+
+    .btn-border.border-red {
+        background: transparent;
+        border: 1px solid var(--danger-color, #dc3545);
+        color: var(--danger-color, #dc3545) !important;
+        padding: 6px 16px;
+        font-size: 14px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-border.border-red:hover {
+        background: var(--danger-color, #dc3545);
+        color: white !important;
+    }
+
+    .panel {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .panel-body {
+        padding: 30px;
+    }
+
+    .content-box-header {
+        color: var(--text-primary, #2f3640);
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .example-box-wrapper {
+        background: transparent;
+    }
+
+    .form-horizontal {
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .control-label {
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        background: var(--bg-secondary, white);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-focus, rgba(91,95,207,0.1));
+    }
+
+    select.form-control {
+        cursor: pointer;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: var(--danger-color, #dc3545);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--danger-hover, #c82333);
+        box-shadow: 0 4px 12px var(--danger-shadow, rgba(220,53,69,0.3));
+        transform: translateY(-1px);
+    }
+
+    .btn-lg {
+        padding: 14px 28px;
+        font-size: 16px;
+    }
+
+    .btn-block {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-blue-alt {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+    }
+
+    .btn-blue-alt:hover {
+        background: var(--accent-hover, #4b4fbf);
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.3));
+        transform: translateY(-1px);
+    }
+
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .alert-danger {
+        background: var(--danger-bg, #fee2e2);
+        border: 1px solid var(--danger-border, #fca5a5);
+        color: var(--danger-text, #991b1b);
+    }
+
+    .alert-success {
+        background: var(--success-bg, #d1fae5);
+        border: 1px solid var(--success-border, #6ee7b7);
+        color: var(--success-text, #065f46);
+    }
+
+    .alert strong {
+        font-weight: 700;
+    }
+
+    /* PowerDNS disabled state */
+    .text-center h3 {
+        color: var(--text-primary, #2f3640);
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .panel-body {
+            padding: 20px;
+        }
+        
+        #page-title h2 {
+            font-size: 24px;
+        }
+    }
+</style>
+
+<div class="container">
+<div id="page-title">
+   <h2>{% trans "Delete DNS Zone" %} - <a  target="_blank" href="https://cyberpanel.net/KnowledgeBase/home/manage-dns-in-cyberpanel/" style="height: 23px;line-height: 21px;" class="btn btn-border btn-alt border-red btn-link font-red" title=""><span>{% trans "DNS Docs" %}</span></a></h2>
+   <p>{% trans "This page can be used to delete DNS Zone. Deleting the DNS zone will remove all its related records as well." %}</p>
+</div>
+<div class="panel">
+    <div class="panel-body">
+        <h3 class="content-box-header">
+            {% trans "Delete DNS Zone" %}
+        </h3>
+        <div ng-controller="deleteDNSZone" class="example-box-wrapper">
+
+
+        {% if not status %}
+            <div class="col-md-12 text-center" style="margin-bottom: 2%;">
+                <h3>{% trans "PowerDNS is disabled." %}
+                    <a href="{% url 'managePowerDNS' %}"><button class="btn btn-alt btn-hover btn-blue-alt">
+                        <span>{% trans "Enable Now" %}</span>
+                        <i class="glyph-icon icon-arrow-right"></i>
+                    </button></a></h3>
+            </div>
+
+        {% else %}
+
+            <form  action="/" class="form-horizontal bordered-row panel-body">
+
+                 <div class="form-group">
+                    <label class="col-sm-3 control-label">{% trans "Select Zone" %}</label>
+                    <div class="col-sm-6">
+                        <select ng-model="selectedZone" class="form-control">
+                            {% for items in domainsList %}
+                                <option>{{ items }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+            <div class="form-group">
+                    <label class="col-sm-3 control-label"></label>
+                    <div class="col-sm-4">
+                         <button type="button" ng-click="deleteZone()" class="btn btn-primary btn-lg">{% trans "Delete Zone" %}</button>
+
+                    </div>
+            </div>
+
+
+            <div ng-hide="deleteZoneButton" class="form-group">
+                    <label class="col-sm-3 control-label"></label>
+                    <div class="col-sm-4">
+                         <button type="button" ng-click="deleteZoneFinal()" class="btn btn-primary btn-lg btn-block">{% trans "Are you sure?" %}</button>
+
+                    </div>
+            </div>
+
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label"></label>
+                    <div class="col-sm-6">
+                            <div ng-hide="deleteFailure" class="alert alert-danger">
+                                        <p>{% trans "Cannot delete zone. Error message: " %}{$ errorMessage $}</p>
+                            </div>
+
+                            <div ng-hide="deleteSuccess" class="alert alert-success">
+                                <p>{% trans "Zone for domain:" %} <strong>{$ deletedZone $}</strong> {% trans "is successfully erased." %}</p>
+                            </div>
+
+                            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                <p>{% trans "Could not connect to server. Please refresh this page." %}</p>
+                            </div>
+                    </div>
+
+
+
+                </div>
+
+
+            </form>
+
+        {% endif %}
+
+
+
+
+        </div>
+    </div>
+</div>
+
+
+</div>
+
+
+{% endblock %}

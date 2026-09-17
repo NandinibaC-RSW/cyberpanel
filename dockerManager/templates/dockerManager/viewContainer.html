@@ -1,0 +1,1379 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{{ name }} - {% trans "Container Management" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 30%, var(--accent-shadow-light, rgba(91, 95, 207, 0.15)) 0%, transparent 50%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    .container-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .container-icon-large {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px var(--shadow-medium, rgba(0,0,0,0.1));
+    }
+    
+    .container-title-section {
+        text-align: left;
+    }
+    
+    .container-name {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .container-id {
+        font-size: 0.875rem;
+        color: var(--text-secondary, #64748b);
+        margin-top: 0.5rem;
+        font-family: monospace;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        animation: pulse 2s infinite;
+        transition: all 0.3s ease;
+    }
+    
+    .status-badge.status-changed {
+        animation: statusChange 0.6s ease-out;
+    }
+    
+    @keyframes statusChange {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .status-running {
+        background: var(--success-bg, #d1fae5);
+        color: var(--success-text, #065f46);
+    }
+    
+    .status-stopped {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-paused {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        animation: blink 2s infinite;
+    }
+    
+    .status-running .status-dot {
+        background: var(--success-color, #10b981);
+    }
+    
+    .status-stopped .status-dot {
+        background: var(--danger-color, #ef4444);
+        animation: none;
+    }
+    
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .refresh-icon {
+        cursor: pointer;
+        color: var(--text-secondary, #64748b);
+        transition: all 0.3s ease;
+    }
+    
+    .refresh-icon:hover {
+        color: var(--accent-color, #5b5fcf);
+        transform: rotate(180deg);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--accent-focus, rgba(91, 95, 207, 0.1)) 0%, transparent 100%);
+        border-radius: 0 0 0 100%;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px var(--accent-shadow-light, rgba(91, 95, 207, 0.15));
+    }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--accent-bg, #e0e7ff);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin: 0.5rem 0;
+    }
+    
+    .stat-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-secondary, #64748b);
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e8e9ff;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-color, #5b5fcf) 0%, #7b7fd0 100%);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+    
+    .main-card {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .info-item {
+        background: var(--bg-hover, #f8f9ff);
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary, #1e293b);
+        word-break: break-all;
+    }
+    
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        padding: 1rem;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
+        color: var(--text-primary, #1e293b);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: var(--accent-focus, rgba(91, 95, 207, 0.1));
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .action-btn:hover::before {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 4px 12px var(--accent-shadow-soft, rgba(91, 95, 207, 0.2));
+    }
+    
+    .action-btn.primary {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .action-btn.primary:hover {
+        background: var(--accent-hover, #4547a9);
+    }
+    
+    .action-btn.danger {
+        background: #fee2e2;
+        color: #ef4444;
+        border-color: #fecaca;
+    }
+    
+    .action-btn.danger:hover {
+        background: #fecaca;
+        border-color: #ef4444;
+    }
+    
+    .action-btn[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .action-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .action-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .terminal-card {
+        background: #1a202c;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .terminal-header {
+        background: #2d3748;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #4a5568;
+    }
+    
+    .terminal-title {
+        color: #e2e8f0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .terminal-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .terminal-btn {
+        background: #4a5568;
+        color: #e2e8f0;
+        border: 1px solid #718096;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .terminal-btn:hover {
+        background: #718096;
+        color: var(--bg-secondary, white);
+    }
+    
+    .terminal-content {
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        color: #e2e8f0;
+        background: #1a202c;
+        padding: 1.5rem;
+        height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+    }
+    
+    .terminal-content::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .terminal-content::-webkit-scrollbar-track {
+        background: #2d3748;
+    }
+    
+    .terminal-content::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 4px;
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #e8e9ff;
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+    
+    /* Modal Overrides */
+    .modal-content {
+        border-radius: 16px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 25px 50px -12px var(--shadow-dark, rgba(0, 0, 0, 0.25));
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        padding: 1.5rem 2rem;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-footer {
+        background: var(--bg-hover, #f8f9ff);
+        border-top: 1px solid var(--border-color, #e8e9ff);
+        padding: 1rem 2rem;
+    }
+    
+    .modal-footer .btn {
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .modal-footer .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+    }
+    
+    .modal-footer .btn-primary:hover {
+        background: var(--accent-hover, #4547a9);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(91, 95, 207, 0.3);
+    }
+    
+    .modal-footer .btn-default {
+        background: #6b7280;
+        color: var(--bg-secondary, white);
+        margin-left: 0.5rem;
+    }
+    
+    .modal-footer .btn-default:hover {
+        background: #4b5563;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 0 0 0 var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+        }
+        50% {
+            box-shadow: 0 0 0 10px rgba(91, 95, 207, 0);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .container-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .container-title-section {
+            text-align: center;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<div class="modern-container" ng-controller="viewContainer">
+    <div class="page-header">
+        <div class="container-header">
+            <div class="container-icon-large">
+                <i class="fab fa-docker" style="color: var(--accent-color, #5b5fcf); font-size: 2.5rem;"></i>
+            </div>
+            <div class="container-title-section">
+                <h1 class="container-name" ng-init="cName='{{ name }}';status='{{ status }}'">
+                    {{ name }}
+                    <span class="status-badge status-{{ status }}" ng-class="'status-' + status">
+                        <span class="status-dot"></span>
+                        <span ng-bind="status"></span>
+                    </span>
+                </h1>
+                <div class="container-id">Container ID: {{ cid|slice:":12" }}...</div>
+            </div>
+            <i class="fas fa-sync refresh-icon" ng-click="refreshStatus()" title="{% trans 'Refresh status' %}"></i>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-title">{% trans "CPU Usage" %}</div>
+                    <div class="stat-value" ng-init="cpuUsage={{ cpuUsage }}">{{ cpuUsage }}%</div>
+                    <div class="stat-subtitle">{% trans "Processing Power" %}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-microchip"></i>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ cpuUsage }}%"></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-title">{% trans "Memory Usage" %}</div>
+                    <div class="stat-value" ng-init="memoryUsage={{ memoryUsage }}">{{ memoryUsage|floatformat:"1" }}%</div>
+                    <div class="stat-subtitle">{% trans "RAM Utilization" %}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-memory"></i>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ memoryUsage }}%"></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-title">{% trans "Memory Limit" %}</div>
+                    <div class="stat-value" ng-init="memory={{ memoryLimit }}">{{ memoryLimit }} MB</div>
+                    <div class="stat-subtitle">{% trans "Allocated Memory" %}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Information -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-info-circle"></i>
+                {% trans "Container Information" %}
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">{% trans "Image" %}</div>
+                    <div class="info-value">{{ image }}</div>
+                </div>
+                {% if ports %}
+                <div class="info-item">
+                    <div class="info-label">{% trans "Port Mappings" %}</div>
+                    <div class="info-value">
+                        {% for iport, eport in ports.items %}
+                            <span style="background: var(--accent-bg, #e0e7ff); padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.5rem;">
+                                {{ iport }} → {{ eport }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                <div class="info-item">
+                    <div class="info-label">{% trans "Restart Policy" %}</div>
+                    <div class="info-value" ng-init="rPolicy='{{ restartPolicy }}'" ng-bind="rPolicy"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">{% trans "Start on Boot" %}</div>
+                    <div class="info-value" ng-init="startOnReboot={{ startOnReboot }}">
+                        <span ng-if="startOnReboot" style="color: var(--success-color, #10b981);">
+                            <i class="fas fa-check-circle"></i> {% trans "Enabled" %}
+                        </span>
+                        <span ng-if="!startOnReboot" style="color: var(--text-secondary, #64748b);">
+                            <i class="fas fa-times-circle"></i> {% trans "Disabled" %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Actions -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-cogs"></i>
+                {% trans "Container Actions" %}
+                <img id="actionLoading" src="/static/images/loading.gif" style="display: none;" class="loading-spinner">
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="action-grid">
+                <div class="action-btn" ng-click="cAction('start')" ng-disabled="status=='running'">
+                    <i class="fas fa-play action-icon" style="color: var(--success-color, #10b981);"></i>
+                    <div class="action-text">{% trans "Start" %}</div>
+                </div>
+                
+                <div class="action-btn" ng-click="cAction('restart')" ng-disabled="status!='running'">
+                    <i class="fas fa-sync-alt action-icon" style="color: var(--info-color, #3b82f6);"></i>
+                    <div class="action-text">{% trans "Restart" %}</div>
+                </div>
+                
+                <div class="action-btn" ng-click="cAction('stop')" ng-disabled="status!='running'">
+                    <i class="fas fa-stop action-icon" style="color: var(--warning-color, #f59e0b);"></i>
+                    <div class="action-text">{% trans "Stop" %}</div>
+                </div>
+                
+                <div class="action-btn" ng-click="cAction('pause')" ng-disabled="status!='running'">
+                    <i class="fas fa-pause action-icon" style="color: #8b5cf6;"></i>
+                    <div class="action-text">{% trans "Pause" %}</div>
+                </div>
+                
+                <div class="action-btn danger" ng-click="cRemove()">
+                    <i class="fas fa-trash action-icon"></i>
+                    <div class="action-text">{% trans "Remove" %}</div>
+                </div>
+                
+                <div class="action-btn" data-toggle="modal" data-target="#settings">
+                    <i class="fas fa-sliders-h action-icon" style="color: #6366f1;"></i>
+                    <div class="action-text">{% trans "Settings" %}</div>
+                </div>
+                
+                <div class="action-btn" ng-click="recreate()">
+                    <i class="fas fa-redo action-icon" style="color: #06b6d4;"></i>
+                    <div class="action-text">{% trans "Recreate" %}</div>
+                </div>
+                
+                <a href="/docker/exportContainer/?name={{ name }}" class="action-btn">
+                    <i class="fas fa-download action-icon" style="color: var(--success-color, #10b981);"></i>
+                    <div class="action-text">{% trans "Export" %}</div>
+                </a>
+                
+                <div class="action-btn" ng-click="showTop()" ng-disabled="loadingTop">
+                    <i class="fas fa-terminal action-icon" style="color: #ec4899;"></i>
+                    <div class="action-text">{% trans "Processes" %}</div>
+                </div>
+                
+                <div class="action-btn" ng-click="showCommandModal()" ng-disabled="status!='running'">
+                    <i class="fas fa-code action-icon" style="color: #10b981;"></i>
+                    <div class="action-text">{% trans "Run Command" %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Logs -->
+    <div class="terminal-card" ng-init="loadLogs('{{ name }}')">
+        <div class="terminal-header">
+            <h3 class="terminal-title">
+                <i class="fas fa-file-alt"></i>
+                {% trans "Container Logs" %}
+            </h3>
+            <div class="terminal-controls">
+                <button class="terminal-btn" ng-click="loadLogs('{{ name }}')">
+                    <i class="fas fa-sync"></i> {% trans "Refresh" %}
+                </button>
+                <button class="terminal-btn" onclick="document.querySelector('.terminal-content').scrollTop = 0">
+                    <i class="fas fa-arrow-up"></i> {% trans "Top" %}
+                </button>
+                <button class="terminal-btn" onclick="document.querySelector('.terminal-content').scrollTop = document.querySelector('.terminal-content').scrollHeight">
+                    <i class="fas fa-arrow-down"></i> {% trans "Bottom" %}
+                </button>
+            </div>
+        </div>
+        <div class="terminal-content" ng-bind="logs"></div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-cog" style="margin-right: 0.5rem;"></i>
+                        {% trans "Container Settings" %}
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" 
+                            style="font-size: 1.5rem; background: transparent; border: none;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form name="containerSettingsForm" class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "Memory Limit (MB)" %}</label>
+                            <div class="col-sm-6">
+                                <input name="memory" type="number" class="form-control" ng-model="memory" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "Start on Reboot" %}</label>
+                            <div class="col-sm-9">
+                                <div class="checkbox">
+                                    <label>
+                                        <input ng-model="startOnReboot" type="checkbox">
+                                        {% trans "Enable automatic startup" %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "Environment Variables" %}</label>
+                            <div class="col-sm-9">
+                                <div class="checkbox">
+                                    <label>
+                                        <input ng-model="envConfirmation" type="checkbox">
+                                        <strong>{% trans "I understand that editing ENV or Volumes will recreate the container" %}</strong>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Environment Variable Mode Toggle -->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "Environment Mode" %}</label>
+                            <div class="col-sm-9">
+                                <div class="toggle-container" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                                    <div style="flex: 1;">
+                                        <label style="font-weight: 600; color: #495057; margin-bottom: 0.25rem; display: block;">
+                                            {% trans "Advanced Environment Mode" %}
+                                        </label>
+                                        <p style="font-size: 0.875rem; color: #6c757d; margin: 0;">
+                                            {% trans "Enable advanced mode for bulk editing environment variables" %}
+                                        </p>
+                                    </div>
+                                    <div class="toggle-switch">
+                                        <label class="switch" style="position: relative; display: inline-block; width: 60px; height: 34px;">
+                                            <input type="checkbox" ng-model="advancedEnvMode" ng-change="toggleEnvMode()" style="opacity: 0; width: 0; height: 0;">
+                                            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;">
+                                                <span class="slider-thumb" style="position: absolute; content: ''; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Simple Mode: Line-by-line input -->
+                        <div ng-show="!advancedEnvMode">
+                        <!-- Docker Compose Information -->
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <div class="alert alert-info docker-compose-info">
+                                    <div class="compose-header">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>{% trans "Docker Compose Environment Variables" %}</strong>
+                                    </div>
+                                    <div class="compose-benefits">
+                                        <p><strong>{% trans "With Docker Compose, you can:" %}</strong></p>
+                                        <ul>
+                                            <li>{% trans "Keep your environment variables in a separate .env file" %}</li>
+                                            <li>{% trans "When you change the .env, you don't need to rebuild the entire container image" %}</li>
+                                            <li>{% trans "You can simply run docker compose up -d again, and only the parts that changed (like the environment variables) will be reloaded" %}</li>
+                                        </ul>
+                                        <div class="compose-actions">
+                                            <button type="button" class="btn btn-primary btn-sm" ng-click="generateDockerCompose()">
+                                                <i class="fas fa-file-code"></i> {% trans "Generate docker-compose.yml" %}
+                                            </button>
+                                            <button type="button" class="btn btn-success btn-sm" ng-click="generateEnvFile()">
+                                                <i class="fas fa-file-alt"></i> {% trans "Generate .env file" %}
+                                            </button>
+                                            <button type="button" class="btn btn-warning btn-sm" ng-click="showComposeHelp()">
+                                                <i class="fas fa-question-circle"></i> {% trans "How to use" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Environment Variables -->
+                        <span ng-init="envList = {}"></span>
+                        {% for env, value in envList.items %}
+                            <span ng-init="envList[{{ forloop.counter0 }}] = {'name':'{{ env }}', 'value':'{{ value }}'}"></span>
+                        {% endfor %}
+
+                            <div ng-repeat="env in envList track by $index">
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" ng-show="$first">
+                                        {% trans "Environment Variables" %}
+                                    </label>
+                                    <label class="col-sm-3" ng-hide="$first"></label>
+                                    <div class="col-sm-3">
+                                        <input type="text" class="form-control" ng-disabled="!envConfirmation" 
+                                               ng-model="envList[$index].name" placeholder="Variable name" required>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" ng-disabled="!envConfirmation" 
+                                               ng-model="envList[$index].value" placeholder="Value" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-sm-offset-3 col-sm-9">
+                                    <button type="button" class="btn btn-info" ng-disabled="!envConfirmation" 
+                                            ng-click="addEnvField()">
+                                        <i class="fas fa-plus"></i> {% trans "Add Environment Variable" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Mode: Bulk input -->
+                        <div ng-show="advancedEnvMode">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% trans "Environment Variables" %}</label>
+                                <div class="col-sm-9">
+                                    <div style="background: white; border-radius: 8px; border: 1px solid #dee2e6; overflow: hidden;">
+                                        <div style="background: #f8f9fa; padding: 1rem; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <h5 style="margin: 0; font-size: 1rem; font-weight: 600; color: #495057;">
+                                                    {% trans "Advanced Environment Variables" %}
+                                                </h5>
+                                                <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #6c757d;">
+                                                    {% trans "Edit environment variables in bulk using KEY=VALUE format" %}
+                                                </p>
+                                            </div>
+                                            <div style="display: flex; gap: 0.5rem;">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" ng-click="importEnvFromContainer()" title="{% trans 'Import from another container' %}">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success" ng-click="exportEnvToFile()" title="{% trans 'Export to .env file' %}">
+                                                    <i class="fas fa-file-export"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" ng-click="copyEnvToClipboard()" title="{% trans 'Copy to clipboard' %}">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="padding: 1rem;">
+                                            <textarea ng-model="advancedEnvText" 
+                                                      ng-change="parseAdvancedEnv()"
+                                                      placeholder="DATABASE_URL=postgresql://user:pass@localhost/db&#10;API_KEY=your-secret-key&#10;DEBUG=true&#10;PORT=3000"
+                                                      style="width: 100%; height: 150px; padding: 0.75rem; border: 1px solid #ced4da; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.875rem; resize: vertical;"
+                                                      ng-disabled="!envConfirmation"
+                                                      ng-init="advancedEnvText = ''"></textarea>
+                                            
+                                            <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #6c757d;">
+                                                <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                                                <span ng-show="advancedEnvCount > 0">{% trans "Parsed" %} {{ advancedEnvCount }} {% trans "environment variables" %}</span>
+                                                <span ng-show="advancedEnvCount === 0">{% trans "No environment variables detected" %}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Volume Mappings -->
+                        <span ng-init="volList = {}; volListNumber = 1"></span>
+                        {% for key, value in volList.items %}
+                            <span ng-init="volList[{{ forloop.counter0 }}] = {'dest':'{{ value.bind }}', 'src':'{{ key }}'}"></span>
+                            <span ng-init="volListNumber = {{ forloop.counter0 }} + 1"></span>
+                        {% endfor %}
+
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "Volume Mappings" %}</label>
+                        </div>
+
+                        <div ng-repeat="volume in volList track by $index">
+                            <div class="form-group">
+                                <div class="col-sm-offset-3 col-sm-4">
+                                    <input type="text" class="form-control" ng-disabled="!envConfirmation" 
+                                           ng-model="volList[$index].dest" placeholder="Container path" required>
+                                </div>
+                                <div class="col-sm-4">
+                                    <input type="text" class="form-control" ng-disabled="!envConfirmation" 
+                                           ng-model="volList[$index].src" placeholder="Host path" required>
+                                </div>
+                                <div class="col-sm-1" ng-show="$last">
+                                    <button class="btn btn-danger" type="button" ng-disabled="!envConfirmation" 
+                                            ng-click="removeVolField()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-9">
+                                <button type="button" class="btn btn-info" ng-disabled="!envConfirmation" 
+                                        ng-click="addVolField()">
+                                    <i class="fas fa-plus"></i> {% trans "Add Volume Mapping" %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <img id="containerSettingLoading" src="/static/images/loading.gif" style="display: none;" class="loading-spinner">
+                    <button type="button" class="btn btn-primary" ng-disabled="savingSettings" ng-click="saveSettings()">
+                        <i class="fas fa-save"></i> {% trans "Save Settings" %}
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <i class="fas fa-times"></i> {% trans "Cancel" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processes Modal -->
+    <div id="processes" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-terminal" style="margin-right: 0.5rem;"></i>
+                        {% trans "Container Processes" %}
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" 
+                            style="font-size: 1.5rem; background: transparent; border: none;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th ng-repeat="item in topHead track by $index">{$ item $}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="process in topProcesses track by $index">
+                                    <td ng-repeat="item in process track by $index">{$ item $}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="showTop()">
+                        <i class="fas fa-sync"></i> {% trans "Refresh" %}
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <i class="fas fa-times"></i> {% trans "Close" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Execution Modal -->
+    <div id="commandModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-code" style="margin-right: 0.5rem;"></i>
+                        {% trans "Execute Command" %}
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" 
+                            style="font-size: 1.5rem; background: transparent; border: none;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="commandInput" class="control-label">
+                            <i class="fas fa-terminal" style="margin-right: 0.5rem;"></i>
+                            {% trans "Command to execute" %}
+                        </label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   id="commandInput" 
+                                   class="form-control" 
+                                   ng-model="commandToExecute" 
+                                   placeholder="Enter command (e.g., ls -la, ps aux, whoami, env)"
+                                   ng-keyup="$event.keyCode === 13 && executeCommand()"
+                                   style="font-family: 'Courier New', monospace;">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" ng-click="executeCommand()" ng-disabled="!commandToExecute || executingCommand">
+                                    <i class="fas fa-play" ng-hide="executingCommand"></i>
+                                    <i class="fas fa-spinner fa-spin" ng-show="executingCommand"></i>
+                                    {% trans "Execute" %}
+                                </button>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">
+                            {% trans "Commands will be executed inside the running container. Use proper shell syntax." %}
+                        </small>
+                    </div>
+                    
+                    <!-- Command History -->
+                    <div class="form-group" ng-show="commandHistory.length > 0">
+                        <label class="control-label">
+                            <i class="fas fa-history" style="margin-right: 0.5rem;"></i>
+                            {% trans "Command History" %}
+                        </label>
+                        <div class="command-history">
+                            <div class="history-item" 
+                                 ng-repeat="cmd in commandHistory track by $index" 
+                                 ng-click="selectCommand(cmd.command)"
+                                 style="cursor: pointer; padding: 0.25rem 0.5rem; margin: 0.125rem 0; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #007bff;">
+                                <code style="font-size: 0.875rem;">{{ cmd.command }}</code>
+                                <small class="text-muted" style="float: right;">{{ cmd.timestamp | date:'short' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Output Display -->
+                    <div class="form-group" ng-show="commandOutput">
+                        <label class="control-label">
+                            <i class="fas fa-terminal" style="margin-right: 0.5rem;"></i>
+                            {% trans "Command Output" %}
+                        </label>
+                        <div class="terminal-output" style="background: #1a202c; color: #e2e8f0; padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.875rem; max-height: 300px; overflow-y: auto; white-space: pre-wrap;">
+                            <div ng-show="commandOutput.exit_code !== undefined" style="margin-bottom: 0.5rem;">
+                                <span style="color: #68d391;">$</span> <span style="color: #fbb6ce;">{{ commandOutput.command }}</span>
+                                <span style="color: #a0aec0; margin-left: 1rem;">(exit code: {{ commandOutput.exit_code }})</span>
+                            </div>
+                            <div ng-bind="commandOutput.output"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="executeCommand()" ng-disabled="!commandToExecute || executingCommand">
+                        <i class="fas fa-play" ng-hide="executingCommand"></i>
+                        <i class="fas fa-spinner fa-spin" ng-show="executingCommand"></i>
+                        {% trans "Execute Command" %}
+                    </button>
+                    <button type="button" class="btn btn-secondary" ng-click="clearOutput()" ng-disabled="!commandOutput">
+                        <i class="fas fa-trash"></i> {% trans "Clear Output" %}
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <i class="fas fa-times"></i> {% trans "Close" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Container Import Modal -->
+<div class="modal fade" id="containerImportModal" tabindex="-1" role="dialog" ng-show="showContainerImportModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <i class="fas fa-download"></i>
+                    {% trans "Import Environment Variables from Container" %}
+                </h4>
+                <button type="button" class="close" ng-click="showContainerImportModal = false">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div ng-show="importLoading" class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>{% trans "Loading containers..." %}</p>
+                </div>
+                
+                <div ng-hide="importLoading">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        {% trans "Select a container to import its environment variables. This will replace your current environment variables." %}
+                    </div>
+                    
+                    <div class="container-list">
+                        <div ng-repeat="container in importContainers" 
+                             class="container-item" 
+                             ng-click="selectContainerForImport(container)"
+                             ng-class="{'selected': selectedImportContainer && selectedImportContainer.name === container.name}">
+                            <div class="container-info">
+                                <div class="container-name">
+                                    <i class="fas fa-cube"></i>
+                                    {{ container.name }}
+                                </div>
+                                <div class="container-details">
+                                    <span class="container-image">{{ container.image }}</span>
+                                    <span class="container-status" ng-class="'status-' + container.status">
+                                        {{ container.status }}
+                                    </span>
+                                </div>
+                                <div class="container-env-count" ng-if="container.envCount">
+                                    <i class="fas fa-list"></i>
+                                    {{ container.envCount }} {% trans "environment variables" %}
+                                </div>
+                            </div>
+                            <div class="container-actions">
+                                <button class="btn btn-primary btn-sm" ng-click="selectContainerForImport(container)">
+                                    <i class="fas fa-download"></i>
+                                    {% trans "Import" %}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div ng-if="importContainers.length === 0" class="text-center text-muted">
+                            <i class="fas fa-info-circle fa-2x"></i>
+                            <p>{% trans "No other containers found to import from" %}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div ng-show="importEnvLoading" class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>{% trans "Importing environment variables..." %}</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" ng-click="showContainerImportModal = false">
+                    {% trans "Cancel" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.container-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.container-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.container-item:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.container-item.selected {
+    background-color: #e3f2fd;
+    border-color: #007bff;
+}
+
+.container-info {
+    flex: 1;
+}
+
+.container-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.container-name i {
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+.container-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.container-image {
+    font-family: monospace;
+    background-color: #f8f9fa;
+    padding: 0.125rem 0.25rem;
+    border-radius: 4px;
+}
+
+.container-status {
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.container-status.status-running {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.container-status.status-stopped {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.container-env-count {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.container-env-count i {
+    margin-right: 0.25rem;
+}
+
+.container-actions {
+    margin-left: 1rem;
+}
+
+/* Docker Compose Information Styles */
+.docker-compose-info {
+    border-left: 4px solid #007bff;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f1ff 100%);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.compose-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.compose-header i {
+    color: #007bff;
+    font-size: 1.2rem;
+}
+
+.compose-benefits ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.compose-benefits li {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.compose-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.compose-actions .btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.compose-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+</style>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script src="{% static 'dockerManager/dockerManager.js' %}"></script>
+{% endblock %}

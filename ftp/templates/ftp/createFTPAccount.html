@@ -1,0 +1,519 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Create FTP Account - CyberPanel" %}{% endblock %}
+{% block content %}
+
+    {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <!-- Current language: {{ LANGUAGE_CODE }} -->
+
+    <style>
+        .modern-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .page-subtitle {
+            font-size: 1.375rem;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 0;
+        }
+        
+        .main-card {
+            background: var(--bg-secondary, white);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+            border: 1px solid var(--border-color, #e8e9ff);
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color, #e8e9ff);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .test-connection-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary, #fff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            color: var(--accent-color, #5b5fcf);
+            text-decoration: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-left: auto;
+        }
+        
+        .test-connection-link:hover {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--accent-shadow, rgba(91, 95, 207, 0.3));
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #1e293b);
+            font-size: 1rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary, #fff);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color, #5b5fcf);
+            box-shadow: 0 0 0 3px var(--accent-focus, rgba(91, 95, 207, 0.1));
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .username-suffix {
+            font-size: 1rem;
+            color: var(--text-secondary, #64748b);
+            font-weight: 500;
+            padding: 0.75rem;
+            background: var(--bg-hover, #f8f9ff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 8px;
+            min-width: fit-content;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color, #5b5fcf);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover, #4547a9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary, #fff);
+            color: var(--accent-color, #5b5fcf);
+            border: 1px solid var(--border-color, #e8e9ff);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover, #f8f9ff);
+            border-color: var(--accent-color, #5b5fcf);
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .alert-success {
+            background: var(--success-bg-light, #d1fae5);
+            color: var(--success-text-dark, #065f46);
+            border: 1px solid var(--success-border, #a7f3d0);
+        }
+        
+        .alert-danger {
+            background: var(--danger-bg-light, #fee2e2);
+            color: var(--danger-text-dark, #991b1b);
+            border: 1px solid var(--danger-border, #fecaca);
+        }
+        
+        .alert-info {
+            background: var(--info-bg-light, #dbeafe);
+            color: var(--info-text-dark, #1e40af);
+            border: 1px solid var(--info-border, #bfdbfe);
+        }
+        
+        .disabled-notice {
+            background: var(--warning-bg-light, #fef3c7);
+            border: 1px solid var(--warning-border, #fde68a);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .disabled-notice h3 {
+            color: var(--warning-text-dark, #92400e);
+            margin-bottom: 1rem;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color, #e8e9ff);
+            border-top-color: var(--accent-color, #5b5fcf);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .account-details {
+            background: var(--bg-hover, #f8f9ff);
+            border: 1px solid var(--border-color, #e8e9ff);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+        }
+        
+        .account-details h3 {
+            color: var(--text-primary, #1e293b);
+            font-size: 1.375rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .password-strength {
+            margin-top: 0.5rem;
+            height: 4px;
+            background: var(--bg-muted, #e5e7eb);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .strength-weak {
+            width: 33%;
+            background: var(--danger-color, #ef4444);
+        }
+        
+        .strength-medium {
+            width: 66%;
+            background: var(--warning-color, #ffa000);
+        }
+        
+        .strength-strong {
+            width: 100%;
+            background: var(--success-color, #10b981);
+        }
+        
+        .path-info {
+            background: var(--info-bg-light, #e0e7ff);
+            border: 1px solid var(--info-border, #c7d2fe);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            color: var(--info-text-dark, #3730a3);
+        }
+        
+        .path-info i {
+            color: var(--accent-color, #5b5fcf);
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Select2 Modern Styling */
+        .select2-container .select2-selection--single {
+            height: 42px !important;
+            padding: 0.75rem 1rem !important;
+            border: 1px solid var(--border-color, #e8e9ff) !important;
+            border-radius: 8px !important;
+            font-size: 1rem !important;
+            background: var(--bg-secondary, #fff) !important;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--text-primary, #1e293b) !important;
+            line-height: 20px !important;
+            padding-left: 0 !important;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+            right: 10px !important;
+        }
+        
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: var(--accent-color, #5b5fcf) !important;
+            box-shadow: 0 0 0 3px var(--accent-focus, rgba(91, 95, 207, 0.1)) !important;
+        }
+        
+        .select2-dropdown {
+            border: 1px solid var(--border-color, #e8e9ff) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 6px -1px var(--shadow-medium, rgba(0, 0, 0, 0.1)), 0 2px 4px -1px var(--shadow-soft, rgba(0, 0, 0, 0.06)) !important;
+        }
+        
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--accent-color, #5b5fcf) !important;
+        }
+        
+        .select2-container--default .select2-results__option[aria-selected="true"] {
+            background-color: var(--bg-hover, #f8f9ff) !important;
+            color: var(--accent-color, #5b5fcf) !important;
+        }
+    </style>
+
+    <div class="modern-container" ng-controller="createFTPAccount">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-folder-plus"></i>
+                {% trans "Create FTP Account" %}
+            </h1>
+            <p class="page-subtitle">{% trans "Setup FTP access for your websites to upload and manage files" %}</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-user-plus"></i>
+                    {% trans "New FTP Account" %}
+                    <span ng-show="ftpLoading" class="loading-spinner"></span>
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if not status %}
+                    <div class="disabled-notice">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3" style="color: var(--warning-color, #ffa000);"></i>
+                        <h3>{% trans "PureFTPD is disabled" %}</h3>
+                        <p class="mb-3">{% trans "You need to enable PureFTPD to create FTP accounts" %}</p>
+                        <a href="{% url 'managePureFtpd' %}" class="btn-primary">
+                            <i class="fas fa-power-off"></i>
+                            {% trans "Enable PureFTPD Now" %}
+                        </a>
+                    </div>
+                {% else %}
+                    <form action="/" method="post">
+                        <div class="form-section">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label">{% trans "Select Website" %}</label>
+                                        <select ng-model="ftpDomain" ng-change="showFTPDetails()" class="form-control create-ftp-acct-select">
+                                            <option value="">{% trans "Choose a website..." %}</option>
+                                            {% for items in websiteList %}
+                                                <option value="{{ items }}">{{ items }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-hide="ftpDetails" class="account-details">
+                            <h3><i class="fas fa-cog"></i> {% trans "FTP Account Details" %}</h3>
+                            
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label">{% trans "FTP Username" %}</label>
+                                        <div class="input-group">
+                                            <input ng-change="hideFewDetails()" type="text" class="form-control" 
+                                                   ng-model="ftpUserName" placeholder="john_ftp" required>
+                                            <span class="username-suffix">{{ OwnerFTP }}_{$ ftpUserName $}</span>
+                                        </div>
+                                        <small style="color: var(--text-secondary, #64748b); margin-top: 0.5rem; display: block; font-size: 1rem;">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans "Your FTP username will be prefixed with the owner username" %}
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">{% trans "FTP Password" %}</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" ng-model="ftpPassword" 
+                                                   placeholder="Enter a strong password" required>
+                                            <button type="button" ng-click="generatePassword()" class="btn-secondary">
+                                                <i class="fas fa-dice"></i>
+                                                {% trans "Generate" %}
+                                            </button>
+                                        </div>
+                                        <div class="password-strength" ng-show="ftpPassword">
+                                            <div class="password-strength-bar" 
+                                                 ng-class="{'strength-weak': ftpPassword.length < 8, 
+                                                            'strength-medium': ftpPassword.length >= 8 && ftpPassword.length < 12,
+                                                            'strength-strong': ftpPassword.length >= 12}">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div ng-hide="generatedPasswordView" class="form-group">
+                                        <label class="form-label">{% trans "Generated Password" %}</label>
+                                        <div class="input-group">
+                                            <input type="text" name="email" class="form-control" 
+                                                   ng-model="ftpPassword" readonly>
+                                            <button type="button" ng-click="usePassword()" class="btn-secondary">
+                                                <i class="fas fa-check"></i>
+                                                {% trans "Use This Password" %}
+                                            </button>
+                                        </div>
+                                        <small style="color: var(--text-secondary, #64748b); margin-top: 0.5rem; display: block; font-size: 1rem;">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans "Make sure to save this password in a secure location" %}
+                                        </small>
+                                    </div>
+
+                                    <div ng-hide="ftpDetails" class="form-group">
+                                        <label class="form-label">{% trans "Path (Relative)" %}</label>
+                                        <div class="path-info">
+                                            <i class="fas fa-folder"></i>
+                                            {% trans "Leave empty to use the website's home directory, or specify a subdirectory" %}
+                                        </div>
+                                        <input placeholder="{% trans 'e.g., public_html or leave empty' %}"
+                                               type="text" class="form-control" ng-model="ftpPath">
+                                    </div>
+
+                                    <div style="margin-top: 2rem;">
+                                        <button type="button" ng-click="createFTPAccount()" class="btn-primary">
+                                            <i class="fas fa-plus-circle"></i>
+                                            {% trans "Create FTP Account" %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alert Messages -->
+                        <div class="form-section">
+                            <div ng-hide="canNotCreateFTP" class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {% trans "Cannot create FTP account. Error message:" %} {$ errorMessage $}
+                            </div>
+
+                            <div ng-hide="successfullyCreatedFTP" class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                {% trans "FTP account successfully created with username:" %} <strong>{$ createdFTPUsername $}</strong>
+                            </div>
+                            
+                            <div ng-hide="couldNotConnect" class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i>
+                                {% trans "Could not connect to server. Please refresh this page." %}
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

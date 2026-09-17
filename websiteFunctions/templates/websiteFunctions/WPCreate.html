@@ -1,0 +1,884 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'websiteFunctions/websiteFunctions.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Deploy WordPress - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* WordPress Create Page Specific Styles */
+    .wp-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .wp-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-heading, #2f3640);
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-header .icon {
+        width: 48px;
+        height: 48px;
+        background: var(--accent-color, #5856d6);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+    }
+    
+    .page-header p {
+        font-size: 15px;
+        color: var(--text-secondary, #64748b);
+        margin: 0;
+    }
+    
+    /* Main Content */
+    .content-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+    }
+    
+    .wp-section {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-heading, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5856d6);
+        border-radius: 2px;
+    }
+    
+    /* Sidebar Info */
+    .info-card {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+    }
+    
+    .info-card h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-heading, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .feature-list li {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color, #f0f0ff);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        color: var(--text-secondary, #64748b);
+    }
+    
+    .feature-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .feature-list i {
+        color: var(--accent-color, #5856d6);
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    
+    .stats-box {
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .stats-box .stat {
+        margin-bottom: 15px;
+    }
+    
+    .stats-box .stat:last-child {
+        margin-bottom: 0;
+    }
+    
+    .stats-box .stat-label {
+        font-size: 13px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    
+    .stats-box .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--accent-color, #5856d6);
+    }
+    
+    /* Form Styles */
+    .form-section {
+        margin-bottom: 30px;
+    }
+    
+    .form-section-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-heading, #2f3640);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--border-color, #f0f0ff);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-section-title i {
+        color: var(--accent-color, #5856d6);
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 15px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-hover, #f8f9ff);
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5856d6);
+        box-shadow: 0 0 0 3px rgba(88,86,214,0.1);
+        background: var(--bg-secondary, white);
+    }
+    
+    .form-control::placeholder {
+        color: var(--text-secondary, #94a3b8);
+        font-size: 14px;
+    }
+    
+    select.form-control {
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f3640' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+        padding-right: 40px;
+        line-height: 1.5;
+        min-height: 44px;
+    }
+    
+    /* Windows-specific fixes */
+    @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+        select.form-control {
+            color: #2f3640 !important;
+            background-color: white !important;
+        }
+    }
+    
+    /* Fix for Windows Edge and Chrome */
+    select.form-control::-ms-expand {
+        display: none;
+    }
+    
+    select.form-control option {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+        padding: 8px;
+    }
+    
+    select.form-control:focus {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+    }
+    
+    .input-group {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .input-group .form-control {
+        flex: 1;
+    }
+    
+    .input-group .btn {
+        flex-shrink: 0;
+    }
+    
+    .help-text {
+        font-size: 13px;
+        color: var(--text-secondary, #94a3b8);
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .help-text i {
+        font-size: 12px;
+    }
+    
+    /* Toggle Switches */
+    .switch-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 26px;
+    }
+    
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--border-color, #e8e9ff);
+        transition: .4s;
+        border-radius: 26px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: var(--bg-secondary, white);
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background-color: var(--accent-color, #5856d6);
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(22px);
+    }
+    
+    .switch-label {
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        font-weight: 500;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        border: none;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5856d6);
+        color: white;
+        box-shadow: 0 2px 8px rgba(88,86,214,0.3);
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4644c0);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(88,86,214,0.4);
+    }
+    
+    .btn-primary:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-secondary {
+        background: #64748b;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #475569;
+        transform: translateY(-2px);
+    }
+    
+    .btn-generate {
+        background: #10b981;
+        color: white;
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+    
+    .btn-generate:hover {
+        background: #059669;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    /* Progress Section */
+    .progress-section {
+        text-align: center;
+    }
+    
+    .progress-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 36px;
+        color: var(--accent-color, #5856d6);
+    }
+    
+    .status-message {
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .status-message h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-heading, #2f3640);
+        margin: 0;
+    }
+    
+    .progress {
+        background: var(--border-color, #e8e9ff);
+        border-radius: 50px;
+        height: 30px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        box-shadow: inset 0 2px 4px var(--shadow-color, rgba(0,0,0,0.05));
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, var(--accent-color, #5856d6) 0%, var(--accent-hover, #4644c0) 100%);
+        height: 100%;
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(88,86,214,0.3);
+    }
+    
+    /* Alerts */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        line-height: 1.5;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .alert i {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #d1fae5);
+        color: var(--success-text, #065f46);
+        border: 1px solid var(--success-border, #a7f3d0);
+    }
+    
+    .alert-success i {
+        color: var(--success-accent, #10b981);
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #fee2e2);
+        color: var(--danger-text, #991b1b);
+        border: 1px solid var(--danger-border, #fecaca);
+    }
+    
+    .alert-danger i {
+        color: var(--danger-accent, #ef4444);
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        margin-left: 10px;
+    }
+    
+    .error-text {
+        color: var(--danger-text, #ef4444);
+        font-size: 13px;
+        margin-top: 5px;
+    }
+    
+    /* Premium Badge */
+    .premium-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 10px;
+        box-shadow: 0 2px 4px rgba(251,191,36,0.3);
+    }
+    
+    /* Responsive */
+    @media (max-width: 968px) {
+        .content-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-card {
+            position: relative;
+            top: 0;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .wp-wrapper {
+            padding: 15px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group > * {
+            width: 100%;
+        }
+        
+        .input-group {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wp-wrapper" ng-controller="createWordpress">
+    <div class="wp-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <div class="icon">
+                    <i class="fab fa-wordpress"></i>
+                </div>
+                {% trans "Deploy WordPress" %}
+            </h1>
+            <p>{% trans "Create a new WordPress site with automatic installation and configuration" %}</p>
+        </div>
+
+        <div class="content-row">
+            <!-- Main Form Section -->
+            <div class="wp-section">
+                <h3 class="section-title">
+                    {% trans "WordPress Configuration" %}
+                    <img ng-hide="webSiteCreationLoading" src="{% static 'images/loading.gif' %}" class="loading-spinner">
+                </h3>
+                
+                <form name="websiteCreationForm" ng-hide="installationDetailsForm">
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans "Basic Information" %}
+                        </h4>
+                        
+                        <!-- Domain Name -->
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Domain Name" %}</label>
+                            <input name="dom" type="text" class="form-control" ng-model="domainNameCreate"
+                                   placeholder="example.com" required>
+                            <p class="help-text">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans "Enter domain without http:// or www" %}
+                            </p>
+                            <div ng-show="websiteCreationForm.dom.$error.pattern" class="error-text">
+                                {% trans "Invalid Domain Format" %}
+                            </div>
+                        </div>
+
+                        <!-- Site Title -->
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Site Title" %}</label>
+                            <input type="text" name="WPtitle" class="form-control" ng-model="WPtitle" 
+                                   placeholder="My Awesome WordPress Site" required>
+                        </div>
+
+                        <!-- Package & Owner -->
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Package" %}</label>
+                            <select ng-model="packageForWebsite" class="form-control">
+                                <option value="">-- {% trans "Select a package" %} --</option>
+                                {% for items in packageList %}
+                                    <option>{{ items }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Owner" %}</label>
+                            <select ng-model="websiteOwner" class="form-control">
+                                <option value="">-- {% trans "Select owner" %} --</option>
+                                {% for items in owernList %}
+                                    <option>{{ items }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- WordPress Admin Section -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-user-shield"></i>
+                            {% trans "Administrator Account" %}
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Admin Username" %}</label>
+                            <input name="Username" type="text" class="form-control" ng-model="WPUsername"
+                                   placeholder="admin" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Admin Email" %}</label>
+                            <input type="email" name="email" class="form-control" ng-model="adminEmail" 
+                                   placeholder="admin@example.com" required>
+                            <div ng-show="websiteCreationForm.email.$error.email" class="error-text">
+                                {% trans "Please enter a valid email address" %}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Admin Password" %}</label>
+                            <div class="input-group">
+                                <input name="password" type="{$ showPassword ? 'text' : 'password' $}" class="form-control" ng-model="WPPassword"
+                                       placeholder="Strong password required" required>
+                                <button type="button" class="btn btn-generate" ng-click="WPPassword = randomPassword(16); showPassword = true">
+                                    <i class="fas fa-magic"></i>
+                                    {% trans "Generate" %}
+                                </button>
+                            </div>
+                            <p class="help-text">
+                                <i class="fas fa-lock"></i>
+                                {% trans "Use a strong password with letters, numbers, and symbols" %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- WordPress Configuration Section -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-cog"></i>
+                            {% trans "WordPress Configuration" %}
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "WordPress Version" %}</label>
+                            <select ng-model="WPVersions" class="form-control">
+                                {% for wp in WPVersions %}
+                                    <option>{{ wp }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Plugin/Theme Bundle" %}</label>
+                            <select ng-model="pluginbucket" class="form-control">
+                                <option value="-1" selected>-- {% trans "None (Clean Installation)" %} --</option>
+                                {% for wp in Plugins %}
+                                    <option value="{{ wp.id }}">{{ wp.Name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="help-text">
+                                <i class="fas fa-puzzle-piece"></i>
+                                {% trans "Pre-configured plugin and theme bundles for quick setup" %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Update Settings Section -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-sync-alt"></i>
+                            {% trans "Update Settings" %}
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Core Updates" %}</label>
+                            <select ng-model="autoupdates" class="form-control">
+                                <option>Minor and Security Updates</option>
+                                <option>All minor and major</option>
+                                <option>Disabled</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Plugin Updates" %}</label>
+                            <select ng-model="pluginupdates" ng-init="pluginupdates='Enabled'" class="form-control">
+                                <option>Enabled</option>
+                                <option>Disabled</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Theme Updates" %}</label>
+                            <select ng-model="themeupdates" ng-init="themeupdates='Enabled'" class="form-control">
+                                <option>Enabled</option>
+                                <option>Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Additional Features -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">
+                            <i class="fas fa-star"></i>
+                            {% trans "Additional Features" %}
+                        </h4>
+                        
+                        <div class="form-group">
+                            <div class="switch-group">
+                                {% if test_domain_data %}
+                                    <label class="switch">
+                                        <input ng-model="apacheBackend" type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span class="switch-label">
+                                        {% trans "Enable Apache Backend" %}
+                                        <p class="help-text" style="margin: 5px 0 0 0;">
+                                            <i class="fas fa-server"></i>
+                                            {% trans "OpenLiteSpeed + Apache for enhanced compatibility" %}
+                                        </p>
+                                    </span>
+                                {% else %}
+                                    <label class="switch" style="opacity: 0.5;">
+                                        <input type="checkbox" disabled>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span class="switch-label">
+                                        {% trans "Apache Backend" %}
+                                        <span class="premium-badge">
+                                            <i class="fas fa-crown"></i>
+                                            {% trans "Premium" %}
+                                        </span>
+                                        <a href="https://cyberpanel.net/KnowledgeBase/home/deploy-a-wordpress-on-cyberpanel/" target="_blank" style="margin-left: 10px;">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="btn-group">
+                        <button type="button" ng-click="createWordPresssite()" class="btn btn-primary">
+                            <i class="fab fa-wordpress"></i>
+                            {% trans "Deploy WordPress" %}
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Progress Section -->
+                <div ng-hide="installationProgress" class="progress-section">
+                    <div class="progress-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    
+                    <div class="status-message">
+                        <h2>{$ currentStatus $}</h2>
+                    </div>
+
+                    <div class="progress">
+                        <div id="installProgress" class="progress-bar" role="progressbar" 
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+                            <span>0%</span>
+                        </div>
+                    </div>
+
+                    <div ng-hide="errorMessageBox" class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>{% trans "Error:" %}</strong> {$ errorMessage $}
+                        </div>
+                    </div>
+
+                    <div ng-hide="success" class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>{% trans "Success!" %}</strong> {% trans "WordPress site has been successfully deployed." %}
+                        </div>
+                    </div>
+
+                    <div ng-hide="couldNotConnect" class="alert alert-danger">
+                        <i class="fas fa-wifi"></i>
+                        <div>
+                            <strong>{% trans "Connection Error" %}</strong> {% trans "Could not connect to server. Please refresh this page." %}
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="button" ng-disabled="goBackDisable" ng-click="goBack()" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            {% trans "Go Back" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar Info -->
+            <div class="info-card">
+                <h3>
+                    <i class="fas fa-sparkles"></i>
+                    {% trans "Features" %}
+                </h3>
+                <ul class="feature-list">
+                    <li>
+                        <i class="fas fa-bolt"></i>
+                        <span>{% trans "One-click WordPress installation" %}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-shield-alt"></i>
+                        <span>{% trans "Automatic security hardening" %}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>{% trans "Optimized for performance" %}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-sync-alt"></i>
+                        <span>{% trans "Automatic updates available" %}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-database"></i>
+                        <span>{% trans "Automatic database creation" %}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-lock"></i>
+                        <span>{% trans "Free SSL certificate" %}</span>
+                    </li>
+                </ul>
+                
+                <div class="stats-box">
+                    <div class="stat">
+                        <div class="stat-label">{% trans "Active Sites" %}</div>
+                        <div class="stat-value">{{ totalWPSites|default:"0" }}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">{% trans "Available Packages" %}</div>
+                        <div class="stat-value">{{ packageList|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

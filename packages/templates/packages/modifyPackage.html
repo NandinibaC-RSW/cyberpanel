@@ -1,0 +1,633 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Modify Package - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern page styles matching new design */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    /* Card styles */
+    .content-card {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    /* Form styles */
+    .form-group {
+        margin-bottom: 24px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-label, #64748b);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-secondary, white);
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:hover {
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--focus-shadow, rgba(91,95,207,0.1));
+    }
+    
+    .form-control[readonly] {
+        background: var(--bg-hover, #f8f9ff);
+        cursor: not-allowed;
+    }
+    
+    /* Windows selectbox fixes */
+    select.form-control {
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f3640' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+        padding-right: 40px;
+        line-height: 1.5;
+        min-height: 44px;
+    }
+    
+    /* Windows-specific fixes */
+    @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+        select.form-control {
+            color: var(--text-primary, #2f3640) !important;
+            background-color: var(--bg-secondary, white) !important;
+        }
+    }
+    
+    /* Fix for Windows Edge and Chrome */
+    select.form-control::-ms-expand {
+        display: none;
+    }
+    
+    select.form-control:focus {
+        color: var(--text-primary, #2f3640);
+        background-color: var(--bg-secondary, white);
+    }
+    
+    /* Package selector card */
+    .package-selector-card {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    /* Input group */
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 0;
+    }
+    
+    .input-group .form-control {
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .input-suffix {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-left: none;
+        padding: 10px 16px;
+        border-radius: 0 8px 8px 0;
+        font-size: 13px;
+        color: var(--text-label, #64748b);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    /* Help text */
+    .help-text {
+        font-size: 12px;
+        color: var(--text-secondary, #8893a7);
+        margin-top: 6px;
+    }
+    
+    /* Form section */
+    .form-section {
+        background: var(--bg-hover, #f8f9ff);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .form-section-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .form-section-title i {
+        color: var(--accent-color, #5b5fcf);
+    }
+    
+    /* Form row */
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    /* Package details section */
+    #packageDetailsToBeModified {
+        display: none;
+    }
+    
+    /* Checkbox styles */
+    .checkbox-wrapper {
+        display: flex;
+        align-items: start;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        margin-bottom: 12px;
+    }
+    
+    .checkbox-wrapper:hover {
+        border-color: var(--accent-color, #5b5fcf);
+        background: var(--bg-hover-alt, #f0f1ff);
+    }
+    
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        cursor: pointer;
+        accent-color: var(--accent-color, #5b5fcf);
+        margin-top: 2px;
+    }
+    
+    .checkbox-content {
+        flex: 1;
+    }
+    
+    .checkbox-label {
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+        display: block;
+        margin-bottom: 4px;
+    }
+    
+    .checkbox-desc {
+        font-size: 12px;
+        color: var(--text-secondary, #8893a7);
+        line-height: 1.5;
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-hover, #4a4fc4);
+        box-shadow: 0 4px 12px var(--accent-shadow, rgba(91,95,207,0.3));
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+        background: var(--bg-disabled, #ccc);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #ffebee);
+        border: 1px solid var(--danger-border, #ffcdd2);
+        color: var(--danger-text, #c62828);
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        color: var(--success-text, #2e7d32);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--spinner-bg, #f3f3f3);
+        border-top: 2px solid var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Button container */
+    .button-container {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border-color, #e8e9ff);
+        display: none;
+    }
+    
+    /* Hide elements by default */
+    #modifyFailure {
+        display: none;
+    }
+    
+    #modifySuccess {
+        display: none;
+    }
+    
+    #successfullyModified {
+        display: none;
+    }
+    
+    #packageLoading {
+        display: none;
+    }
+    
+    #modifyButton {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .content-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="page-wrapper" ng-controller="modifyPackages">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{% trans "Modify Package" %}</h1>
+            <p class="page-subtitle">{% trans "Update resource limits and features for your hosting packages" %}</p>
+        </div>
+
+        <div class="content-card">
+            <h2 class="card-title">
+                {% trans "Package Selection" %}
+                <span id="packageLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <div class="package-selector-card">
+                <div class="form-group">
+                    <label class="form-label">{% trans "Select Package to Modify" %}</label>
+                    <select ng-change="fetchDetails()" ng-model="packageToBeModified" class="form-control" aria-label="{% trans 'Select Package to Modify' %}">
+                        <option value="">-- {% trans "Select a package" %} --</option>
+                        {% for items in packList %}
+                            <option>{{ items }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Package Details Form -->
+        <div id="packageDetailsToBeModified">
+            <div class="content-card">
+                <h2 class="card-title">{% trans "Package Details" %}</h2>
+                
+                <form name="modifyPackageForm">
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-globe"></i>
+                            {% trans "Web Resources" %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Domains" %}</label>
+                            <input type="number" class="form-control" ng-model="allowedDomains" required aria-label="{% trans 'Number of domains allowed' %}">
+                            <div class="help-text">{% trans "Number of domains allowed (0 = Unlimited)" %}</div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">{% trans "Disk Space" %}</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" ng-model="diskSpace" required aria-label="{% trans 'Disk space in MB' %}">
+                                    <span class="input-suffix">MB</span>
+                                </div>
+                                <div class="help-text">{% trans "Disk space in MB (0 = Unlimited)" %}</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">{% trans "Bandwidth" %}</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" ng-model="bandwidth" required aria-label="{% trans 'Monthly bandwidth in MB' %}">
+                                    <span class="input-suffix">MB</span>
+                                </div>
+                                <div class="help-text">{% trans "Monthly bandwidth in MB (0 = Unlimited)" %}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-server"></i>
+                            {% trans "Services & Features" %}
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">{% trans "FTP Accounts" %}</label>
+                                <input type="number" class="form-control" ng-model="ftpAccounts" required aria-label="{% trans 'Number of FTP accounts' %}">
+                                <div class="help-text">{% trans "Number of FTP accounts" %}</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">{% trans "Databases" %}</label>
+                                <input type="number" class="form-control" ng-model="dataBases" required aria-label="{% trans 'Number of MySQL databases' %}">
+                                <div class="help-text">{% trans "Number of MySQL databases" %}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Email Accounts" %}</label>
+                            <input type="number" class="form-control" ng-model="emails" required aria-label="{% trans 'Number of email accounts' %}">
+                            <div class="help-text">{% trans "Number of email accounts" %}</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {% if has_addons %}
+            <div class="content-card">
+                <h2 class="card-title">{% trans "Advanced Resource Limits" %}</h2>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-microchip"></i>
+                        {% trans "CPU & Memory" %}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Memory Limit" %}</label>
+                            <div class="input-group">
+                                <input name="memoryLimitMB" type="number" class="form-control" ng-model="memoryLimitMB"
+                                       min="256" max="16384" step="256" required aria-label="{% trans 'Memory limit in MB' %}">
+                                <span class="input-suffix">MB</span>
+                            </div>
+                            <div class="help-text">{% trans "RAM allocated per website (256 MB - 16 GB)" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "CPU Cores" %}</label>
+                            <input name="cpuCores" type="number" class="form-control" ng-model="cpuCores"
+                                   min="1" max="16" required aria-label="{% trans 'Number of CPU cores' %}">
+                            <div class="help-text">{% trans "Number of CPU cores (1-16)" %}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-hdd"></i>
+                        {% trans "Disk & I/O" %}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">{% trans "I/O Limit" %}</label>
+                            <div class="input-group">
+                                <input name="ioLimitMBPS" type="number" class="form-control" ng-model="ioLimitMBPS"
+                                       min="5" max="100" required aria-label="{% trans 'I/O limit in MB/s' %}">
+                                <span class="input-suffix">MB/s</span>
+                            </div>
+                            <div class="help-text">{% trans "Disk I/O bandwidth limit (5-100 MB/s)" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Inode Limit" %}</label>
+                            <input name="inodeLimit" type="number" class="form-control" ng-model="inodeLimit"
+                                   min="100000" max="2000000" step="100000" required aria-label="{% trans 'Maximum files/directories' %}">
+                            <div class="help-text">{% trans "Maximum files/directories (100k - 2M)" %}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fas fa-cogs"></i>
+                        {% trans "Process Limits" %}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Max Connections" %}</label>
+                            <input name="maxConnections" type="number" class="form-control" ng-model="maxConnections"
+                                   min="1" max="100" required aria-label="{% trans 'Max concurrent PHP connections' %}">
+                            <div class="help-text">{% trans "Max concurrent PHP connections (1-100)" %}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">{% trans "Process Soft Limit" %}</label>
+                            <input name="procSoftLimit" type="number" class="form-control" ng-model="procSoftLimit"
+                                   min="100" max="2000" required aria-label="{% trans 'Soft process limit' %}">
+                            <div class="help-text">{% trans "Soft process limit (100-2000)" %}</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Process Hard Limit" %}</label>
+                        <input name="procHardLimit" type="number" class="form-control" ng-model="procHardLimit"
+                               min="100" max="2000" required aria-label="{% trans 'Hard process limit' %}">
+                        <div class="help-text">{% trans "Hard process limit (100-2000)" %}</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="content-card">
+                <h2 class="card-title">{% trans "Advanced Resource Limits" %}</h2>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>{% trans "Premium Feature" %}</strong><br>
+                        {% trans "Advanced resource limits (CPU, Memory, I/O, Inode, Process limits) require CyberPanel Addons." %}<br>
+                        <a href="https://cyberpanel.net/cyberpanel-addons" target="_blank" class="alert-link">
+                            <i class="fas fa-external-link-alt"></i>
+                            {% trans "Purchase CyberPanel Addons" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="content-card" ng-hide="installationDetailsForm">
+                <h2 class="card-title">{% trans "Additional Features" %}</h2>
+                
+                <div class="checkbox-wrapper">
+                    <input ng-model="allowFullDomain" type="checkbox" id="allowFullDomain">
+                    <div class="checkbox-content">
+                        <label for="allowFullDomain" class="checkbox-label">
+                            {% trans "Allow Fully Qualified Domains" %}
+                        </label>
+                        <div class="checkbox-desc">
+                            {% trans "Allow creation of fully qualified domain names as child-domains" %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checkbox-wrapper">
+                    <input ng-model="enforceDiskLimits" type="checkbox" id="enforceDiskLimits">
+                    <div class="checkbox-content">
+                        <label for="enforceDiskLimits" class="checkbox-label">
+                            {% trans "Enforce Disk Limits" %}
+                        </label>
+                        <div class="checkbox-desc">
+                            {% trans "Strictly enforce disk space limits for websites using this package" %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="modifyButton" class="button-container">
+                    <button type="button" ng-click="modifyPackageFunc()" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        {$ modifyButton $}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="modifyFailure" class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{% trans "Cannot fetch package details. Error message:" %} {$ errorMessage $}</span>
+        </div>
+
+        <div id="modifySuccess" class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <span>{% trans "Package Details Successfully Fetched" %}</span>
+        </div>
+
+        <div id="successfullyModified" class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <span>{% trans "Package" %} <strong>{$ packageModified $}</strong> {% trans "successfully modified" %}</span>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

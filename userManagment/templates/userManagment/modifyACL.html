@@ -1,0 +1,634 @@
+{% extends "baseTemplate/index.html" %}
+{% load i18n %}
+{% block title %}{% trans "Modify ACL - CyberPanel" %}{% endblock %}
+
+{% block header_scripts %}
+<style>
+    /* Modern page styles matching new design */
+    .page-wrapper {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary, #8893a7);
+    }
+    
+    /* Card styles */
+    .content-card {
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 25px;
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: var(--accent-color, #5b5fcf);
+        border-radius: 2px;
+    }
+    
+    /* Form styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-primary, #2f3640);
+        background: var(--bg-secondary, white);
+        transition: all 0.2s ease;
+    }
+    
+    .form-select:hover {
+        border-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px rgba(91,95,207,0.1);
+    }
+    
+    /* Button styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #4a4fc4;
+        box-shadow: 0 4px 12px rgba(91,95,207,0.3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* Permissions grid */
+    .permissions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 25px;
+    }
+    
+    .permission-category {
+        background: var(--bg-hover, #f8f9ff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        padding: 20px;
+    }
+    
+    .category-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary, #2f3640);
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .category-title i {
+        color: var(--accent-color, #5b5fcf);
+        font-size: 16px;
+    }
+    
+    /* Checkbox styles */
+    .checkbox-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: var(--bg-secondary, white);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .checkbox-wrapper:hover {
+        border-color: var(--accent-color, #5b5fcf);
+        background: var(--bg-hover, #f8f9ff);
+    }
+    
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        cursor: pointer;
+        accent-color: var(--accent-color, #5b5fcf);
+    }
+    
+    .checkbox-label {
+        font-size: 13px;
+        color: var(--text-primary, #2f3640);
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+        flex: 1;
+    }
+    
+    /* Master toggle */
+    .master-toggle {
+        background: var(--accent-color, #5b5fcf);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .master-toggle input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .master-toggle label {
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    /* Alert styles */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .alert-info {
+        background: var(--info-bg, #e3f2fd);
+        border: 1px solid var(--info-border, #bbdefb);
+        color: var(--info-text, #1565c0);
+    }
+    
+    .alert-success {
+        background: var(--success-bg, #e8f5e9);
+        border: 1px solid var(--success-border, #c8e6c9);
+        color: var(--success-text, #2e7d32);
+    }
+    
+    .alert-danger {
+        background: var(--danger-bg, #ffebee);
+        border: 1px solid var(--danger-border, #ffcdd2);
+        color: var(--danger-text, #c62828);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Response message styles */
+    .response-message {
+        margin-top: 20px;
+        padding: 16px 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Save button container */
+    .save-container {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border-color, #e8e9ff);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .content-card {
+            padding: 20px;
+        }
+        
+        .permissions-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .save-container {
+            justify-content: center;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="page-wrapper" ng-controller="modifyACLCtrl">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{% trans "Modify ACL" %}</h1>
+            <p class="page-subtitle">{% trans "Manage permissions and access rights for Access Control Lists" %}</p>
+        </div>
+
+        <div class="content-card">
+            <h2 class="card-title">
+                {% trans "Select ACL to Modify" %}
+                <span ng-hide="aclLoading" class="loading-spinner"></span>
+            </h2>
+            
+            <form>
+                <div class="form-group">
+                    <label for="aclToModify" class="form-label">{% trans "Available ACLs" %}</label>
+                    <select ng-change="fetchDetails()" ng-model="aclToModify" id="aclToModify" class="form-select">
+                        <option value="">-- {% trans "Select an ACL" %} --</option>
+                        {% for items in aclNames %}
+                            <option value="{{ items }}">{{ items }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div class="content-card" ng-hide="aclDetails">
+            <h2 class="card-title">{% trans "Permissions Configuration" %}</h2>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>{% trans "Configure the permissions for this ACL. Changes will be applied to all users assigned to this ACL." %}</span>
+            </div>
+
+            <div class="master-toggle">
+                <label>
+                    <input ng-change="adminHook()" ng-model="makeAdmin" type="checkbox">
+                    <span>{% trans "Administrator Access (Full Permissions)" %}</span>
+                </label>
+            </div>
+
+            <div class="permissions-grid">
+                <!-- Version Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-code-branch"></i>
+                        {% trans "Version Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="versionManagement" type="checkbox" id="versionManagement">
+                            <label for="versionManagement" class="checkbox-label">{% trans "Version Management" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-users"></i>
+                        {% trans "User Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createNewUser" type="checkbox" id="createNewUser">
+                            <label for="createNewUser" class="checkbox-label">{% trans "Create New User" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="listUsers" type="checkbox" id="listUsers">
+                            <label for="listUsers" class="checkbox-label">{% trans "List Users" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="resellerCenter" type="checkbox" id="resellerCenter">
+                            <label for="resellerCenter" class="checkbox-label">{% trans "Reseller Center" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="deleteUser" type="checkbox" id="deleteUser">
+                            <label for="deleteUser" class="checkbox-label">{% trans "Delete User" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="changeUserACL" type="checkbox" id="changeUserACL">
+                            <label for="changeUserACL" class="checkbox-label">{% trans "Change User ACL" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Website Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-globe"></i>
+                        {% trans "Website Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createWebsite" type="checkbox" id="createWebsite">
+                            <label for="createWebsite" class="checkbox-label">{% trans "Create Website" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="modifyWebsite" type="checkbox" id="modifyWebsite">
+                            <label for="modifyWebsite" class="checkbox-label">{% trans "Modify Website" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="suspendWebsite" type="checkbox" id="suspendWebsite">
+                            <label for="suspendWebsite" class="checkbox-label">{% trans "Suspend Website" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="deleteWebsite" type="checkbox" id="deleteWebsite">
+                            <label for="deleteWebsite" class="checkbox-label">{% trans "Delete Website" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Package Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-box"></i>
+                        {% trans "Package Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createPackage" type="checkbox" id="createPackage">
+                            <label for="createPackage" class="checkbox-label">{% trans "Create Package" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="listPackages" type="checkbox" id="listPackages">
+                            <label for="listPackages" class="checkbox-label">{% trans "List Packages" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="deletePackage" type="checkbox" id="deletePackage">
+                            <label for="deletePackage" class="checkbox-label">{% trans "Delete Package" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="modifyPackage" type="checkbox" id="modifyPackage">
+                            <label for="modifyPackage" class="checkbox-label">{% trans "Modify Package" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-database"></i>
+                        {% trans "Database Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createDatabase" type="checkbox" id="createDatabase">
+                            <label for="createDatabase" class="checkbox-label">{% trans "Create Database" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="deleteDatabase" type="checkbox" id="deleteDatabase">
+                            <label for="deleteDatabase" class="checkbox-label">{% trans "Delete Database" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="listDatabases" type="checkbox" id="listDatabases">
+                            <label for="listDatabases" class="checkbox-label">{% trans "List Databases" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DNS Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-network-wired"></i>
+                        {% trans "DNS Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createNameServer" type="checkbox" id="createNameServer">
+                            <label for="createNameServer" class="checkbox-label">{% trans "Create Nameserver" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createDNSZone" type="checkbox" id="createDNSZone">
+                            <label for="createDNSZone" class="checkbox-label">{% trans "Create DNS Zone" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="deleteZone" type="checkbox" id="deleteZone">
+                            <label for="deleteZone" class="checkbox-label">{% trans "Delete Zone" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="addDeleteRecords" type="checkbox" id="addDeleteRecords">
+                            <label for="addDeleteRecords" class="checkbox-label">{% trans "Add/Delete Records" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-envelope"></i>
+                        {% trans "Email Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createEmail" type="checkbox" id="createEmail">
+                            <label for="createEmail" class="checkbox-label">{% trans "Create Email" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="listEmails" type="checkbox" id="listEmails">
+                            <label for="listEmails" class="checkbox-label">{% trans "List Emails" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="deleteEmail" type="checkbox" id="deleteEmail">
+                            <label for="deleteEmail" class="checkbox-label">{% trans "Delete Email" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="emailForwarding" type="checkbox" id="emailForwarding">
+                            <label for="emailForwarding" class="checkbox-label">{% trans "Email Forwarding" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="changeEmailPassword" type="checkbox" id="changeEmailPassword">
+                            <label for="changeEmailPassword" class="checkbox-label">{% trans "Change Email Password" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="dkimManager" type="checkbox" id="dkimManager">
+                            <label for="dkimManager" class="checkbox-label">{% trans "DKIM Manager" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FTP Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-folder"></i>
+                        {% trans "FTP Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createFTPAccount" type="checkbox" id="createFTPAccount">
+                            <label for="createFTPAccount" class="checkbox-label">{% trans "Create FTP Account" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="deleteFTPAccount" type="checkbox" id="deleteFTPAccount">
+                            <label for="deleteFTPAccount" class="checkbox-label">{% trans "Delete FTP Account" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="listFTPAccounts" type="checkbox" id="listFTPAccounts">
+                            <label for="listFTPAccounts" class="checkbox-label">{% trans "List FTP Accounts" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backup Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-save"></i>
+                        {% trans "Backup Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="createBackup" type="checkbox" id="createBackup">
+                            <label for="createBackup" class="checkbox-label">{% trans "Create Backup" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="googleDriveBackups" type="checkbox" id="googleDriveBackups">
+                            <label for="googleDriveBackups" class="checkbox-label">{% trans "Google Drive Backups" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="restoreBackup" type="checkbox" id="restoreBackup">
+                            <label for="restoreBackup" class="checkbox-label">{% trans "Restore Backup" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="addDeleteDestinations" type="checkbox" id="addDeleteDestinations">
+                            <label for="addDeleteDestinations" class="checkbox-label">{% trans "Add/Delete Destination" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="scheduleBackups" type="checkbox" id="scheduleBackups">
+                            <label for="scheduleBackups" class="checkbox-label">{% trans "Schedule Backup" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="remoteBackups" type="checkbox" id="remoteBackups">
+                            <label for="remoteBackups" class="checkbox-label">{% trans "Remote Backups" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SSL Management -->
+                <div class="permission-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-lock"></i>
+                        {% trans "SSL Management" %}
+                    </h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input ng-model="manageSSL" type="checkbox" id="manageSSL">
+                            <label for="manageSSL" class="checkbox-label">{% trans "Manage SSL" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="hostnameSSL" type="checkbox" id="hostnameSSL">
+                            <label for="hostnameSSL" class="checkbox-label">{% trans "Hostname SSL" %}</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input ng-model="mailServerSSL" type="checkbox" id="mailServerSSL">
+                            <label for="mailServerSSL" class="checkbox-label">{% trans "MailServer SSL" %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="save-container">
+                <button type="button" ng-click="saveChanges()" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    {% trans "Save Changes" %}
+                    <span ng-hide="aclLoading" class="loading-spinner"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
