@@ -10,7 +10,7 @@ jobs:
     # Guard: this workflow runs a job on a self-hosted runner that lives on a
     # production server. It must NEVER execute for forks or pull requests.
     if: github.repository == 'NandinibaC-RSW/cyberpanel' && github.event_name != 'pull_request'
-    runs-on: [self-hosted, staging]
+    runs-on: [self-hosted, cyberpanel]
     concurrency:
       group: staging-deploy
       cancel-in-progress: false
