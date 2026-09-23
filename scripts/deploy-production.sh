@@ -59,10 +59,12 @@ sudo git -C "$PROD_DIR" branch -f "$BACKUP_BRANCH" HEAD
 PREV_COMMIT="$(sudo git -C "$PROD_DIR" rev-parse HEAD)"
 say "backup branch: $BACKUP_BRANCH @ $PREV_COMMIT"
 
-# --- 3. DB dump ---
+# --- 3. DB dump (entire pipeline as root: rainstream can't write /root, and
+#         shell redirections run as the calling user, not under sudo) ---
 DB_DUMP="/root/cyberpanel-db-pre-deploy-$STAMP.sql.gz"
-sudo mysqldump --single-transaction --no-tablespaces cyberpanel | sudo gzip > "$DB_DUMP"
+sudo bash -c "mysqldump --single-transaction --no-tablespaces cyberpanel | gzip > '$DB_DUMP'"
 sudo chmod 600 "$DB_DUMP"
+[ -s "$DB_DUMP" ] || fail "DB dump $DB_DUMP is empty — aborting before any changes"
 say "DB dump written: $DB_DUMP ($(sudo du -h "$DB_DUMP" | cut -f1))"
 # keep the last 3 DB dumps (glob must run as root — rainstream can't list /root)
 sudo bash -c 'ls -1t /root/cyberpanel-db-pre-deploy-*.sql.gz 2>/dev/null | tail -n +4 | xargs -r rm -f' || true
