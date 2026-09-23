@@ -10,7 +10,7 @@ from baseTemplate.models import version
 from plogical.getSystemInformation import SystemInformation
 from .models import ACL
 from plogical.acl import ACLManager
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils import translation
@@ -20,6 +20,7 @@ VERSION = '2.4'
 BUILD = 8
 
 
+@csrf_exempt
 def verifyLogin(request):
     try:
         userID = request.session['userID']
@@ -105,8 +106,7 @@ def verifyLogin(request):
                     request.session['twofa'] = 0
                     data = {'userID': admin.pk, 'loginStatus': 2, 'error_message': "None"}
                     json_data = json.dumps(data)
-                    response.write(json_data)
-                    return response
+                    return HttpResponse(json_data)
 
             password_check_result = hashPassword.check_password(admin.password, password)
 
@@ -120,8 +120,7 @@ def verifyLogin(request):
                             request.session['twofa'] = 0
                             data = {'userID': 0, 'loginStatus': 0, 'error_message': "Invalid verification code."}
                             json_data = json.dumps(data)
-                            response.write(json_data)
-                            return response
+                            return HttpResponse(json_data)
                         # Clear the session flag after successful 2FA verification
                         del request.session['twofa']
 
@@ -140,14 +139,12 @@ def verifyLogin(request):
                 request.session.set_expiry(43200)
                 data = {'userID': admin.pk, 'loginStatus': 1, 'error_message': "None"}
                 json_data = json.dumps(data)
-                response.write(json_data)
-                return response
+                return HttpResponse(json_data)
 
             else:
                 data = {'userID': 0, 'loginStatus': 0, 'error_message': "login failed."}
                 json_data = json.dumps(data)
-                response.write(json_data)
-                return response
+                return HttpResponse(json_data)
 
         except BaseException as msg:
             data = {'userID': 0, 'loginStatus': 0, 'error_message': str(msg)}

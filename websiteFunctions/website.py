@@ -2813,9 +2813,9 @@ Require valid-user
             pagination.append(counter)
         else:
             pages = ceil(pages)
-            finalPages = int(pages) + 1
+            finalPages = int(pages)
 
-            for i in range(1, finalPages):
+            for i in range(1, finalPages + 1):
                 pagination.append(counter)
                 counter = counter + 1
 
