@@ -49,7 +49,8 @@ sudo curl -sf https://raw.githubusercontent.com/NandinibaC-RSW/cyberpanel/main/.
 # --- 2. Snapshot the live tree state (dirty work + untracked source) ---
 if [ -n "$(sudo git -C "$PROD_DIR" status --porcelain)" ]; then
     sudo git -C "$PROD_DIR" add -A
-    sudo git -C "$PROD_DIR" commit -q -m "pre-deploy snapshot $STAMP (auto: before deploying $COMMIT)"
+    sudo git -C "$PROD_DIR" -c user.name="deploy-bot" -c user.email="deploy-bot@rainflowweb.local" \
+        commit -q -m "pre-deploy snapshot $STAMP (auto: before deploying $COMMIT)"
     say "dirty production state saved as commit $(sudo git -C "$PROD_DIR" rev-parse --short HEAD)"
 else
     say "production tree clean; no snapshot commit needed"
@@ -63,8 +64,8 @@ DB_DUMP="/root/cyberpanel-db-pre-deploy-$STAMP.sql.gz"
 sudo mysqldump --single-transaction --no-tablespaces cyberpanel | sudo gzip > "$DB_DUMP"
 sudo chmod 600 "$DB_DUMP"
 say "DB dump written: $DB_DUMP ($(sudo du -h "$DB_DUMP" | cut -f1))"
-# keep the last 3 DB dumps
-sudo ls -1t /root/cyberpanel-db-pre-deploy-*.sql.gz 2>/dev/null | tail -n +4 | while read -r old; do sudo rm -f "$old"; done
+# keep the last 3 DB dumps (glob must run as root — rainstream can't list /root)
+sudo bash -c 'ls -1t /root/cyberpanel-db-pre-deploy-*.sql.gz 2>/dev/null | tail -n +4 | xargs -r rm -f' || true
 
 # --- 4. Fetch target commit from the fork and reset the tree ---
 sudo git -C "$PROD_DIR" fetch "$REPO_URL" main
@@ -75,8 +76,8 @@ fi
 sudo git -C "$PROD_DIR" reset --hard "$COMMIT"
 say "production tree checked out $COMMIT ($(sudo git -C "$PROD_DIR" log -1 --format='%h %s'))"
 
-# --- 5. DB migrations ---
-if ! sudo /usr/local/CyberCP/bin/python3 manage.py migrate --noinput; then
+# --- 5. DB migrations (run from the production tree, not the job workspace) ---
+if ! sudo bash -c "cd '$PROD_DIR' && ./bin/python3 manage.py migrate --noinput"; then
     say "migrate FAILED — rolling back tree before failing"
     sudo git -C "$PROD_DIR" reset --hard "$PREV_COMMIT"
     sudo systemctl restart "$SERVICE"
