@@ -12,7 +12,9 @@ jobs:
     if: github.repository == 'NandinibaC-RSW/cyberpanel' && github.event_name != 'pull_request'
     runs-on: [self-hosted, cyberpanel]
     concurrency:
-      group: staging-deploy
+      # v2: the original group is held forever by run #1, which queued for a
+      # runner label that no longer exists and was never cancelled.
+      group: staging-deploy-v2
       cancel-in-progress: false
     timeout-minutes: 20
     steps:
