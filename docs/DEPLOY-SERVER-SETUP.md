@@ -107,6 +107,7 @@ site-management operations in staging fail with DB access errors **by design**
 sudo mysql <<SQL
 CREATE DATABASE IF NOT EXISTS cyberpanel_staging;
 CREATE USER IF NOT EXISTS 'cyberpanel_staging'@'localhost' IDENTIFIED BY '$DBPASS';
+ALTER USER 'cyberpanel_staging'@'localhost' IDENTIFIED BY '$DBPASS';
 GRANT ALL PRIVILEGES ON cyberpanel_staging.* TO 'cyberpanel_staging'@'localhost';
 FLUSH PRIVILEGES;
 SQL
@@ -116,7 +117,9 @@ sudo mysqldump --single-transaction --no-tablespaces cyberpanel | sudo mysql cyb
 ```
 
 (`$DBPASS` must still be set in the shell from §5; otherwise re-read it from
-`.env` first.)
+`.env` first. The `ALTER USER` line keeps the DB password in sync if you ever
+regenerate `.env` — `CREATE USER IF NOT EXISTS` does **not** update an existing
+user's password.)
 
 To refresh staging data from production later (manual, on the server):
 
