@@ -41,13 +41,19 @@ sudo apt-get install -y python3.12-venv
 > `usmannasir/cyberpanel` (v3.0.5-dev + 4 local template tweaks). Those tweaks
 > are already part of the fork's `main`, so repointing loses nothing.
 
+> **Never run `git` in this tree with `sudo`.** Root-owned `.git` files will
+> break future deploys (`unable to append to '.git/logs/...' Permission denied`).
+> The tree belongs to `rainstream` — the same user the runner and deploy
+> script run as. `sudo` is only for apt/mysql/systemd and reading
+> `/usr/local/CyberCP`.
+
 ```bash
 cd /var/www/html/cyberpanel
-sudo git remote set-url origin https://github.com/NandinibaC-RSW/cyberpanel.git
-sudo git fetch origin
-sudo git checkout -B main origin/main
-sudo git reset --hard origin/main
 sudo chown -R rainstream:rainstream /var/www/html/cyberpanel
+git remote set-url origin https://github.com/NandinibaC-RSW/cyberpanel.git
+git fetch origin
+git checkout -B main origin/main
+git reset --hard origin/main
 ```
 
 ## 3. Runtime webroot `public/`
