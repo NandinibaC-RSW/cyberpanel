@@ -1,19 +1,31 @@
-name: Deploy Staging
+name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, development]
   workflow_dispatch:
 
 jobs:
-  deploy-staging:
-    # Guard: this workflow runs a job on a self-hosted runner that lives on a
-    # production server. It must NEVER execute for forks or pull requests.
-    if: github.repository == 'NandinibaC-RSW/cyberpanel' && github.event_name != 'pull_request'
+  # main  -> LIVE production panel (/usr/local/CyberCP, port 8090)
+  deploy-production:
+    if: github.repository == 'NandinibaC-RSW/cyberpanel' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, cyberpanel]
     concurrency:
-      # v2: the original group is held forever by run #1, which queued for a
-      # runner label that no longer exists and was never cancelled.
+      group: production-deploy
+      cancel-in-progress: false
+    timeout-minutes: 30
+    steps:
+      - name: Checkout (provides scripts/deploy-production.sh)
+        uses: actions/checkout@v4
+
+      - name: Deploy to production (/usr/local/CyberCP, panel.rainflowweb.com)
+        run: bash scripts/deploy-production.sh "${{ github.sha }}"
+
+  # development -> staging panel (/var/www/html/cyberpanel, port 8091)
+  deploy-staging:
+    if: github.repository == 'NandinibaC-RSW/cyberpanel' && github.event_name != 'pull_request' && github.ref == 'refs/heads/development'
+    runs-on: [self-hosted, cyberpanel]
+    concurrency:
       group: staging-deploy-v2
       cancel-in-progress: false
     timeout-minutes: 20
