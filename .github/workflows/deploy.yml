@@ -1,0 +1,23 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    # Guard: this workflow runs a job on a self-hosted runner that lives on a
+    # production server. It must NEVER execute for forks or pull requests.
+    if: github.repository == 'NandinibaC-RSW/cyberpanel' && github.event_name != 'pull_request'
+    runs-on: [self-hosted, staging]
+    concurrency:
+      group: staging-deploy
+      cancel-in-progress: false
+    timeout-minutes: 20
+    steps:
+      - name: Checkout (provides scripts/deploy-staging.sh)
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging (/var/www/html/cyberpanel)
+        run: bash scripts/deploy-staging.sh "${{ github.sha }}"

@@ -119,6 +119,23 @@ dmypy.json
 cyberpanel_password.txt
 mysql_password.txt
 
+# Runtime venv stubs accidentally committed in the initial snapshot
+bin/
+include/
+share/
+pyvenv.cfg
+
+# Served runtime webroot (phpMyAdmin, SnappyMail, collected static) - lives on servers only
+public/
+
+# Live secrets - NEVER commit (rotate + purge history if ever committed)
+secret_key
+terminal_jwt_secret
+
+# Install payloads - fetched/provisioned on servers, not source
+install/lscp.tar.gz
+phpmyadmin.zip
+
 # Docker
 docker-compose*.yml
 Dockerfile.dev

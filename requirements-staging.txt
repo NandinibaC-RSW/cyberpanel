@@ -1,0 +1,4 @@
+# Extra dependencies for the staging deployment only (served by gunicorn).
+# Production (lscpd/lswsgi) does not need these.
+gunicorn>=21.2
+whitenoise>=6.6

@@ -120,6 +120,13 @@ MIDDLEWARE = [
     'CyberCP.secMiddleware.secMiddleware'
 ]
 
+# Staging-only static serving (gunicorn has no static handler; production
+# serves static via lscpd). Enabled by SERVE_STATIC=true in the staging .env.
+if os.getenv('SERVE_STATIC', 'false').lower() == 'true':
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    WHITENOISE_USE_FINDERS = True
+    WHITENOISE_AUTOREFRESH = True
+
 ROOT_URLCONF = 'CyberCP.urls'
 
 TEMPLATES = [
