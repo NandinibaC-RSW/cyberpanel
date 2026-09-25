@@ -6732,6 +6732,13 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
     };
     $scope.getFurtherWebsitesFromDB();
 
+    $scope.goToPage = function (page) {
+        if (page >= 1 && page <= $scope.pagination.length) {
+            $scope.currentPage = page;
+            $scope.getFurtherWebsitesFromDB();
+        }
+    };
+
     $scope.cyberPanelLoading = true;
 
     $scope.issueSSL = function (virtualHost) {

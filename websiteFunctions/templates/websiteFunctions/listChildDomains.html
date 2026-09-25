@@ -603,11 +603,11 @@
                     <input ng-change="searchWebsites()" placeholder="{% trans 'Search domains...' %}" 
                            ng-model="patternAdded" name="dom" type="text" class="form-control">
                 </div>
-                <select ng-model="recordsToShow" ng-change="getFurtherWebsitesFromDB()" 
+                <select ng-model="recordsToShow" ng-change="getFurtherWebsitesFromDB()"
                         class="form-select">
-                    <option>10</option>
-                    <option>50</option>
-                    <option>100</option>
+                    <option ng-value="10">10</option>
+                    <option ng-value="50">50</option>
+                    <option ng-value="100">100</option>
                 </select>
             </div>
         </div>
@@ -706,7 +706,7 @@
         <!-- Pagination -->
         <div class="pagination-section" ng-show="pagination.length > 0">
             <select ng-model="currentPage" class="pagination-select" ng-change="getFurtherWebsitesFromDB()">
-                <option ng-repeat="page in pagination" value="{$ $index + 1 $}">{% trans "Page" %} {$ $index + 1 $}</option>
+                <option ng-repeat="page in pagination track by $index" ng-value="$index + 1">{% trans "Page" %} {$ $index + 1 $}</option>
             </select>
         </div>
     </div>

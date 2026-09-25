@@ -2519,8 +2519,8 @@ Require valid-user
     def fetchChildDomainsMain(self, userID=None, data=None):
         try:
             currentACL = ACLManager.loadedACL(userID)
-            pageNumber = int(data['page'])
-            recordsToShow = int(data['recordsToShow'])
+            pageNumber = int(data.get('page', 1))
+            recordsToShow = int(data.get('recordsToShow', 10))
 
             endPageNumber, finalPageNumber = self.recordsPointer(pageNumber, recordsToShow)
             websites = ACLManager.findWebsiteObjects(currentACL, userID)

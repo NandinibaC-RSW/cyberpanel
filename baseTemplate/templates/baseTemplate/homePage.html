@@ -26,10 +26,12 @@
             <span class="cp-qa-text"><span class="cp-qa-title">{% trans "Create Website" %}</span><span class="cp-qa-sub">{% trans "Launch a new site" %}</span></span>
         </a>
         {% endif %}
+        {% comment %}<!-- WordPress quick action hidden
         <a class="cp-qa-card" href="{% url 'createWordpress' %}">
             <span class="cp-qa-ic" style="background:#5b87da;color:#fff;"><i class="fab fa-wordpress"></i></span>
             <span class="cp-qa-text"><span class="cp-qa-title">{% trans "Deploy WordPress" %}</span><span class="cp-qa-sub">{% trans "One-click install" %}</span></span>
         </a>
+        {% endcomment %}
         {% if admin or createEmail %}
         <a class="cp-qa-card" href="{% url 'createEmailAccount' %}">
             <span class="cp-qa-ic"><i class="fas fa-envelope"></i></span>
@@ -148,6 +150,7 @@
                 <div class="insight-label">{% trans "Websites" %}</div>
             </a>
 
+            {% comment %}<!-- WordPress insight hidden
             <a class="insight-card" href="{% url 'ListWPSites' %}" aria-label="{% trans 'List WordPress' %}">
                 <div class="insight-icon" style="background: #5b87da;">
                     <i class="fab fa-wordpress" aria-hidden="true"></i>
@@ -158,6 +161,7 @@
                 </div>
                 <div class="insight-label">{% trans "WordPress" %}</div>
             </a>
+            {% endcomment %}
 
             <a class="insight-card" href="{% url 'listDBs' %}" aria-label="{% trans 'List Databases' %}">
                 <div class="insight-icon">

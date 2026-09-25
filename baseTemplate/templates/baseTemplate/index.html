@@ -93,57 +93,6 @@
                 <button id="cp-cmdk-trigger" class="theme-toggle" type="button" title="{% trans 'Search (Ctrl/Cmd-K)' %}" aria-label="{% trans 'Open command palette' %}">
                 <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
             </button>
-            <div class="cp-notif" id="cp-notif">
-                <button id="cp-notif-btn" class="cp-notif-btn" type="button" title="{% trans 'Notifications' %}" aria-label="{% trans 'Notifications' %}" aria-haspopup="true" aria-expanded="false" aria-controls="cp-notif-panel">
-                    <i class="fas fa-bell" aria-hidden="true"></i>
-                    <span class="cp-notif-badge" id="cp-notif-badge" hidden>0</span>
-                </button>
-                <div class="cp-notif-panel" id="cp-notif-panel" role="region" aria-label="{% trans 'Notifications' %}" hidden>
-                    <div class="cp-notif-head">
-                        <span>{% trans "Notifications" %}</span>
-                        <button type="button" class="cp-notif-clear" id="cp-notif-clear">{% trans "Dismiss all" %}</button>
-                    </div>
-                    <div class="cp-notif-list" id="cp-notif-list">
-                        <div class="cp-notif-item" data-key="emaildelivery" data-storekey="emailDeliveryNotificationDismissed" data-store="local">
-                            <div class="cp-notif-ic ic-accent"><i class="fas fa-paper-plane" aria-hidden="true"></i></div>
-                            <div class="cp-notif-body">
-                                <div class="cp-notif-title">{% trans "Reliable email delivery" %}</div>
-                                <div class="cp-notif-desc">{% trans "Land in the inbox, not spam — with CyberPanel's managed Email Delivery service." %}</div>
-                                <a class="cp-notif-action" href="https://cyberpanel.net/email-delivery-service?utm_source=cyberpanel&utm_medium=panel&utm_campaign=email_delivery" target="_blank" rel="noopener">{% trans "Learn more" %}</a>
-                            </div>
-                            <button class="cp-notif-x" type="button" aria-label="{% trans 'Dismiss' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
-                        </div>
-                        <div class="cp-notif-item" data-key="backup" data-storekey="backupNotificationDismissed" data-store="session">
-                            <div class="cp-notif-ic ic-warn"><i class="fas fa-shield-alt" aria-hidden="true"></i></div>
-                            <div class="cp-notif-body">
-                                <div class="cp-notif-title">{% trans "Automatic backups not configured" %}</div>
-                                <div class="cp-notif-desc">{% trans "Your websites are not secured with automatic backups." %}</div>
-                                <a class="cp-notif-action" href="{% url 'OneClickBackups' %}">{% trans "Configure now" %}</a>
-                            </div>
-                            <button class="cp-notif-x" type="button" aria-label="{% trans 'Dismiss' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
-                        </div>
-                        <div class="cp-notif-item" data-key="ai" data-storekey="aiScannerNotificationDismissed" data-store="session">
-                            <div class="cp-notif-ic ic-accent"><i class="fas fa-brain" aria-hidden="true"></i></div>
-                            <div class="cp-notif-body">
-                                <div class="cp-notif-title">{% trans "AI-powered malware detection" %}</div>
-                                <div class="cp-notif-desc">{% trans "Advanced threat detection, real-time scanning, zero false positives." %}</div>
-                                <a class="cp-notif-action" href="/aiscanner/">{% trans "Start AI Security Scan" %}</a>
-                            </div>
-                            <button class="cp-notif-x" type="button" aria-label="{% trans 'Dismiss' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
-                        </div>
-                        <div class="cp-notif-item" data-key="htaccess" data-storekey="htaccessNotificationDismissed" data-store="local">
-                            <div class="cp-notif-ic ic-ok"><i class="fas fa-magic" aria-hidden="true"></i></div>
-                            <div class="cp-notif-body">
-                                <div class="cp-notif-title">{% trans ".htaccess support is now live" %}</div>
-                                <div class="cp-notif-desc">{% trans "Full .htaccess support, PHP configuration works, zero rule rewrites needed." %}</div>
-                                <a class="cp-notif-action" href="https://cyberpanel.net/cyberpanel-htaccess-module" target="_blank" rel="noopener">{% trans "Learn more" %}</a>
-                            </div>
-                            <button class="cp-notif-x" type="button" aria-label="{% trans 'Dismiss' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
-                        </div>
-                    </div>
-                    <div class="cp-notif-empty" id="cp-notif-empty" hidden>{% trans "You're all caught up." %}</div>
-                </div>
-            </div>
             <button id="theme-toggle" class="theme-toggle" title="{% trans 'Toggle dark mode' %}" aria-label="{% trans 'Toggle dark mode' %}" aria-pressed="false">
                 <i class="fas fa-moon" id="theme-icon" aria-hidden="true"></i>
             </button>
@@ -221,10 +170,12 @@
             <div class="icon-wrapper"><i class="fas fa-envelope"></i></div>
             <span>{% trans "Email" %}</span>
         </a>
+        {% comment %}<!-- WordPress menu hidden for now -->
         <a href="{% url 'ListWPSites' %}" class="menu-item">
             <div class="icon-wrapper"><i class="fab fa-wordpress"></i></div>
             <span>{% trans "WordPress" %}</span>
         </a>
+        {% endcomment %}
 
         <!-- ============================ ACCOUNT ============================ -->
         <div class="section-header">{% trans "ACCOUNT" %}</div>
@@ -288,13 +239,13 @@
         var CP_PAGES = [
             // Quick actions
             {% if admin or createWebsite %}{l:'{% trans "Create Website" %}', h:'{% url "createWebsite" %}', i:'fa-circle-plus', g:'{% trans "Quick actions" %}'},{% endif %}
-            {l:'{% trans "Deploy WordPress" %}', h:'{% url "createWordpress" %}', i:'fa-circle-plus', g:'{% trans "Quick actions" %}'},
+            {% comment %}{l:'{% trans "Deploy WordPress" %}', h:'{% url "createWordpress" %}', i:'fa-circle-plus', g:'{% trans "Quick actions" %}'},{% endcomment %}
             {% if admin or createEmail %}{l:'{% trans "Create Email Account" %}', h:'{% url "createEmailAccount" %}', i:'fa-circle-plus', g:'{% trans "Quick actions" %}'},{% endif %}
             {% if admin or createDatabase %}{l:'{% trans "Create Database" %}', h:'{% url "createDatabase" %}', i:'fa-circle-plus', g:'{% trans "Quick actions" %}'},{% endif %}
             // Sites
             {l:'{% trans "Dashboard" %}', h:'{% url "index" %}', i:'fa-gauge-high', g:'{% trans "Sites" %}'},
             {l:'{% trans "Websites" %}', h:'{% url "listWebsites" %}', i:'fa-globe', g:'{% trans "Sites" %}'},
-            {l:'{% trans "WordPress Sites" %}', h:'{% url "ListWPSites" %}', i:'fab fa-wordpress', g:'{% trans "Sites" %}'},
+            {% comment %}{l:'{% trans "WordPress Sites" %}', h:'{% url "ListWPSites" %}', i:'fab fa-wordpress', g:'{% trans "Sites" %}'},{% endcomment %}
             {l:'{% trans "Sub / Addon Domains" %}', h:'{% url "listChildDomains" %}', i:'fa-diagram-project', g:'{% trans "Sites" %}'},
             {l:'{% trans "Create Sub / Addon Domain" %}', h:'{% url "CreateNewDomain" %}', i:'fa-circle-plus', g:'{% trans "Sites" %}'},
             // Email

@@ -2747,7 +2747,7 @@ app.controller('listWebsites', function ($scope, $http, $window) {
     $scope.expandedSites = {}; // Track which sites are expanded
 
     $scope.currentPage = 1;
-    $scope.recordsToShow = "10";
+    $scope.recordsToShow = 10;
 
     // Function to toggle site expansion
     $scope.toggleSite = function(site) {
@@ -2845,14 +2845,6 @@ app.controller('listWebsites', function ($scope, $http, $window) {
 
     // Call it immediately
     $scope.getFurtherWebsitesFromDB();
-
-    // Go to specific page
-    $scope.goToPage = function(page) {
-        if (page >= 1 && page <= $scope.pagination.length) {
-            $scope.currentPage = page;
-            $scope.getFurtherWebsitesFromDB();
-        }
-    };
 
     $scope.showWPSites = function(domain) {
         console.log('showWPSites called for domain:', domain);
@@ -6082,7 +6074,7 @@ app.controller('listWebsites', function ($scope, $http, $window) {
     $scope.expandedSites = {}; // Track which sites are expanded
 
     $scope.currentPage = 1;
-    $scope.recordsToShow = "10";
+    $scope.recordsToShow = 10;
 
     // Function to toggle site expansion
     $scope.toggleSite = function(site) {
@@ -6180,14 +6172,6 @@ app.controller('listWebsites', function ($scope, $http, $window) {
 
     // Call it immediately
     $scope.getFurtherWebsitesFromDB();
-
-    // Go to specific page
-    $scope.goToPage = function(page) {
-        if (page >= 1 && page <= $scope.pagination.length) {
-            $scope.currentPage = page;
-            $scope.getFurtherWebsitesFromDB();
-        }
-    };
 
     $scope.showWPSites = function(domain) {
         console.log('showWPSites called for domain:', domain);
@@ -6706,7 +6690,7 @@ app.controller('listWebsites', function ($scope, $http, $window) {
 app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
 
     $scope.currentPage = 1;
-    $scope.recordsToShow = "10";
+    $scope.recordsToShow = 10;
 
     $scope.getFurtherWebsitesFromDB = function () {
 
@@ -6747,6 +6731,13 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
 
     };
     $scope.getFurtherWebsitesFromDB();
+
+    $scope.goToPage = function (page) {
+        if (page >= 1 && page <= $scope.pagination.length) {
+            $scope.currentPage = page;
+            $scope.getFurtherWebsitesFromDB();
+        }
+    };
 
     $scope.cyberPanelLoading = true;
 
@@ -9770,7 +9761,7 @@ app.controller('listWebsites', function ($scope, $http, $window) {
     $scope.expandedSites = {}; // Track which sites are expanded
 
     $scope.currentPage = 1;
-    $scope.recordsToShow = "10";
+    $scope.recordsToShow = 10;
 
     // Function to toggle site expansion
     $scope.toggleSite = function(site) {
@@ -9868,14 +9859,6 @@ app.controller('listWebsites', function ($scope, $http, $window) {
 
     // Call it immediately
     $scope.getFurtherWebsitesFromDB();
-
-    // Go to specific page
-    $scope.goToPage = function(page) {
-        if (page >= 1 && page <= $scope.pagination.length) {
-            $scope.currentPage = page;
-            $scope.getFurtherWebsitesFromDB();
-        }
-    };
 
     $scope.showWPSites = function(domain) {
         console.log('showWPSites called for domain:', domain);
@@ -10326,7 +10309,7 @@ app.controller('listWebsites', function ($scope, $http, $window) {
 app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
 
     $scope.currentPage = 1;
-    $scope.recordsToShow = "10";
+    $scope.recordsToShow = 10;
 
     $scope.getFurtherWebsitesFromDB = function () {
 
@@ -17095,7 +17078,7 @@ app.controller('manageGIT', function ($scope, $http, $timeout, $window) {
     };
 
     $scope.currentPage = 1;
-    $scope.recordsToShow = "10";
+    $scope.recordsToShow = 10;
 
     $scope.fetchGitLogs = function () {
         $scope.cyberpanelLoading = false;
@@ -17927,7 +17910,7 @@ app.controller('listDockersite', function ($scope, $http) {
 
 
     $scope.currentPage = 1;
-    $scope.recordsToShow = "10";
+    $scope.recordsToShow = 10;
 
     $scope.fetchDockersiteFromDB = function () {
 
