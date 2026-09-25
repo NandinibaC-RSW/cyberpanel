@@ -1,6 +1,14 @@
 /**
  * Created by usman on 7/26/17.
  */
+
+// Global function for deleting staging sites
+function deleteStagingGlobal(stagingId) {
+    if (confirm("Are you sure you want to delete this staging site? This action cannot be undone.")) {
+        // Redirect to WordPress list with delete parameter
+        window.location.href = "/websites/ListWPSites?DeleteID=" + stagingId;
+    }
+}
 function getCookie(name) {
     var cookieValue = null;
     var t = document.cookie;
@@ -285,6 +293,18 @@ app.controller('createWordpress', function ($scope, $http, $timeout, $compile, $
     $scope.couldNotConnect = true;
     $scope.goBackDisable = true;
 
+    // Password generation function
+    $scope.randomPassword = function(length) {
+        var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        var password = "";
+        for (var i = 0; i < length; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    };
+
+    // Initialize showPassword
+    $scope.showPassword = false;
 
     var statusFile;
 
@@ -518,35 +538,7 @@ function DeployToProductionInitial(vall) {
     DeploytoProductionID = vall;
 }
 
-var create_staging_domain_check = 0;
-
-function create_staging_checkbox_function() {
-
-    try {
-
-        var checkBox = document.getElementById("Create_Staging_Check");
-        // Get the output text
-
-
-        // If the checkbox is checked, display the output text
-        if (checkBox.checked == true) {
-            create_staging_domain_check = 0;
-            document.getElementById('Website_Create_Test_Domain').style.display = "block";
-            document.getElementById('Website_Create_Own_Domain').style.display = "none";
-
-        } else {
-            document.getElementById('Website_Create_Test_Domain').style.display = "none";
-            document.getElementById('Website_Create_Own_Domain').style.display = "block";
-            create_staging_domain_check = 1;
-        }
-    } catch (e) {
-
-    }
-
-    // alert(domain_check);
-}
-
-create_staging_checkbox_function();
+// Simplified staging domain input - checkbox functionality removed
 
 app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $window) {
     var CheckBoxpasssword = 0;
@@ -978,13 +970,13 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 if (value[x] === 'none') {
                     FinalMarkup = FinalMarkup + '<td><span class="label label-success">Upto Date</span></td>';
                 } else {
-                    FinalMarkup = FinalMarkup + '<td><button ng-click="UpdatePlugins(\'' + value.name + '\')" aria-label="" type="button" class="btn btn-outline-danger">Update</button></td>';
+                    FinalMarkup = FinalMarkup + '<td><button ng-click="UpdatePlugins(\'' + value.name + '\')" aria-label="" type="button" class="btn btn-outline-danger btn-sm"><i class="fas fa-sync-alt"></i> Update</button></td>';
                 }
             } else {
                 FinalMarkup = FinalMarkup + '<td>' + value[x] + "</td>";
             }
         }
-        FinalMarkup = FinalMarkup + '<td><button ng-click="DeletePlugins(\'' + value.name + '\')" aria-label="" class="btn btn-danger btn-icon-left m-b-10" type="button">Delete</button></td>'
+        FinalMarkup = FinalMarkup + '<td><button ng-click="DeletePlugins(\'' + value.name + '\')" aria-label="" class="btn btn-danger btn-sm" type="button"><i class="fas fa-trash"></i> Delete</button></td>'
         FinalMarkup = FinalMarkup + '</tr>'
         var temp = $compile(FinalMarkup)($scope)
         AppendToTable('#PluginBody', temp)
@@ -1159,18 +1151,20 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 if (value[x] === 'none') {
                     FinalMarkup = FinalMarkup + '<td><span class="label label-success">Upto Date</span></td>';
                 } else {
-                    FinalMarkup = FinalMarkup + '<td><button ng-click="UpdateThemes(\'' + value.name + '\')" aria-label="" type="button" class="btn btn-outline-danger">Update</button></td>';
+                    FinalMarkup = FinalMarkup + '<td><button ng-click="UpdateThemes(\'' + value.name + '\')" aria-label="" type="button" class="btn btn-outline-danger btn-sm"><i class="fas fa-sync-alt"></i> Update</button></td>';
                 }
             } else {
                 FinalMarkup = FinalMarkup + '<td>' + value[x] + "</td>";
             }
         }
-        FinalMarkup = FinalMarkup + '<td><button ng-click="DeleteThemes(\'' + value.name + '\')" aria-label="" class="btn btn-danger btn-icon-left m-b-10" type="button">Delete</button></td>'
+        FinalMarkup = FinalMarkup + '<td><button ng-click="DeleteThemes(\'' + value.name + '\')" aria-label="" class="btn btn-danger btn-sm" type="button"><i class="fas fa-trash"></i> Delete</button></td>'
         FinalMarkup = FinalMarkup + '</tr>'
         var temp = $compile(FinalMarkup)($scope)
         AppendToTable('#ThemeBody', temp)
     }
 
+    var statusFile; // Declare statusFile at controller scope
+    
     $scope.CreateStagingNow = function () {
         $('#wordpresshomeloading').show();
 
@@ -1182,20 +1176,36 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
         $scope.couldNotConnect = true;
         $scope.goBackDisable = true;
 
-
         $scope.currentStatus = "Starting creation Staging..";
 
-        //here enter domain name
-        if (create_staging_domain_check == 0) {
-            var Part2_domainNameCreate = document.getElementById('Part2_domainNameCreate').value;
-            var domainNameCreate = document.getElementById('TestDomainNameCreate').value + Part2_domainNameCreate;
+        // Get staging name
+        var stagingName = $('#stagingName').val();
+        if (!stagingName) {
+            new PNotify({
+                title: 'Error!',
+                text: 'Please enter a staging name',
+                type: 'error'
+            });
+            $('#wordpresshomeloading').hide();
+            $scope.wordpresshomeloading = true;
+            return;
         }
-        if (create_staging_domain_check == 1) {
 
-            var domainNameCreate = $scope.own_domainNameCreate;
+        // Get staging domain from the simplified input
+        var domainNameCreate = $('#stagingDomainName').val() || $scope.stagingDomainName;
+        if (!domainNameCreate) {
+            new PNotify({
+                title: 'Error!',
+                text: 'Please enter a staging domain',
+                type: 'error'
+            });
+            $('#wordpresshomeloading').hide();
+            $scope.wordpresshomeloading = true;
+            return;
         }
+        
         var data = {
-            StagingName: $('#stagingName').val(),
+            StagingName: stagingName,
             StagingDomain: domainNameCreate,
             WPid: $('#WPid').html(),
         }
@@ -1337,51 +1347,76 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
     $scope.fetchstaging = function () {
 
-        $('#wordpresshomeloading').show();
-        $scope.wordpresshomeloading = false;
-
-        var url = "/websites/fetchstaging";
-
-        var data = {
-            WPid: $('#WPid').html(),
-        }
-
-        var config = {
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        };
-
-
-        $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
-
-
-        function ListInitialDatas(response) {
-            wordpresshomeloading = true;
-            $('#wordpresshomeloading').hide();
-
-            if (response.data.status === 1) {
-
-                //   $('#ThemeBody').html('');
-                // var themes = JSON.parse(response.data.themes);
-                // themes.forEach(AddThemes);
-
-                $('#StagingBody').html('');
-                var staging = JSON.parse(response.data.wpsites);
-                staging.forEach(AddStagings);
-
-            } else {
-                alert("Error data.error_message:" + response.data.error_message)
-
+        // Ensure DOM is ready
+        $timeout(function() {
+            // Check if the staging table exists
+            if ($('#StagingBody').length === 0) {
+                console.error('StagingBody table not found in DOM');
+                return;
             }
 
-        }
+            $('#wordpresshomeloading').show();
+            $scope.wordpresshomeloading = false;
 
-        function cantLoadInitialDatas(response) {
-            $('#wordpresshomeloading').hide();
-            alert("Error" + response)
+            var url = "/websites/fetchstaging";
 
-        }
+            var data = {
+                WPid: $('#WPid').html(),
+            }
+
+            var config = {
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            };
+
+
+            $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
+
+
+            function ListInitialDatas(response) {
+                wordpresshomeloading = true;
+                $('#wordpresshomeloading').hide();
+
+                if (response.data.status === 1) {
+
+                    //   $('#ThemeBody').html('');
+                    // var themes = JSON.parse(response.data.themes);
+                    // themes.forEach(AddThemes);
+
+                    $('#StagingBody').html('');
+                    console.log('Staging response:', response.data);
+                    
+                    try {
+                        var staging = JSON.parse(response.data.wpsites);
+                        console.log('Parsed staging data:', staging);
+                        
+                        if (staging && staging.length > 0) {
+                            staging.forEach(function(site, index) {
+                                console.log('Processing staging site ' + index + ':', site);
+                                AddStagings(site, index, staging);
+                            });
+                        } else {
+                            $('#StagingBody').html('<tr><td colspan="4" class="text-center">No staging sites found</td></tr>');
+                        }
+                    } catch (e) {
+                        console.error('Error parsing staging data:', e);
+                        $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Error loading staging sites</td></tr>');
+                    }
+
+                } else {
+                    console.error("Error from server:", response.data.error_message);
+                    $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Error: ' + response.data.error_message + '</td></tr>');
+                }
+
+            }
+
+            function cantLoadInitialDatas(response) {
+                $('#wordpresshomeloading').hide();
+                console.error("Request failed:", response);
+                $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load staging sites</td></tr>');
+            }
+        }, 100); // Small delay to ensure DOM is ready
 
     };
 
@@ -1389,6 +1424,10 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         $('#wordpresshomeloading').show();
         $scope.wordpresshomeloading = false;
+
+        $('#databaseLoading').show();
+        $('#databaseInfoTable').hide();
+        $('#databaseError').hide().text('');
 
         var url = "/websites/fetchDatabase";
 
@@ -1409,21 +1448,23 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
         function ListInitialDatas(response) {
             wordpresshomeloading = true;
             $('#wordpresshomeloading').hide();
+            $('#databaseLoading').hide();
 
             if (response.data.status === 1) {
                 $('#DB_Name').html(response.data.DataBaseName);
                 $('#DB_User').html(response.data.DataBaseUser);
                 $('#tableprefix').html(response.data.tableprefix);
+                $('#databaseInfoTable').show();
             } else {
-                alert("Error data.error_message:" + response.data.error_message)
-
+                $('#databaseError').text('Unable to load database information: ' + response.data.error_message).show();
             }
         }
 
         function cantLoadInitialDatas(response) {
             $('#wordpresshomeloading').hide();
-            alert("Error" + response)
-
+            $('#databaseLoading').hide();
+            var status = (response && response.status) ? response.status : 'network';
+            $('#databaseError').text('Unable to load database information (request failed, status: ' + status + ').').show();
         }
 
     };
@@ -1485,18 +1526,37 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
     };
 
     function AddStagings(value, index, array) {
-        var FinalMarkup = '<tr>'
-        for (let x in value) {
-            if (x === 'name') {
-                FinalMarkup = FinalMarkup + '<td><a href=/websites/WPHome?ID=' + value.id + '>' + value[x] + '</a></td>';
-            } else if (x !== 'url' && x !== 'deleteURL' && x !== 'id') {
-                FinalMarkup = FinalMarkup + '<td>' + value[x] + "</td>";
-            }
+        console.log('Adding staging site:', value);
+        
+        // Ensure all required properties exist
+        if (!value || !value.id) {
+            console.error('Invalid staging site data:', value);
+            return;
         }
-        FinalMarkup = FinalMarkup + '<td><button onclick="DeployToProductionInitial(' + value.id + ')" data-toggle="modal" data-target="#DeployToProduction" style="margin-bottom: 2%; display: block" aria-label="" type="button" class="btn btn-outline-primary">Deploy to Production</button>' +
-            '<a href="' + value.deleteURL + '"> <button aria-label="" class="btn btn-danger btn-icon-left m-b-10" type="button">Delete</button></a></td>'
-        FinalMarkup = FinalMarkup + '</tr>'
+        
+        // Check if table exists
+        if ($('#StagingBody').length === 0) {
+            console.error('StagingBody table not found');
+            return;
+        }
+        
+        var FinalMarkup = '<tr>';
+        
+        // Add columns in correct order: Name, Domain, Path, Actions
+        FinalMarkup += '<td><a href="/websites/WPHome?ID=' + (value.id || '') + '">' + (value.name || 'Unnamed') + '</a></td>';
+        FinalMarkup += '<td>' + (value.Domain || '') + '</td>';
+        FinalMarkup += '<td>' + (value.path || '') + '</td>';
+        FinalMarkup += '<td>' +
+            '<button onclick="DeployToProductionInitial(' + value.id + ')" data-toggle="modal" data-target="#DeployToProduction" style="margin-right: 10px;" aria-label="" type="button" class="btn btn-outline-primary btn-sm">' +
+            '<i class="fas fa-rocket"></i> Deploy to Production</button>' +
+            '<button onclick="deleteStagingGlobal(' + value.id + ')" aria-label="" class="btn btn-danger btn-sm" type="button"><i class="fas fa-trash"></i> Delete</button>' +
+            '</td>';
+        
+        FinalMarkup += '</tr>';
+        
+        console.log('Appending markup to table:', FinalMarkup);
         AppendToTable('#StagingBody', FinalMarkup);
+        console.log('Table content after append:', $('#StagingBody').html());
     }
 
     $scope.FinalDeployToProduction = function () {
@@ -1591,7 +1651,6 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         function ListInitialDatas(response) {
             $('#wordpresshomeloading').hide();
-            $('createbackupbutton').hide();
             if (response.data.status === 1) {
                 new PNotify({
                     title: 'Success!',
@@ -1618,7 +1677,137 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
         }
 
     };
+    
+    function getCreationStatus() {
+        $('#wordpresshomeloading').show();
 
+        url = "/websites/installWordpressStatus";
+
+        var data = {
+            statusFile: statusFile
+        };
+
+        var config = {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        };
+
+
+        $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
+
+
+        function ListInitialDatas(response) {
+            if (response.data.abort === 1) {
+                $('#wordpresshomeloading').hide();
+
+                if (response.data.installStatus === 1) {
+                    $scope.wordpresshomeloading = true;
+                    $scope.stagingDetailsForm = true;
+                    $scope.installationProgress = false;
+                    $scope.errorMessageBox = true;
+                    $scope.success = false;
+                    $scope.couldNotConnect = true;
+                    $scope.goBackDisable = false;
+
+                    $("#installProgress").css("width", "100%");
+                    $("#installProgressbackup").css("width", "100%");
+                    $scope.installPercentage = "100";
+                    $scope.currentStatus = response.data.currentStatus;
+                    $timeout.cancel();
+                    
+                    // Re-enable buttons
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // For backup operations, refresh the backup list
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Backup created successfully!</span>');
+                        // Clear status after 5 seconds
+                        setTimeout(function() {
+                            $('#backupStatus').text('');
+                        }, 5000);
+                    }
+                    // For staging operations, refresh the staging list
+                    else {
+                        $('#stagingStatus').html('<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Staging site created successfully!</span>');
+                        $scope.fetchstaging();
+                        // Clear status after 5 seconds
+                        setTimeout(function() {
+                            $('#stagingStatus').text('');
+                        }, 5000);
+                    }
+
+                } else {
+                    $('#wordpresshomeloading').hide();
+
+                    $scope.wordpresshomeloading = true;
+                    $scope.stagingDetailsForm = true;
+                    $scope.installationProgress = false;
+                    $scope.errorMessageBox = false;
+                    $scope.success = true;
+                    $scope.couldNotConnect = true;
+                    $scope.goBackDisable = false;
+
+                    $scope.errorMessage = response.data.error_message;
+
+                    $("#installProgress").css("width", "0%");
+                    $("#installProgressbackup").css("width", "0%");
+                    $scope.installPercentage = "0";
+                    $scope.goBackDisable = false;
+                    
+                    // Re-enable buttons on error
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // Show error status
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    } else {
+                        $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    }
+
+                }
+
+            } else {
+
+                $("#installProgress").css("width", response.data.installationProgress + "%");
+                $("#installProgressbackup").css("width", response.data.installationProgress + "%");
+                $scope.installPercentage = response.data.installationProgress;
+                $scope.currentStatus = response.data.currentStatus;
+                
+                // Update status displays with progress
+                var statusHtml = '<i class="fas fa-spinner fa-pulse"></i> ' + response.data.currentStatus;
+                if (response.data.installationProgress) {
+                    statusHtml += ' (' + response.data.installationProgress + '%)';
+                }
+                
+                if (statusFile && statusFile.includes('backup')) {
+                    $('#backupStatus').html(statusHtml);
+                } else {
+                    $('#stagingStatus').html(statusHtml);
+                }
+                
+                $timeout(getCreationStatus, 1000);
+
+            }
+
+        }
+
+        function cantLoadInitialDatas(response) {
+            $('#wordpresshomeloading').hide();
+            $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+            $scope.wordpresshomeloading = true;
+            $scope.stagingDetailsForm = true;
+            $scope.installationProgress = false;
+            $scope.errorMessageBox = true;
+            $scope.success = true;
+            $scope.couldNotConnect = false;
+            $scope.goBackDisable = false;
+
+        }
+
+    }
 
     $scope.installwpcore = function () {
 
@@ -1890,7 +2079,23 @@ function AddThemeToArray(cBox, name) {
 
 
 function AppendToTable(table, markup) {
-    $(table).append(markup);
+    try {
+        if ($(table).length === 0) {
+            console.error('Table element not found:', table);
+            return false;
+        }
+        
+        console.log('Appending to table:', table);
+        console.log('Markup:', markup);
+        
+        $(table).append(markup);
+        
+        console.log('Successfully appended. Table now has', $(table).find('tr').length, 'rows');
+        return true;
+    } catch (e) {
+        console.error('Error appending to table:', e);
+        return false;
+    }
 }
 
 
@@ -2048,13 +2253,10 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
 
 
         function ListInitialDatas(response) {
-            //$('#wordpresshomeloading').hide();
-
             if (response.data.abort === 1) {
+                $('#wordpresshomeloading').hide();
 
                 if (response.data.installStatus === 1) {
-
-
                     $scope.wordpresshomeloading = true;
                     $scope.stagingDetailsForm = true;
                     $scope.installationProgress = false;
@@ -2063,15 +2265,40 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                     $scope.couldNotConnect = true;
                     $scope.goBackDisable = false;
 
-
                     $("#installProgress").css("width", "100%");
                     $("#installProgressbackup").css("width", "100%");
                     $scope.installPercentage = "100";
                     $scope.currentStatus = response.data.currentStatus;
                     $timeout.cancel();
+                    
+                    // Re-enable buttons
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // For backup operations, refresh the backup list
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Backup created successfully!</span>');
+                        if (typeof window.fetchBackupList === 'function') {
+                            window.fetchBackupList();
+                        }
+                        // Clear status after 5 seconds
+                        setTimeout(function() {
+                            $('#backupStatus').text('');
+                        }, 5000);
+                    }
+                    // For staging operations, refresh the staging list
+                    else {
+                        $('#stagingStatus').html('<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Staging site created successfully!</span>');
+                        $scope.fetchstaging();
+                        // Clear status after 5 seconds
+                        setTimeout(function() {
+                            $('#stagingStatus').text('');
+                        }, 5000);
+                    }
 
 
                 } else {
+                    $('#wordpresshomeloading').hide();
 
                     $scope.wordpresshomeloading = true;
                     $scope.stagingDetailsForm = true;
@@ -2087,6 +2314,17 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                     $("#installProgressbackup").css("width", "0%");
                     $scope.installPercentage = "0";
                     $scope.goBackDisable = false;
+                    
+                    // Re-enable buttons on error
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // Show error status
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    } else {
+                        $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    }
 
 
                 }
@@ -2097,6 +2335,19 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                 $("#installProgressbackup").css("width", response.data.installationProgress + "%");
                 $scope.installPercentage = response.data.installationProgress;
                 $scope.currentStatus = response.data.currentStatus;
+                
+                // Update status displays with progress
+                var statusHtml = '<i class="fas fa-spinner fa-pulse"></i> ' + response.data.currentStatus;
+                if (response.data.installationProgress) {
+                    statusHtml += ' (' + response.data.installationProgress + '%)';
+                }
+                
+                if (statusFile && statusFile.includes('backup')) {
+                    $('#backupStatus').html(statusHtml);
+                } else {
+                    $('#stagingStatus').html(statusHtml);
+                }
+                
                 $timeout(getCreationStatus, 1000);
 
             }
@@ -2104,7 +2355,8 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
         }
 
         function cantLoadInitialDatas(response) {
-            //$('#wordpresshomeloading').hide();
+            $('#wordpresshomeloading').hide();
+            $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
             $scope.wordpresshomeloading = true;
             $scope.stagingDetailsForm = true;
             $scope.installationProgress = false;
@@ -2520,6 +2772,38 @@ app.controller('listWebsites', function ($scope, $http, $window) {
     // Function to check if site data is loaded
     $scope.isDataLoaded = function(site) {
         return site.version !== undefined;
+    };
+
+    // Function to get SSL tooltip text
+    $scope.getSslTooltip = function(web) {
+        if (!web.ssl) return '';
+        
+        var tooltip = '';
+        if (web.ssl.issuer && web.ssl.issuer !== '') {
+            tooltip += 'Issuer: ' + web.ssl.issuer;
+        }
+        
+        if (web.ssl.days !== undefined) {
+            if (tooltip) tooltip += ' | ';
+            if (web.ssl.days < 0) {
+                tooltip += 'Expired ' + Math.abs(web.ssl.days) + ' days ago';
+            } else {
+                tooltip += 'Valid for ' + web.ssl.days + ' days';
+            }
+        }
+        
+        if (web.ssl.is_wildcard) {
+            if (tooltip) tooltip += ' | ';
+            tooltip += 'Wildcard Certificate';
+        }
+        
+        if (web.ssl.status === 'none') {
+            tooltip = 'No SSL certificate installed. Click "Issue SSL" to secure this site.';
+        } else if (web.ssl.status === 'self-signed') {
+            tooltip = 'Self-signed certificate detected. Not trusted by browsers.';
+        }
+        
+        return tooltip;
     };
 
     // Initial fetch of websites
@@ -3372,6 +3656,18 @@ app.controller('createWordpress', function ($scope, $http, $timeout, $compile, $
     $scope.couldNotConnect = true;
     $scope.goBackDisable = true;
 
+    // Password generation function
+    $scope.randomPassword = function(length) {
+        var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        var password = "";
+        for (var i = 0; i < length; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    };
+
+    // Initialize showPassword
+    $scope.showPassword = false;
 
     var statusFile;
 
@@ -3605,35 +3901,7 @@ function DeployToProductionInitial(vall) {
     DeploytoProductionID = vall;
 }
 
-var create_staging_domain_check = 0;
-
-function create_staging_checkbox_function() {
-
-    try {
-
-        var checkBox = document.getElementById("Create_Staging_Check");
-        // Get the output text
-
-
-        // If the checkbox is checked, display the output text
-        if (checkBox.checked == true) {
-            create_staging_domain_check = 0;
-            document.getElementById('Website_Create_Test_Domain').style.display = "block";
-            document.getElementById('Website_Create_Own_Domain').style.display = "none";
-
-        } else {
-            document.getElementById('Website_Create_Test_Domain').style.display = "none";
-            document.getElementById('Website_Create_Own_Domain').style.display = "block";
-            create_staging_domain_check = 1;
-        }
-    } catch (e) {
-
-    }
-
-    // alert(domain_check);
-}
-
-create_staging_checkbox_function();
+// Simplified staging domain input - checkbox functionality removed
 
 app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $window) {
     var CheckBoxpasssword = 0;
@@ -4246,7 +4514,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 if (value[x] === 'none') {
                     FinalMarkup = FinalMarkup + '<td><span class="label label-success">Upto Date</span></td>';
                 } else {
-                    FinalMarkup = FinalMarkup + '<td><button ng-click="UpdateThemes(\'' + value.name + '\')" aria-label="" type="button" class="btn btn-outline-danger">Update</button></td>';
+                    FinalMarkup = FinalMarkup + '<td><button ng-click="UpdateThemes(\'' + value.name + '\')" aria-label="" type="button" class="btn btn-outline-danger btn-sm"><i class="fas fa-sync-alt"></i> Update</button></td>';
                 }
             } else {
                 FinalMarkup = FinalMarkup + '<td>' + value[x] + "</td>";
@@ -4260,6 +4528,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
     $scope.CreateStagingNow = function () {
         $('#wordpresshomeloading').show();
+        $('#stagingStatus').html('<i class="fas fa-spinner fa-pulse"></i> Starting staging site creation...');
+        $('button[ng-click="CreateStagingNow()"]').prop('disabled', true).html('<i class="fas fa-spinner fa-pulse"></i> Creating Staging Site...');
 
         $scope.wordpresshomeloading = false;
         $scope.stagingDetailsForm = true;
@@ -4272,15 +4542,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         $scope.currentStatus = "Starting creation Staging..";
 
-        //here enter domain name
-        if (create_staging_domain_check == 0) {
-            var Part2_domainNameCreate = document.getElementById('Part2_domainNameCreate').value;
-            var domainNameCreate = document.getElementById('TestDomainNameCreate').value + Part2_domainNameCreate;
-        }
-        if (create_staging_domain_check == 1) {
-
-            var domainNameCreate = $scope.own_domainNameCreate;
-        }
+        // Get the staging domain from the simplified input
+        var domainNameCreate = $('#stagingDomainName').val() || $scope.stagingDomainName;
         var data = {
             StagingName: $('#stagingName').val(),
             StagingDomain: domainNameCreate,
@@ -4304,6 +4567,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 statusFile = response.data.tempStatusPath;
                 getCreationStatus();
             } else {
+                $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
                 new PNotify({
                     title: 'Operation Failed!',
                     text: response.data.error_message,
@@ -4316,6 +4581,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         function cantLoadInitialDatas(response) {
             $('#wordpresshomeloading').hide();
+            $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> Could not connect to server</span>');
+            $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
             $scope.wordpresshomeloading = true;
             alert(response)
 
@@ -4364,6 +4631,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
 
                 } else {
+                    $('#wordpresshomeloading').hide();
 
                     $scope.wordpresshomeloading = true;
                     $scope.stagingDetailsForm = true;
@@ -4379,6 +4647,17 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                     $("#installProgressbackup").css("width", "0%");
                     $scope.installPercentage = "0";
                     $scope.goBackDisable = false;
+                    
+                    // Re-enable buttons on error
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // Show error status
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    } else {
+                        $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    }
 
 
                 }
@@ -4389,6 +4668,19 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 $("#installProgressbackup").css("width", response.data.installationProgress + "%");
                 $scope.installPercentage = response.data.installationProgress;
                 $scope.currentStatus = response.data.currentStatus;
+                
+                // Update status displays with progress
+                var statusHtml = '<i class="fas fa-spinner fa-pulse"></i> ' + response.data.currentStatus;
+                if (response.data.installationProgress) {
+                    statusHtml += ' (' + response.data.installationProgress + '%)';
+                }
+                
+                if (statusFile && statusFile.includes('backup')) {
+                    $('#backupStatus').html(statusHtml);
+                } else {
+                    $('#stagingStatus').html(statusHtml);
+                }
+                
                 $timeout(getCreationStatus, 1000);
 
             }
@@ -4396,7 +4688,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
         }
 
         function cantLoadInitialDatas(response) {
-            //$('#wordpresshomeloading').hide();
+            $('#wordpresshomeloading').hide();
+            $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
             $scope.wordpresshomeloading = true;
             $scope.stagingDetailsForm = true;
             $scope.installationProgress = false;
@@ -4424,51 +4717,76 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
     $scope.fetchstaging = function () {
 
-        $('#wordpresshomeloading').show();
-        $scope.wordpresshomeloading = false;
-
-        var url = "/websites/fetchstaging";
-
-        var data = {
-            WPid: $('#WPid').html(),
-        }
-
-        var config = {
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        };
-
-
-        $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
-
-
-        function ListInitialDatas(response) {
-            wordpresshomeloading = true;
-            $('#wordpresshomeloading').hide();
-
-            if (response.data.status === 1) {
-
-                //   $('#ThemeBody').html('');
-                // var themes = JSON.parse(response.data.themes);
-                // themes.forEach(AddThemes);
-
-                $('#StagingBody').html('');
-                var staging = JSON.parse(response.data.wpsites);
-                staging.forEach(AddStagings);
-
-            } else {
-                alert("Error data.error_message:" + response.data.error_message)
-
+        // Ensure DOM is ready
+        $timeout(function() {
+            // Check if the staging table exists
+            if ($('#StagingBody').length === 0) {
+                console.error('StagingBody table not found in DOM');
+                return;
             }
 
-        }
+            $('#wordpresshomeloading').show();
+            $scope.wordpresshomeloading = false;
 
-        function cantLoadInitialDatas(response) {
-            $('#wordpresshomeloading').hide();
-            alert("Error" + response)
+            var url = "/websites/fetchstaging";
 
-        }
+            var data = {
+                WPid: $('#WPid').html(),
+            }
+
+            var config = {
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            };
+
+
+            $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
+
+
+            function ListInitialDatas(response) {
+                wordpresshomeloading = true;
+                $('#wordpresshomeloading').hide();
+
+                if (response.data.status === 1) {
+
+                    //   $('#ThemeBody').html('');
+                    // var themes = JSON.parse(response.data.themes);
+                    // themes.forEach(AddThemes);
+
+                    $('#StagingBody').html('');
+                    console.log('Staging response:', response.data);
+                    
+                    try {
+                        var staging = JSON.parse(response.data.wpsites);
+                        console.log('Parsed staging data:', staging);
+                        
+                        if (staging && staging.length > 0) {
+                            staging.forEach(function(site, index) {
+                                console.log('Processing staging site ' + index + ':', site);
+                                AddStagings(site, index, staging);
+                            });
+                        } else {
+                            $('#StagingBody').html('<tr><td colspan="4" class="text-center">No staging sites found</td></tr>');
+                        }
+                    } catch (e) {
+                        console.error('Error parsing staging data:', e);
+                        $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Error loading staging sites</td></tr>');
+                    }
+
+                } else {
+                    console.error("Error from server:", response.data.error_message);
+                    $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Error: ' + response.data.error_message + '</td></tr>');
+                }
+
+            }
+
+            function cantLoadInitialDatas(response) {
+                $('#wordpresshomeloading').hide();
+                console.error("Request failed:", response);
+                $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load staging sites</td></tr>');
+            }
+        }, 100); // Small delay to ensure DOM is ready
 
     };
 
@@ -4476,6 +4794,10 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         $('#wordpresshomeloading').show();
         $scope.wordpresshomeloading = false;
+
+        $('#databaseLoading').show();
+        $('#databaseInfoTable').hide();
+        $('#databaseError').hide().text('');
 
         var url = "/websites/fetchDatabase";
 
@@ -4496,21 +4818,23 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
         function ListInitialDatas(response) {
             wordpresshomeloading = true;
             $('#wordpresshomeloading').hide();
+            $('#databaseLoading').hide();
 
             if (response.data.status === 1) {
                 $('#DB_Name').html(response.data.DataBaseName);
                 $('#DB_User').html(response.data.DataBaseUser);
                 $('#tableprefix').html(response.data.tableprefix);
+                $('#databaseInfoTable').show();
             } else {
-                alert("Error data.error_message:" + response.data.error_message)
-
+                $('#databaseError').text('Unable to load database information: ' + response.data.error_message).show();
             }
         }
 
         function cantLoadInitialDatas(response) {
             $('#wordpresshomeloading').hide();
-            alert("Error" + response)
-
+            $('#databaseLoading').hide();
+            var status = (response && response.status) ? response.status : 'network';
+            $('#databaseError').text('Unable to load database information (request failed, status: ' + status + ').').show();
         }
 
     };
@@ -4572,18 +4896,39 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
     };
 
     function AddStagings(value, index, array) {
-        var FinalMarkup = '<tr>'
-        for (let x in value) {
-            if (x === 'name') {
-                FinalMarkup = FinalMarkup + '<td><a href=/websites/WPHome?ID=' + value.id + '>' + value[x] + '</a></td>';
-            } else if (x !== 'url' && x !== 'deleteURL' && x !== 'id') {
-                FinalMarkup = FinalMarkup + '<td>' + value[x] + "</td>";
+        console.log('AddStagings function called with:', value);
+        
+        // Check if table element exists
+        if ($('#stagingListBody').length === 0) {
+            console.error('stagingListBody not found! Looking for StagingBody...');
+            if ($('#StagingBody').length > 0) {
+                console.log('Found StagingBody, using that instead');
+                var tableSelector = '#StagingBody';
+            } else {
+                console.error('Neither stagingListBody nor StagingBody found!');
+                console.log('Available table bodies:', $('tbody').map(function() { return this.id; }).get());
+                return;
             }
+        } else {
+            var tableSelector = '#stagingListBody';
         }
-        FinalMarkup = FinalMarkup + '<td><button onclick="DeployToProductionInitial(' + value.id + ')" data-toggle="modal" data-target="#DeployToProduction" style="margin-bottom: 2%; display: block" aria-label="" type="button" class="btn btn-outline-primary">Deploy to Production</button>' +
-            '<a href="' + value.deleteURL + '"> <button aria-label="" class="btn btn-danger btn-icon-left m-b-10" type="button">Delete</button></a></td>'
-        FinalMarkup = FinalMarkup + '</tr>'
-        AppendToTable('#StagingBody', FinalMarkup);
+        
+        var stagingUrl = 'http://' + value.Domain;
+        var createdDate = new Date().toLocaleDateString();
+        
+        var FinalMarkup = '<tr>';
+        FinalMarkup += '<td><a href="/websites/WPHome?ID=' + value.id + '">' + value.name + '</a></td>';
+        FinalMarkup += '<td><a href="' + stagingUrl + '" target="_blank" rel="noopener">' + stagingUrl + '</a></td>';
+        FinalMarkup += '<td>' + createdDate + '</td>';
+        FinalMarkup += '<td>';
+        FinalMarkup += '<button class="btn btn-sm btn-primary" onclick="DeployToProductionInitial(' + value.id + ')" data-toggle="modal" data-target="#DeployToProduction"><i class="fas fa-sync"></i> Sync to Production</button> ';
+        FinalMarkup += '<button class="btn btn-sm btn-danger" onclick="deleteStagingGlobal(' + value.id + ')"><i class="fas fa-trash"></i> Delete</button>';
+        FinalMarkup += '</td>';
+        FinalMarkup += '</tr>';
+        
+        console.log('Appending to:', tableSelector);
+        $(tableSelector).append(FinalMarkup);
+        console.log('Rows in table after append:', $(tableSelector).find('tr').length);
     }
 
     $scope.FinalDeployToProduction = function () {
@@ -4652,6 +4997,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
     $scope.CreateBackup = function () {
         $('#wordpresshomeloading').show();
+        $('#createbackupbutton').prop('disabled', true).html('<i class="fas fa-spinner fa-pulse"></i> Creating Backup...');
 
         $scope.wordpresshomeloading = false;
         $scope.stagingDetailsForm = true;
@@ -4678,7 +5024,6 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         function ListInitialDatas(response) {
             $('#wordpresshomeloading').hide();
-            $('createbackupbutton').hide();
             if (response.data.status === 1) {
                 new PNotify({
                     title: 'Success!',
@@ -4688,6 +5033,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 statusFile = response.data.tempStatusPath;
                 getCreationStatus();
             } else {
+                $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
                 new PNotify({
                     title: 'Operation Failed!',
                     text: response.data.error_message,
@@ -4700,6 +5046,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         function cantLoadInitialDatas(response) {
             $('#wordpresshomeloading').hide();
+            $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
             alert(response)
 
         }
@@ -5010,13 +5357,10 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
 
 
         function ListInitialDatas(response) {
-            //$('#wordpresshomeloading').hide();
-
             if (response.data.abort === 1) {
+                $('#wordpresshomeloading').hide();
 
                 if (response.data.installStatus === 1) {
-
-
                     $scope.wordpresshomeloading = true;
                     $scope.stagingDetailsForm = true;
                     $scope.installationProgress = false;
@@ -5025,15 +5369,40 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                     $scope.couldNotConnect = true;
                     $scope.goBackDisable = false;
 
-
                     $("#installProgress").css("width", "100%");
                     $("#installProgressbackup").css("width", "100%");
                     $scope.installPercentage = "100";
                     $scope.currentStatus = response.data.currentStatus;
                     $timeout.cancel();
+                    
+                    // Re-enable buttons
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // For backup operations, refresh the backup list
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Backup created successfully!</span>');
+                        if (typeof window.fetchBackupList === 'function') {
+                            window.fetchBackupList();
+                        }
+                        // Clear status after 5 seconds
+                        setTimeout(function() {
+                            $('#backupStatus').text('');
+                        }, 5000);
+                    }
+                    // For staging operations, refresh the staging list
+                    else {
+                        $('#stagingStatus').html('<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Staging site created successfully!</span>');
+                        $scope.fetchstaging();
+                        // Clear status after 5 seconds
+                        setTimeout(function() {
+                            $('#stagingStatus').text('');
+                        }, 5000);
+                    }
 
 
                 } else {
+                    $('#wordpresshomeloading').hide();
 
                     $scope.wordpresshomeloading = true;
                     $scope.stagingDetailsForm = true;
@@ -5049,6 +5418,17 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                     $("#installProgressbackup").css("width", "0%");
                     $scope.installPercentage = "0";
                     $scope.goBackDisable = false;
+                    
+                    // Re-enable buttons on error
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // Show error status
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    } else {
+                        $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    }
 
 
                 }
@@ -5059,6 +5439,19 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                 $("#installProgressbackup").css("width", response.data.installationProgress + "%");
                 $scope.installPercentage = response.data.installationProgress;
                 $scope.currentStatus = response.data.currentStatus;
+                
+                // Update status displays with progress
+                var statusHtml = '<i class="fas fa-spinner fa-pulse"></i> ' + response.data.currentStatus;
+                if (response.data.installationProgress) {
+                    statusHtml += ' (' + response.data.installationProgress + '%)';
+                }
+                
+                if (statusFile && statusFile.includes('backup')) {
+                    $('#backupStatus').html(statusHtml);
+                } else {
+                    $('#stagingStatus').html(statusHtml);
+                }
+                
                 $timeout(getCreationStatus, 1000);
 
             }
@@ -5066,7 +5459,8 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
         }
 
         function cantLoadInitialDatas(response) {
-            //$('#wordpresshomeloading').hide();
+            $('#wordpresshomeloading').hide();
+            $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
             $scope.wordpresshomeloading = true;
             $scope.stagingDetailsForm = true;
             $scope.installationProgress = false;
@@ -5707,6 +6101,38 @@ app.controller('listWebsites', function ($scope, $http, $window) {
         return site.version !== undefined;
     };
 
+    // Function to get SSL tooltip text
+    $scope.getSslTooltip = function(web) {
+        if (!web.ssl) return '';
+        
+        var tooltip = '';
+        if (web.ssl.issuer && web.ssl.issuer !== '') {
+            tooltip += 'Issuer: ' + web.ssl.issuer;
+        }
+        
+        if (web.ssl.days !== undefined) {
+            if (tooltip) tooltip += ' | ';
+            if (web.ssl.days < 0) {
+                tooltip += 'Expired ' + Math.abs(web.ssl.days) + ' days ago';
+            } else {
+                tooltip += 'Valid for ' + web.ssl.days + ' days';
+            }
+        }
+        
+        if (web.ssl.is_wildcard) {
+            if (tooltip) tooltip += ' | ';
+            tooltip += 'Wildcard Certificate';
+        }
+        
+        if (web.ssl.status === 'none') {
+            tooltip = 'No SSL certificate installed. Click "Issue SSL" to secure this site.';
+        } else if (web.ssl.status === 'self-signed') {
+            tooltip = 'Self-signed certificate detected. Not trusted by browsers.';
+        }
+        
+        return tooltip;
+    };
+
     // Initial fetch of websites
     $scope.getFurtherWebsitesFromDB = function () {
         $scope.loading = true; // Set loading to true when starting fetch
@@ -6306,6 +6732,13 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
     };
     $scope.getFurtherWebsitesFromDB();
 
+    $scope.goToPage = function (page) {
+        if (page >= 1 && page <= $scope.pagination.length) {
+            $scope.currentPage = page;
+            $scope.getFurtherWebsitesFromDB();
+        }
+    };
+
     $scope.cyberPanelLoading = true;
 
     $scope.issueSSL = function (virtualHost) {
@@ -6363,6 +6796,12 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
 
         $scope.cyberPanelLoading = false;
 
+        if (!$scope.patternAdded) {
+            $scope.cyberPanelLoading = true;
+            $scope.getFurtherWebsitesFromDB();
+            return;
+        }
+
         var config = {
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
@@ -6384,6 +6823,9 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
 
                 var finalData = JSON.parse(response.data.data);
                 $scope.WebSitesList = finalData;
+                // search results aren't paginated - hide the stale page selector
+                // so clicking an old page number can't silently discard the search
+                $scope.pagination = [];
                 $("#listFail").hide();
             } else {
                 new PNotify({
@@ -6576,11 +7018,16 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
     }
 
     var DeleteDomain;
+    $scope.DeleteDocRoot = false;
     $scope.deleteDomainInit = function (childDomainForDeletion) {
         DeleteDomain = childDomainForDeletion;
+        $scope.DeleteDocRoot = false;
     };
 
     $scope.deleteChildDomain = function () {
+        console.log("Delete child domain called for:", DeleteDomain);
+        console.log("Delete doc root:", $scope.DeleteDocRoot);
+        
         $scope.cyberPanelLoading = false;
         url = "/websites/submitDomainDeletion";
 
@@ -6595,18 +7042,25 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
             }
         };
 
+        console.log("Sending delete request with data:", data);
         $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
 
         function ListInitialDatas(response) {
+            console.log("Delete response received:", response.data);
             $scope.cyberPanelLoading = true;
             if (response.data.websiteDeleteStatus === 1) {
+                console.log("Delete successful");
                 new PNotify({
                     title: 'Success!',
                     text: 'Child Domain successfully deleted.',
                     type: 'success'
                 });
+                $('#DeleteChild').modal('hide');
+                $('.modal-backdrop').remove();
+                $scope.DeleteDocRoot = false;
                 $scope.getFurtherWebsitesFromDB();
             } else {
+                console.log("Delete failed:", response.data.error_message);
                 new PNotify({
                     title: 'Operation Failed!',
                     text: response.data.error_message,
@@ -6616,6 +7070,7 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
         }
 
         function cantLoadInitialDatas(response) {
+            console.log("Delete request failed:", response);
             $scope.cyberPanelLoading = true;
             new PNotify({
                 title: 'Operation Failed!',
@@ -6992,6 +7447,18 @@ app.controller('createWordpress', function ($scope, $http, $timeout, $compile, $
     $scope.couldNotConnect = true;
     $scope.goBackDisable = true;
 
+    // Password generation function
+    $scope.randomPassword = function(length) {
+        var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        var password = "";
+        for (var i = 0; i < length; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    };
+
+    // Initialize showPassword
+    $scope.showPassword = false;
 
     var statusFile;
 
@@ -7225,35 +7692,7 @@ function DeployToProductionInitial(vall) {
     DeploytoProductionID = vall;
 }
 
-var create_staging_domain_check = 0;
-
-function create_staging_checkbox_function() {
-
-    try {
-
-        var checkBox = document.getElementById("Create_Staging_Check");
-        // Get the output text
-
-
-        // If the checkbox is checked, display the output text
-        if (checkBox.checked == true) {
-            create_staging_domain_check = 0;
-            document.getElementById('Website_Create_Test_Domain').style.display = "block";
-            document.getElementById('Website_Create_Own_Domain').style.display = "none";
-
-        } else {
-            document.getElementById('Website_Create_Test_Domain').style.display = "none";
-            document.getElementById('Website_Create_Own_Domain').style.display = "block";
-            create_staging_domain_check = 1;
-        }
-    } catch (e) {
-
-    }
-
-    // alert(domain_check);
-}
-
-create_staging_checkbox_function();
+// Simplified staging domain input - checkbox functionality removed
 
 app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $window) {
     var CheckBoxpasssword = 0;
@@ -7866,7 +8305,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 if (value[x] === 'none') {
                     FinalMarkup = FinalMarkup + '<td><span class="label label-success">Upto Date</span></td>';
                 } else {
-                    FinalMarkup = FinalMarkup + '<td><button ng-click="UpdateThemes(\'' + value.name + '\')" aria-label="" type="button" class="btn btn-outline-danger">Update</button></td>';
+                    FinalMarkup = FinalMarkup + '<td><button ng-click="UpdateThemes(\'' + value.name + '\')" aria-label="" type="button" class="btn btn-outline-danger btn-sm"><i class="fas fa-sync-alt"></i> Update</button></td>';
                 }
             } else {
                 FinalMarkup = FinalMarkup + '<td>' + value[x] + "</td>";
@@ -7880,6 +8319,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
     $scope.CreateStagingNow = function () {
         $('#wordpresshomeloading').show();
+        $('#stagingStatus').html('<i class="fas fa-spinner fa-pulse"></i> Starting staging site creation...');
+        $('button[ng-click="CreateStagingNow()"]').prop('disabled', true).html('<i class="fas fa-spinner fa-pulse"></i> Creating Staging Site...');
 
         $scope.wordpresshomeloading = false;
         $scope.stagingDetailsForm = true;
@@ -7892,15 +8333,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         $scope.currentStatus = "Starting creation Staging..";
 
-        //here enter domain name
-        if (create_staging_domain_check == 0) {
-            var Part2_domainNameCreate = document.getElementById('Part2_domainNameCreate').value;
-            var domainNameCreate = document.getElementById('TestDomainNameCreate').value + Part2_domainNameCreate;
-        }
-        if (create_staging_domain_check == 1) {
-
-            var domainNameCreate = $scope.own_domainNameCreate;
-        }
+        // Get the staging domain from the simplified input
+        var domainNameCreate = $('#stagingDomainName').val() || $scope.stagingDomainName;
         var data = {
             StagingName: $('#stagingName').val(),
             StagingDomain: domainNameCreate,
@@ -7924,6 +8358,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 statusFile = response.data.tempStatusPath;
                 getCreationStatus();
             } else {
+                $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
                 new PNotify({
                     title: 'Operation Failed!',
                     text: response.data.error_message,
@@ -7936,6 +8372,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         function cantLoadInitialDatas(response) {
             $('#wordpresshomeloading').hide();
+            $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> Could not connect to server</span>');
+            $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
             $scope.wordpresshomeloading = true;
             alert(response)
 
@@ -7984,6 +8422,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
 
                 } else {
+                    $('#wordpresshomeloading').hide();
 
                     $scope.wordpresshomeloading = true;
                     $scope.stagingDetailsForm = true;
@@ -7999,6 +8438,17 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                     $("#installProgressbackup").css("width", "0%");
                     $scope.installPercentage = "0";
                     $scope.goBackDisable = false;
+                    
+                    // Re-enable buttons on error
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // Show error status
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    } else {
+                        $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    }
 
 
                 }
@@ -8009,6 +8459,19 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 $("#installProgressbackup").css("width", response.data.installationProgress + "%");
                 $scope.installPercentage = response.data.installationProgress;
                 $scope.currentStatus = response.data.currentStatus;
+                
+                // Update status displays with progress
+                var statusHtml = '<i class="fas fa-spinner fa-pulse"></i> ' + response.data.currentStatus;
+                if (response.data.installationProgress) {
+                    statusHtml += ' (' + response.data.installationProgress + '%)';
+                }
+                
+                if (statusFile && statusFile.includes('backup')) {
+                    $('#backupStatus').html(statusHtml);
+                } else {
+                    $('#stagingStatus').html(statusHtml);
+                }
+                
                 $timeout(getCreationStatus, 1000);
 
             }
@@ -8016,7 +8479,8 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
         }
 
         function cantLoadInitialDatas(response) {
-            //$('#wordpresshomeloading').hide();
+            $('#wordpresshomeloading').hide();
+            $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
             $scope.wordpresshomeloading = true;
             $scope.stagingDetailsForm = true;
             $scope.installationProgress = false;
@@ -8044,51 +8508,76 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
     $scope.fetchstaging = function () {
 
-        $('#wordpresshomeloading').show();
-        $scope.wordpresshomeloading = false;
-
-        var url = "/websites/fetchstaging";
-
-        var data = {
-            WPid: $('#WPid').html(),
-        }
-
-        var config = {
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        };
-
-
-        $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
-
-
-        function ListInitialDatas(response) {
-            wordpresshomeloading = true;
-            $('#wordpresshomeloading').hide();
-
-            if (response.data.status === 1) {
-
-                //   $('#ThemeBody').html('');
-                // var themes = JSON.parse(response.data.themes);
-                // themes.forEach(AddThemes);
-
-                $('#StagingBody').html('');
-                var staging = JSON.parse(response.data.wpsites);
-                staging.forEach(AddStagings);
-
-            } else {
-                alert("Error data.error_message:" + response.data.error_message)
-
+        // Ensure DOM is ready
+        $timeout(function() {
+            // Check if the staging table exists
+            if ($('#StagingBody').length === 0) {
+                console.error('StagingBody table not found in DOM');
+                return;
             }
 
-        }
+            $('#wordpresshomeloading').show();
+            $scope.wordpresshomeloading = false;
 
-        function cantLoadInitialDatas(response) {
-            $('#wordpresshomeloading').hide();
-            alert("Error" + response)
+            var url = "/websites/fetchstaging";
 
-        }
+            var data = {
+                WPid: $('#WPid').html(),
+            }
+
+            var config = {
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            };
+
+
+            $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
+
+
+            function ListInitialDatas(response) {
+                wordpresshomeloading = true;
+                $('#wordpresshomeloading').hide();
+
+                if (response.data.status === 1) {
+
+                    //   $('#ThemeBody').html('');
+                    // var themes = JSON.parse(response.data.themes);
+                    // themes.forEach(AddThemes);
+
+                    $('#StagingBody').html('');
+                    console.log('Staging response:', response.data);
+                    
+                    try {
+                        var staging = JSON.parse(response.data.wpsites);
+                        console.log('Parsed staging data:', staging);
+                        
+                        if (staging && staging.length > 0) {
+                            staging.forEach(function(site, index) {
+                                console.log('Processing staging site ' + index + ':', site);
+                                AddStagings(site, index, staging);
+                            });
+                        } else {
+                            $('#StagingBody').html('<tr><td colspan="4" class="text-center">No staging sites found</td></tr>');
+                        }
+                    } catch (e) {
+                        console.error('Error parsing staging data:', e);
+                        $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Error loading staging sites</td></tr>');
+                    }
+
+                } else {
+                    console.error("Error from server:", response.data.error_message);
+                    $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Error: ' + response.data.error_message + '</td></tr>');
+                }
+
+            }
+
+            function cantLoadInitialDatas(response) {
+                $('#wordpresshomeloading').hide();
+                console.error("Request failed:", response);
+                $('#StagingBody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load staging sites</td></tr>');
+            }
+        }, 100); // Small delay to ensure DOM is ready
 
     };
 
@@ -8096,6 +8585,10 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         $('#wordpresshomeloading').show();
         $scope.wordpresshomeloading = false;
+
+        $('#databaseLoading').show();
+        $('#databaseInfoTable').hide();
+        $('#databaseError').hide().text('');
 
         var url = "/websites/fetchDatabase";
 
@@ -8116,21 +8609,23 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
         function ListInitialDatas(response) {
             wordpresshomeloading = true;
             $('#wordpresshomeloading').hide();
+            $('#databaseLoading').hide();
 
             if (response.data.status === 1) {
                 $('#DB_Name').html(response.data.DataBaseName);
                 $('#DB_User').html(response.data.DataBaseUser);
                 $('#tableprefix').html(response.data.tableprefix);
+                $('#databaseInfoTable').show();
             } else {
-                alert("Error data.error_message:" + response.data.error_message)
-
+                $('#databaseError').text('Unable to load database information: ' + response.data.error_message).show();
             }
         }
 
         function cantLoadInitialDatas(response) {
             $('#wordpresshomeloading').hide();
-            alert("Error" + response)
-
+            $('#databaseLoading').hide();
+            var status = (response && response.status) ? response.status : 'network';
+            $('#databaseError').text('Unable to load database information (request failed, status: ' + status + ').').show();
         }
 
     };
@@ -8192,18 +8687,33 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
     };
 
     function AddStagings(value, index, array) {
-        var FinalMarkup = '<tr>'
-        for (let x in value) {
-            if (x === 'name') {
-                FinalMarkup = FinalMarkup + '<td><a href=/websites/WPHome?ID=' + value.id + '>' + value[x] + '</a></td>';
-            } else if (x !== 'url' && x !== 'deleteURL' && x !== 'id') {
-                FinalMarkup = FinalMarkup + '<td>' + value[x] + "</td>";
+        var stagingUrl = 'http://' + value.Domain;
+        var createdDate = new Date().toLocaleDateString();
+        
+        var FinalMarkup = '<tr>';
+        FinalMarkup += '<td><a href="/websites/WPHome?ID=' + value.id + '">' + value.name + '</a></td>';
+        FinalMarkup += '<td><a href="' + stagingUrl + '" target="_blank" rel="noopener">' + stagingUrl + '</a></td>';
+        FinalMarkup += '<td>' + createdDate + '</td>';
+        FinalMarkup += '<td>';
+        FinalMarkup += '<button class="btn btn-sm btn-primary" onclick="DeployToProductionInitial(' + value.id + ')" data-toggle="modal" data-target="#DeployToProduction"><i class="fas fa-sync"></i> Sync to Production</button> ';
+        FinalMarkup += '<button class="btn btn-sm btn-danger" onclick="deleteStagingGlobal(' + value.id + ')"><i class="fas fa-trash"></i> Delete</button>';
+        FinalMarkup += '</td>';
+        FinalMarkup += '</tr>';
+        
+        console.log('Appending to #stagingListBody');
+        if ($('#stagingListBody').length === 0) {
+            console.error('stagingListBody not found! Looking for StagingBody...');
+            if ($('#StagingBody').length > 0) {
+                console.log('Found StagingBody, using that instead');
+                $('#StagingBody').append(FinalMarkup);
+            } else {
+                console.error('Neither stagingListBody nor StagingBody found!');
+                console.log('Available table bodies:', $('tbody').map(function() { return this.id; }).get());
             }
+        } else {
+            $('#stagingListBody').append(FinalMarkup);
         }
-        FinalMarkup = FinalMarkup + '<td><button onclick="DeployToProductionInitial(' + value.id + ')" data-toggle="modal" data-target="#DeployToProduction" style="margin-bottom: 2%; display: block" aria-label="" type="button" class="btn btn-outline-primary">Deploy to Production</button>' +
-            '<a href="' + value.deleteURL + '"> <button aria-label="" class="btn btn-danger btn-icon-left m-b-10" type="button">Delete</button></a></td>'
-        FinalMarkup = FinalMarkup + '</tr>'
-        AppendToTable('#StagingBody', FinalMarkup);
+        console.log('Rows in table after append:', $('#stagingListBody').find('tr').length + ' in stagingListBody, ' + $('#StagingBody').find('tr').length + ' in StagingBody');
     }
 
     $scope.FinalDeployToProduction = function () {
@@ -8272,6 +8782,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
     $scope.CreateBackup = function () {
         $('#wordpresshomeloading').show();
+        $('#createbackupbutton').prop('disabled', true).html('<i class="fas fa-spinner fa-pulse"></i> Creating Backup...');
 
         $scope.wordpresshomeloading = false;
         $scope.stagingDetailsForm = true;
@@ -8298,7 +8809,6 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         function ListInitialDatas(response) {
             $('#wordpresshomeloading').hide();
-            $('createbackupbutton').hide();
             if (response.data.status === 1) {
                 new PNotify({
                     title: 'Success!',
@@ -8308,6 +8818,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
                 statusFile = response.data.tempStatusPath;
                 getCreationStatus();
             } else {
+                $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
                 new PNotify({
                     title: 'Operation Failed!',
                     text: response.data.error_message,
@@ -8320,6 +8831,7 @@ app.controller('WPsiteHome', function ($scope, $http, $timeout, $compile, $windo
 
         function cantLoadInitialDatas(response) {
             $('#wordpresshomeloading').hide();
+            $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
             alert(response)
 
         }
@@ -8755,13 +9267,10 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
 
 
         function ListInitialDatas(response) {
-            //$('#wordpresshomeloading').hide();
-
             if (response.data.abort === 1) {
+                $('#wordpresshomeloading').hide();
 
                 if (response.data.installStatus === 1) {
-
-
                     $scope.wordpresshomeloading = true;
                     $scope.stagingDetailsForm = true;
                     $scope.installationProgress = false;
@@ -8770,15 +9279,40 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                     $scope.couldNotConnect = true;
                     $scope.goBackDisable = false;
 
-
                     $("#installProgress").css("width", "100%");
                     $("#installProgressbackup").css("width", "100%");
                     $scope.installPercentage = "100";
                     $scope.currentStatus = response.data.currentStatus;
                     $timeout.cancel();
+                    
+                    // Re-enable buttons
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // For backup operations, refresh the backup list
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Backup created successfully!</span>');
+                        if (typeof window.fetchBackupList === 'function') {
+                            window.fetchBackupList();
+                        }
+                        // Clear status after 5 seconds
+                        setTimeout(function() {
+                            $('#backupStatus').text('');
+                        }, 5000);
+                    }
+                    // For staging operations, refresh the staging list
+                    else {
+                        $('#stagingStatus').html('<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Staging site created successfully!</span>');
+                        $scope.fetchstaging();
+                        // Clear status after 5 seconds
+                        setTimeout(function() {
+                            $('#stagingStatus').text('');
+                        }, 5000);
+                    }
 
 
                 } else {
+                    $('#wordpresshomeloading').hide();
 
                     $scope.wordpresshomeloading = true;
                     $scope.stagingDetailsForm = true;
@@ -8794,6 +9328,17 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                     $("#installProgressbackup").css("width", "0%");
                     $scope.installPercentage = "0";
                     $scope.goBackDisable = false;
+                    
+                    // Re-enable buttons on error
+                    $('#createbackupbutton').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
+                    $('button[ng-click="CreateStagingNow()"]').prop('disabled', false).html('<i class="fas fa-clone"></i> Create Staging Site');
+                    
+                    // Show error status
+                    if (statusFile && statusFile.includes('backup')) {
+                        $('#backupStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    } else {
+                        $('#stagingStatus').html('<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> ' + response.data.error_message + '</span>');
+                    }
 
 
                 }
@@ -8804,6 +9349,19 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
                 $("#installProgressbackup").css("width", response.data.installationProgress + "%");
                 $scope.installPercentage = response.data.installationProgress;
                 $scope.currentStatus = response.data.currentStatus;
+                
+                // Update status displays with progress
+                var statusHtml = '<i class="fas fa-spinner fa-pulse"></i> ' + response.data.currentStatus;
+                if (response.data.installationProgress) {
+                    statusHtml += ' (' + response.data.installationProgress + '%)';
+                }
+                
+                if (statusFile && statusFile.includes('backup')) {
+                    $('#backupStatus').html(statusHtml);
+                } else {
+                    $('#stagingStatus').html(statusHtml);
+                }
+                
                 $timeout(getCreationStatus, 1000);
 
             }
@@ -8811,7 +9369,8 @@ app.controller('RestoreWPBackup', function ($scope, $http, $timeout, $window) {
         }
 
         function cantLoadInitialDatas(response) {
-            //$('#wordpresshomeloading').hide();
+            $('#wordpresshomeloading').hide();
+            $('#createBackupBtn').prop('disabled', false).html('<i class="fas fa-download"></i> Create Backup');
             $scope.wordpresshomeloading = true;
             $scope.stagingDetailsForm = true;
             $scope.installationProgress = false;
@@ -9227,6 +9786,38 @@ app.controller('listWebsites', function ($scope, $http, $window) {
     // Function to check if site data is loaded
     $scope.isDataLoaded = function(site) {
         return site.version !== undefined;
+    };
+
+    // Function to get SSL tooltip text
+    $scope.getSslTooltip = function(web) {
+        if (!web.ssl) return '';
+        
+        var tooltip = '';
+        if (web.ssl.issuer && web.ssl.issuer !== '') {
+            tooltip += 'Issuer: ' + web.ssl.issuer;
+        }
+        
+        if (web.ssl.days !== undefined) {
+            if (tooltip) tooltip += ' | ';
+            if (web.ssl.days < 0) {
+                tooltip += 'Expired ' + Math.abs(web.ssl.days) + ' days ago';
+            } else {
+                tooltip += 'Valid for ' + web.ssl.days + ' days';
+            }
+        }
+        
+        if (web.ssl.is_wildcard) {
+            if (tooltip) tooltip += ' | ';
+            tooltip += 'Wildcard Certificate';
+        }
+        
+        if (web.ssl.status === 'none') {
+            tooltip = 'No SSL certificate installed. Click "Issue SSL" to secure this site.';
+        } else if (web.ssl.status === 'self-signed') {
+            tooltip = 'Self-signed certificate detected. Not trusted by browsers.';
+        }
+        
+        return tooltip;
     };
 
     // Initial fetch of websites
@@ -9746,10 +10337,6 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
                 $scope.pagination = response.data.pagination;
                 $scope.clients = JSON.parse(response.data.data);
                 $("#listFail").hide();
-                // Expand the first site by default
-                if ($scope.WebSitesList.length > 0) {
-                    $scope.expandedSites[$scope.WebSitesList[0].domain] = true;
-                }
             } else {
                 $("#listFail").fadeIn();
                 $scope.errorMessage = response.data.error_message;
@@ -9821,6 +10408,12 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
 
         $scope.cyberPanelLoading = false;
 
+        if (!$scope.patternAdded) {
+            $scope.cyberPanelLoading = true;
+            $scope.getFurtherWebsitesFromDB();
+            return;
+        }
+
         var config = {
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
@@ -9842,6 +10435,9 @@ app.controller('listChildDomainsMain', function ($scope, $http, $timeout) {
 
                 var finalData = JSON.parse(response.data.data);
                 $scope.WebSitesList = finalData;
+                // search results aren't paginated - hide the stale page selector
+                // so clicking an old page number can't silently discard the search
+                $scope.pagination = [];
                 $("#listFail").hide();
             } else {
                 new PNotify({
@@ -11499,7 +12095,11 @@ app.controller('websitePages', function ($scope, $http, $timeout, $window) {
         var type = $scope.websitetype;
         if (type == 'Sub Domain') {
             $scope.webselection = false;
-            $scope.DomainCreateForm = true;
+            // Sub Domain still needs a Domain Name + Document Root, so this
+            // must be false (visible), not true (hidden) - was hiding the
+            // input entirely, leaving domainNameCreate empty and failing
+            // backend validation with "Invalid domain." regardless of input.
+            $scope.DomainCreateForm = false;
 
         } else if (type == 'Addon Domain') {
             $scope.DomainCreateForm = false;
@@ -12262,7 +12862,6 @@ RewriteRule ^/(xmlrpc|wp-trackback)\.php - [F,L,NC]
 
 });
 
-
 /* Java script code to create account ends here */
 
 /* Java script code to suspend/un-suspend Website */
@@ -12913,6 +13512,10 @@ app.controller('manageAliasController', function ($scope, $http, $timeout, $wind
 
     $scope.removeAlias = function (masterDomain, aliasDomain) {
 
+        if (!window.confirm('Delete alias ' + aliasDomain + ' from ' + masterDomain + '? This cannot be undone.')) {
+            return;
+        }
+
         $scope.manageAliasLoading = false;
 
         url = "/websites/delateAlias";
@@ -13017,7 +13620,11 @@ app.controller('manageAliasController', function ($scope, $http, $timeout, $wind
         var type = $scope.websitetype;
         if (type == 'Sub Domain') {
             $scope.webselection = false;
-            $scope.DomainCreateForm = true;
+            // Sub Domain still needs a Domain Name + Document Root, so this
+            // must be false (visible), not true (hidden) - was hiding the
+            // input entirely, leaving domainNameCreate empty and failing
+            // backend validation with "Invalid domain." regardless of input.
+            $scope.DomainCreateForm = false;
 
         } else if (type == 'Addon Domain') {
             $scope.DomainCreateForm = false;
@@ -15653,6 +16260,55 @@ app.controller('manageGIT', function ($scope, $http, $timeout, $window) {
 
     };
 
+    $scope.cloneWithToken = function () {
+
+        $scope.cloningWithToken = true;
+
+        var url = "/websites/cloneWithToken";
+
+        var data = {
+            domain: $("#domain").text(),
+            folder: $scope.folder,
+            gitHttpUrl: $scope.gitHttpUrl,
+            gitUsername: $scope.gitTokenUsername,
+            gitToken: $scope.gitToken,
+        };
+
+        var config = {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        };
+
+        $http.post(url, data, config).then(function (response) {
+            $scope.cloningWithToken = false;
+            if (response.data.status === 1) {
+                new PNotify({
+                    title: 'Success',
+                    text: 'Repository cloned successfully.',
+                    type: 'success'
+                });
+                $scope.gitToken = '';
+                $('#cloneWithTokenModal').modal('hide');
+                $scope.fetchFolderDetails();
+            } else {
+                new PNotify({
+                    title: 'Operation Failed!',
+                    text: response.data.error_message,
+                    type: 'error'
+                });
+            }
+        }, function () {
+            $scope.cloningWithToken = false;
+            new PNotify({
+                title: 'Operation Failed!',
+                text: 'Could not connect to server, please refresh this page.',
+                type: 'error'
+            });
+        });
+
+    };
+
     var changeBranch = 0;
 
     $scope.changeBranch = function () {
@@ -16796,6 +17452,9 @@ app.controller('createDockerPackage', function ($scope, $http, $window) {
                     text: 'Successfully Saved.',
                     type: 'success'
                 });
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
 
             } else {
                 new PNotify({
@@ -16839,14 +17498,59 @@ app.controller('createDockerPackage', function ($scope, $http, $window) {
 
         function ListInitialDatas(response) {
             $scope.cyberpanelLoading = true;
+            console.log('Getpackage response:', response.data);
             if (response.data.status === 1) {
-                $scope.U_Name = response.data.error_message.obj.Name
-                $scope.U_CPU = response.data.error_message.obj.CPU
-                $scope.U_Memory = response.data.error_message.obj.Memory
-                $scope.U_Bandwidth = response.data.error_message.obj.Bandwidth
-                $scope.U_DiskSpace = response.data.error_message.obj.DiskSpace
-
-                $scope.EidtID = packid;
+                // Log the exact structure to understand the response
+                console.log('Response error_message:', response.data.error_message);
+                
+                // Handle different possible response formats
+                var packageData = response.data.error_message;
+                if (packageData) {
+                    // Check if data is nested in obj property or direct
+                    var data = packageData.obj || packageData;
+                    
+                    $scope.U_Name = data.Name;
+                    $scope.U_CPU = data.CPU || data.CPUs;
+                    $scope.U_Memory = data.Memory || data.Ram;
+                    $scope.U_Bandwidth = data.Bandwidth;
+                    $scope.U_DiskSpace = data.DiskSpace;
+                    $scope.EditID = packid;
+                    
+                    console.log('Set modal data:', {
+                        Name: $scope.U_Name,
+                        CPU: $scope.U_CPU,
+                        Memory: $scope.U_Memory,
+                        Bandwidth: $scope.U_Bandwidth,
+                        DiskSpace: $scope.U_DiskSpace
+                    });
+                    
+                    // Force Angular to update the view
+                    if (!$scope.$$phase) {
+                        $scope.$apply();
+                    }
+                    
+                    // Also manually update the form fields as a fallback
+                    setTimeout(function() {
+                        $('#EditPackage input[ng-model="U_Name"]').val($scope.U_Name);
+                        $('#EditPackage input[ng-model="U_CPU"]').val($scope.U_CPU);
+                        $('#EditPackage input[ng-model="U_Memory"]').val($scope.U_Memory);
+                        $('#EditPackage input[ng-model="U_Bandwidth"]').val($scope.U_Bandwidth);
+                        $('#EditPackage input[ng-model="U_DiskSpace"]').val($scope.U_DiskSpace);
+                        
+                        console.log('Manually updated form fields');
+                        
+                        // Ensure Angular knows about the manual updates
+                        $('#EditPackage').find('input[ng-model="U_CPU"]').trigger('input');
+                        $('#EditPackage').find('input[ng-model="U_Memory"]').trigger('input');
+                        $('#EditPackage').find('input[ng-model="U_Bandwidth"]').trigger('input');
+                        $('#EditPackage').find('input[ng-model="U_DiskSpace"]').trigger('input');
+                        
+                        // Show the modal
+                        $('#EditPackage').modal('show');
+                    }, 200);
+                } else {
+                    console.error('Package data not found in response');
+                }
 
             } else {
                 new PNotify({
@@ -16880,7 +17584,7 @@ app.controller('createDockerPackage', function ($scope, $http, $window) {
         };
 
         var data = {
-            id: $scope.EidtID,
+            id: $scope.EditID,
             CPU: $scope.U_CPU,
             RAM: $scope.U_Memory,
             Bandwidth: $scope.U_Bandwidth,
@@ -16900,6 +17604,10 @@ app.controller('createDockerPackage', function ($scope, $http, $window) {
                     text: 'Successfully Updated.',
                     type: 'success'
                 });
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+                $('#EditPackage').modal('hide');
             } else {
                 new PNotify({
                     title: 'Operation Failed!',
@@ -16924,11 +17632,26 @@ app.controller('createDockerPackage', function ($scope, $http, $window) {
     var FinalDeletepackageURL;
     $scope.Deletepackage = function (url) {
         FinalDeletepackageURL = url;
-        // console.log(FinalDeletepackageURL);
+        console.log('Delete URL set to:', FinalDeletepackageURL);
+        
+        // Show the delete confirmation modal
+        $('#packagedelete').modal('show');
     }
 
     $scope.ConfirmDelete = function () {
-        window.location.href = FinalDeletepackageURL
+        console.log('Confirming delete with URL:', FinalDeletepackageURL);
+        
+        if (!FinalDeletepackageURL) {
+            console.error('No delete URL set');
+            return;
+        }
+        
+        // Hide modal and redirect after a small delay
+        $('#packagedelete').modal('hide');
+        
+        setTimeout(function() {
+            window.location.href = FinalDeletepackageURL;
+        }, 300);
     }
 
 })
@@ -16960,6 +17683,11 @@ app.controller('AssignPackage', function ($scope, $http,) {
                     text: 'Successfully saved.',
                     type: 'success'
                 });
+                
+                // Reload page to show new assignment
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
 
             } else {
                 new PNotify({
@@ -17204,6 +17932,7 @@ app.controller('listDockersite', function ($scope, $http) {
 
 
         function ListInitialData(response) {
+            $scope.cyberPanelLoading = false;
             if (response.data.listWebSiteStatus === 1) {
 
                 $scope.WebSitesList = JSON.parse(response.data.data);
@@ -17218,6 +17947,7 @@ app.controller('listDockersite', function ($scope, $http) {
         }
 
         function cantLoadInitialData(response) {
+            $scope.cyberPanelLoading = false;
         }
 
 
@@ -17275,6 +18005,10 @@ app.controller('listDockersite', function ($scope, $http) {
         }
 
 
+    };
+
+    $scope.getFurtherWebsitesFromDB = function () {
+        $scope.fetchDockersiteFromDB();
     };
 
     var deletedockersiteurl;
@@ -17349,13 +18083,18 @@ app.controller('launchChild', function ($scope, $http) {
         $scope.hideLogs = true;
     };
 
-    $scope.fileManagerURL = "/filemanager/" + $("#domainNamePage").text();
-    $scope.previewUrl = "/preview/" + $("#childDomain").text() + "/";
-    $scope.wordPressInstallURL = "/websites/" + $("#childDomain").text() + "/wordpressInstall";
-    $scope.joomlaInstallURL = "/websites/" + $("#childDomain").text() + "/joomlaInstall";
-    $scope.setupGit = "/websites/" + $("#childDomain").text() + "/setupGit";
-    $scope.installPrestaURL = "/websites/" + $("#childDomain").text() + "/installPrestaShop";
-    $scope.installMagentoURL = "/websites/" + $("#childDomain").text() + "/installMagento";
+    // Watch for when the scope variables are initialized from ng-init
+    $scope.$watch('childDomainName', function(newVal) {
+        if (newVal) {
+            $scope.fileManagerURL = "/filemanager/" + $scope.masterDomain;
+            $scope.previewUrl = "/preview/" + $scope.childDomainName + "/";
+            $scope.wordPressInstallURL = "/websites/" + $scope.childDomainName + "/wordpressInstall";
+            $scope.joomlaInstallURL = "/websites/" + $scope.childDomainName + "/joomlaInstall";
+            $scope.setupGit = "/websites/" + $scope.childDomainName + "/setupGit";
+            $scope.installPrestaURL = "/websites/" + $scope.childDomainName + "/installPrestaShop";
+            $scope.installMagentoURL = "/websites/" + $scope.childDomainName + "/installMagento";
+        }
+    });
 
     var logType = 0;
     $scope.pageNumber = 1;
@@ -18261,4 +19000,32 @@ app.controller('launchChild', function ($scope, $http) {
 
     }
 
+
+    // === Custom: Issue Let's Encrypt SSL via panel button (added 2026-08-12) ===
+    $scope.issueLESSL = function () {
+        var virtualHost = ($('#childDomain').text() || '').trim() || $scope.childDomainName;
+        if (!virtualHost) { alert('Could not determine domain.'); return; }
+        if (!confirm("Issue free Let\'s Encrypt SSL for " + virtualHost + "?\nTakes ~30 seconds. DNS must point to this server.")) return;
+        $scope.hidsslconfigs = true;
+        $scope.leIssuing = true;
+        $scope.leStatus = "Issuing Let\'s Encrypt SSL for " + virtualHost + "... ~30 sec.";
+        var data = { virtualHost: virtualHost };
+        var config = { headers: { 'X-CSRFToken': getCookie('csrftoken') } };
+        $http.post('/manageSSL/issueSSL', data, config).then(
+            function (response) {
+                $scope.leIssuing = false;
+                if (response.data && (response.data.status === 1 || response.data.SSL === 1)) {
+                    $scope.leStatus = 'SUCCESS — SSL issued. Reloading...';
+                    setTimeout(function () { window.location.reload(); }, 2000);
+                } else {
+                    var err = (response.data && response.data.error_message) ? response.data.error_message : 'Unknown error';
+                    $scope.leStatus = 'FAILED: ' + err;
+                }
+            },
+            function (response) {
+                $scope.leIssuing = false;
+                $scope.leStatus = 'Connection failed. Check login / network.';
+            }
+        );
+    };
 });
