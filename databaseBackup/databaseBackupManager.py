@@ -34,6 +34,10 @@ class DBBackupManager:
     JOB_STATUS_FILE = '/tmp/cyberpanel-dbbackup-status.json'
     JOB_DONE_FILE = '/tmp/cyberpanel-dbbackup-done.json'
 
+    # only these folders on the backup disk are managed (and mirrored);
+    # legacy/unrelated content on the disk must not count as drift
+    MANAGED_FOLDERS = ('mariadb', 'postgresql', 'sites')
+
     # cron job key -> (script path, log file)
     JOB_SCRIPTS = {
         'mariadb': '/usr/local/bin/backup-mariadb-per-db.sh',
@@ -152,7 +156,7 @@ class DBBackupManager:
             with os.fdopen(fd, 'w') as tmp_file:
                 tmp_file.write(content)
             os.chmod(tmp_path, mode)
-            ok, error = cls._run_elevated('install -m %o %s %s' % (
+            ok, error = cls._run_elevated('/usr/bin/install -m %o %s %s' % (
                 mode, shlex.quote(tmp_path), shlex.quote(path)))
             if ok:
                 return True, None
@@ -172,7 +176,7 @@ class DBBackupManager:
         except FileNotFoundError:
             return True, None
         except OSError as direct_error:
-            ok, error = cls._run_elevated('rm -f -- %s' % shlex.quote(path))
+            ok, error = cls._run_elevated('/bin/rm -f -- %s' % shlex.quote(path))
             if ok:
                 return True, None
             return False, '%s; %s' % (direct_error, error)
@@ -348,23 +352,30 @@ class DBBackupManager:
 
     @classmethod
     def _mirrorCheck(cls):
-        """Compare file sets between primary store and mirror store."""
+        """Compare file sets between primary store and mirror store,
+        scoped to the managed backup folders only."""
         primary_present = os.path.isdir(cls.BACKUP_BASE)
         mirror_present = os.path.isdir(cls.MIRROR_BASE)
         if not primary_present or not mirror_present:
-            return {'state': 'unknown', 'missingOnMirror': [], 'missingOnPrimary': []}
+            return {'state': 'unknown', 'missingOnMirror': [],
+                    'missingOnPrimary': [], 'missingOnMirrorCount': 0,
+                    'missingOnPrimaryCount': 0}
 
         def walk(base):
             found = {}
-            for root, dirs, files in os.walk(base):
-                dirs[:] = [d for d in dirs if not d.startswith('.')]
-                for file_name in files:
-                    full = os.path.join(root, file_name)
-                    rel = os.path.relpath(full, base)
-                    try:
-                        found[rel] = os.path.getsize(full)
-                    except OSError:
-                        pass
+            for folder in cls.MANAGED_FOLDERS:
+                folder_path = os.path.join(base, folder)
+                if not os.path.isdir(folder_path):
+                    continue
+                for root, dirs, files in os.walk(folder_path):
+                    dirs[:] = [d for d in dirs if not d.startswith('.')]
+                    for file_name in files:
+                        full = os.path.join(root, file_name)
+                        rel = os.path.relpath(full, base)
+                        try:
+                            found[rel] = os.path.getsize(full)
+                        except OSError:
+                            pass
             return found
 
         primary = walk(cls.BACKUP_BASE)
@@ -381,6 +392,8 @@ class DBBackupManager:
             'mirrorFiles': len(mirrored),
             'missingOnMirror': missing_on_mirror[:10],
             'missingOnPrimary': missing_on_primary[:10],
+            'missingOnMirrorCount': len(missing_on_mirror),
+            'missingOnPrimaryCount': len(missing_on_primary),
         }
 
     ###########################################################
@@ -470,12 +483,12 @@ class DBBackupManager:
                 shutil.copyfile(staging_path, mirror_path)
             except OSError:
                 # fallback: stage in /tmp and install with elevated copy
-                ok, error = self._run_elevated('mkdir -p -- %s %s' % (
+                ok, error = self._run_elevated('/usr/bin/mkdir -p -- %s %s' % (
                     shlex.quote(primary_dir), shlex.quote(mirror_dir)))
                 if not ok:
                     return self._deny('Cannot create backup folders: %s' % error)
                 for dest in (primary_path, mirror_path):
-                    ok, error = self._run_elevated('install -m 644 -- %s %s' % (
+                    ok, error = self._run_elevated('/usr/bin/install -m 644 -- %s %s' % (
                         shlex.quote(staging_path), shlex.quote(dest)))
                     if not ok:
                         return self._deny('Could not store %s: %s' % (
@@ -713,7 +726,7 @@ class DBBackupManager:
             logging.writeToFile('DBBackupManager cron save failed: %s' % error)
             return self._deny('Could not write the cron file: %s' % error)
 
-        ok, error = self._run_elevated('systemctl restart cron')
+        ok, error = self._run_elevated('/usr/bin/systemctl restart cron')
         if not ok:
             logging.writeToFile('DBBackupManager cron restart failed: %s' % error)
 
