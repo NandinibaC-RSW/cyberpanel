@@ -105,6 +105,7 @@ INSTALLED_APPS = [
     'aiScanner',
     'webmail',
     'emailDelivery',
+    'databaseBackup',
     #    'WebTerminal'
 ]
 

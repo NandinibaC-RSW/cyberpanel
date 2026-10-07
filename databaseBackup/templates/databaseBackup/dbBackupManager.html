@@ -1,0 +1,1086 @@
+{% extends "baseTemplate/index.html" %}
+{% load static %}
+{% block module_scripts %}<script defer src="{% static 'databaseBackup/databaseBackup.js' %}?v={{ CP_VERSION }}"></script>{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "DB Backup Manager - CyberPanel" %}{% endblock %}
+{% block content %}
+
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!-- Current language: {{ LANGUAGE_CODE }} -->
+
+<style>
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 0;
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        border-radius: 20px;
+        animation: fadeInDown 0.5s ease-out;
+    }
+
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-primary, #1e293b);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary, #64748b);
+        margin-bottom: 1.5rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    .btn-primary:hover {
+        background: var(--accent-hover, #4547a9);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--accent-shadow-hover, rgba(91, 95, 207, 0.4));
+        color: var(--bg-secondary, white);
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary, #fff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--border-color, #e8e9ff);
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-hover, #f8f9ff);
+        border-color: var(--accent-color, #5b5fcf);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--accent-shadow-light, rgba(91, 95, 207, 0.2));
+    }
+
+    .btn-danger {
+        background: var(--danger-color, #ef4444);
+        color: var(--bg-secondary, white);
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.825rem;
+    }
+
+    .btn-danger:hover {
+        background: var(--danger-hover, #dc2626);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--danger-shadow, rgba(239, 68, 68, 0.4));
+    }
+
+    .btn-run {
+        background: var(--success-bg, #d1fae5);
+        color: var(--success-text, #065f46);
+        border: 1px solid var(--success-border, #a7f3d0);
+        padding: 0.4rem 0.9rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+    }
+
+    .btn-run:hover {
+        background: var(--success-text, #065f46);
+        color: var(--bg-secondary, white);
+    }
+
+    .main-card {
+        background: var(--bg-secondary, white);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05)), 0 10px 40px var(--shadow-color, rgba(0,0,0,0.08));
+        border: 1px solid var(--border-color, #e8e9ff);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--bg-secondary, white);
+        border-radius: 14px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05));
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: var(--accent-bg, #e0e7ff); color: var(--accent-color, #5b5fcf); }
+    .stat-icon.green { background: var(--success-bg, #d1fae5); color: var(--success-text, #065f46); }
+    .stat-icon.orange { background: #ffedd5; color: #c2410c; }
+    .stat-icon.purple { background: #f3e8ff; color: #7e22ce; }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.1;
+        color: var(--text-primary, #1e293b);
+    }
+
+    .stat-label {
+        color: var(--text-secondary, #64748b);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    .storage-card {
+        background: var(--bg-secondary, white);
+        border-radius: 14px;
+        border: 1px solid var(--border-color, #e8e9ff);
+        box-shadow: 0 1px 3px var(--shadow-light, rgba(0,0,0,0.05));
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .storage-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .storage-name {
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .storage-path {
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: var(--text-secondary, #64748b);
+    }
+
+    .storage-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: var(--text-secondary, #64748b);
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .storage-progress {
+        height: 10px;
+        background: var(--border-light, #f3f4f6);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .storage-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-color, #5b5fcf), var(--accent-light, #8187ff));
+        border-radius: 5px;
+        transition: width 0.5s ease;
+    }
+
+    .storage-progress-bar.warn {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+
+    .storage-progress-bar.crit {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+
+    .badge-type {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .badge-mariadb { background: var(--accent-bg, #e0e7ff); color: var(--accent-color, #5b5fcf); }
+    .badge-postgresql { background: #f3e8ff; color: #7e22ce; }
+    .badge-content { background: var(--success-bg, #d1fae5); color: var(--success-text, #065f46); }
+    .badge-sitedb { background: #ffedd5; color: #c2410c; }
+
+    .state-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .state-synced { background: var(--success-bg, #d1fae5); color: var(--success-text, #065f46); }
+    .state-drift { background: #fef3c7; color: #92400e; }
+    .state-unknown { background: var(--border-light, #f3f4f6); color: var(--text-secondary, #64748b); }
+
+    .backup-table {
+        width: 100%;
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color, #e8e9ff);
+    }
+
+    .backup-table thead {
+        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
+    }
+
+    .backup-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        white-space: nowrap;
+    }
+
+    .backup-table td {
+        padding: 0.9rem 1rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 0.85rem;
+        border-bottom: 1px solid var(--border-light, #f3f4f6);
+        vertical-align: middle;
+    }
+
+    .backup-table tbody tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+
+    .backup-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .file-name {
+        font-family: monospace;
+        background: var(--bg-hover, #f8f9ff);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.78rem;
+        word-break: break-all;
+    }
+
+    .btn-download {
+        padding: 0.4rem 0.9rem;
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+        border: none;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+
+    .btn-download:hover {
+        background: var(--accent-hover, #4547a9);
+        color: var(--bg-secondary, white);
+        transform: translateY(-1px);
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filters-bar {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .filters-bar select,
+    .filters-bar input {
+        padding: 0.6rem 0.9rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.85rem;
+        background: var(--bg-secondary, #fff);
+        color: var(--text-primary, #1e293b);
+    }
+
+    .filters-bar input:focus,
+    .filters-bar select:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-focus, rgba(91, 95, 207, 0.1));
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.875rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 10px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        background: var(--bg-secondary, #fff);
+        color: var(--text-primary, #1e293b);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+        box-shadow: 0 0 0 3px var(--accent-focus, rgba(91, 95, 207, 0.1));
+    }
+
+    .schedule-table {
+        width: 100%;
+        background: var(--bg-secondary, white);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color, #e8e9ff);
+        margin-bottom: 1.5rem;
+    }
+
+    .schedule-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-color, #e8e9ff);
+        white-space: nowrap;
+    }
+
+    .schedule-table td {
+        padding: 0.9rem 1rem;
+        color: var(--text-secondary, #64748b);
+        font-size: 0.85rem;
+        border-bottom: 1px solid var(--border-light, #f3f4f6);
+        vertical-align: middle;
+    }
+
+    .schedule-table tbody tr:hover {
+        background: var(--bg-hover, #f8f9ff);
+    }
+
+    .schedule-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .job-label {
+        font-weight: 600;
+        color: var(--text-primary, #1e293b);
+    }
+
+    .job-script {
+        font-family: monospace;
+        font-size: 0.72rem;
+        color: var(--text-secondary, #64748b);
+        word-break: break-all;
+    }
+
+    .job-time {
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        padding: 0.45rem 0.7rem;
+        background: var(--bg-secondary, #fff);
+        color: var(--text-primary, #1e293b);
+        font-size: 0.85rem;
+    }
+
+    .job-time:focus {
+        outline: none;
+        border-color: var(--accent-color, #5b5fcf);
+    }
+
+    .enable-check {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent-color, #5b5fcf);
+        cursor: pointer;
+        vertical-align: middle;
+    }
+
+    .pagination-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.25rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .pagination-info {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #64748b);
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .page-btn {
+        padding: 0.45rem 0.9rem;
+        border: 1px solid var(--border-color, #e8e9ff);
+        background: var(--bg-secondary, #fff);
+        color: var(--text-primary, #1e293b);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+    }
+
+    .page-btn:hover:not(:disabled) {
+        border-color: var(--accent-color, #5b5fcf);
+        color: var(--accent-color, #5b5fcf);
+    }
+
+    .page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-secondary, #64748b);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.4;
+    }
+
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .alert-warning {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+
+    .alert-info {
+        background: var(--accent-bg, #e0e7ff);
+        color: var(--accent-color, #5b5fcf);
+        border: 1px solid var(--accent-light, #c7d2fe);
+    }
+
+    .log-box {
+        background: #0f172a;
+        color: #e2e8f0;
+        font-family: monospace;
+        font-size: 0.75rem;
+        border-radius: 10px;
+        padding: 1rem;
+        max-height: 260px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .log-tabs {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+
+    .log-tab {
+        padding: 0.45rem 1rem;
+        background: var(--bg-secondary, #fff);
+        border: 1px solid var(--border-color, #e8e9ff);
+        border-radius: 8px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        color: var(--text-secondary, #64748b);
+        transition: all 0.2s ease;
+    }
+
+    .log-tab.active {
+        background: var(--accent-color, #5b5fcf);
+        color: var(--bg-secondary, white);
+        border-color: var(--accent-color, #5b5fcf);
+    }
+
+    .upload-zone {
+        border: 2px dashed var(--border-color, #e8e9ff);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-secondary, #64748b);
+        transition: all 0.3s ease;
+    }
+
+    .upload-zone.dragover {
+        border-color: var(--accent-color, #5b5fcf);
+        background: var(--bg-hover, #f8f9ff);
+    }
+
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-color, #e8e9ff);
+        border-top-color: var(--accent-color, #5b5fcf);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+
+    .running-row {
+        background: #fffbeb !important;
+    }
+
+    .section-gap { margin-bottom: 2rem; }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .page-title { font-size: 2rem; }
+        .backup-table th, .backup-table td { padding: 0.6rem; }
+        .card-body { padding: 1.25rem; }
+    }
+</style>
+
+<div class="modern-container" ng-controller="dbBackupManagerControl">
+
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-database"></i>
+            {% trans "DB Backup Manager" %}
+        </h1>
+        <p class="page-subtitle">{% trans "Server database and site backups on the backup SSD, mirrored to the primary SSD" %}</p>
+        <div class="header-actions">
+            <button type="button" class="btn-secondary" ng-click="refreshAll()">
+                <i class="fas fa-rotate-right"></i>
+                {% trans "Refresh" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Storage not mounted warning -->
+    <div class="alert alert-warning" ng-show="statsLoaded && !stats.storagePresent">
+        <i class="fas fa-triangle-exclamation"></i>
+        {% trans "Backup storage" %} <strong>/mnt/backup</strong> {% trans "is not available on this server. Backups produced by the cron scripts will appear here once the disk is mounted." %}
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-database"></i></div>
+            <div>
+                <div class="stat-value">{$ stats.dbTotal $}</div>
+                <div class="stat-label">{% trans "Database Backup Files" %}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-box-archive"></i></div>
+            <div>
+                <div class="stat-value">{$ stats.siteTotal $}</div>
+                <div class="stat-label">{% trans "Site Backup Files" %}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-calendar-days"></i></div>
+            <div>
+                <div class="stat-value">{$ stats.backupDays $}</div>
+                <div class="stat-label">{% trans "Backup Days" %}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fas fa-table-columns"></i></div>
+            <div>
+                <div class="stat-value">{$ stats.uniqueDatabases $}</div>
+                <div class="stat-label">{% trans "Unique Databases" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Storage status -->
+    <div class="row section-gap">
+        <div class="col-md-6">
+            <div class="storage-card" style="margin-bottom: 0;">
+                <div class="storage-title">
+                    <span class="storage-name">
+                        <i class="fas fa-hard-drive" style="color: var(--accent-color, #5b5fcf);"></i>
+                        {% trans "Backup SSD" %}
+                        <span class="storage-path">/mnt/backup</span>
+                    </span>
+                    <span class="state-badge" ng-class="stats.storagePresent ? 'state-synced' : 'state-unknown'">
+                        {$ stats.storagePresent ? 'Mounted' : 'Not mounted' $}
+                    </span>
+                </div>
+                <div class="storage-progress">
+                    <div class="storage-progress-bar" ng-class="storageBarClass(stats.primary)" ng-style="{width: (stats.primary ? stats.primary.percent : 0) + '%'}"></div>
+                </div>
+                <div class="storage-meta" ng-show="stats.primary">
+                    <span>{% trans "Used" %} {$ stats.primary.usedText $} / {$ stats.primary.totalText $}</span>
+                    <span>{% trans "Free" %} {$ stats.primary.freeText $}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="storage-card" style="margin-bottom: 0;">
+                <div class="storage-title">
+                    <span class="storage-name">
+                        <i class="fas fa-clone" style="color: var(--accent-color, #5b5fcf);"></i>
+                        {% trans "Primary SSD Mirror" %}
+                        <span class="storage-path">/backup-mirror</span>
+                    </span>
+                    <span class="state-badge" ng-class="'state-' + (stats.mirrorCheck ? stats.mirrorCheck.state : 'unknown')">
+                        {$ mirrorStateText() $}
+                    </span>
+                </div>
+                <div class="storage-progress">
+                    <div class="storage-progress-bar" ng-class="storageBarClass(stats.mirror)" ng-style="{width: (stats.mirror ? stats.mirror.percent : 0) + '%'}"></div>
+                </div>
+                <div class="storage-meta" ng-show="stats.mirror">
+                    <span>{% trans "Used" %} {$ stats.mirror.usedText $} / {$ stats.mirror.totalText $}</span>
+                    <span ng-show="stats.mirrorCheck && stats.mirrorCheck.state == 'drift'" style="color: #92400e;">
+                        {$ stats.mirrorCheck.missingOnMirror.length $}+ {% trans "files missing on mirror" %}
+                    </span>
+                    <span ng-show="stats.mirrorCheck && stats.mirrorCheck.state == 'synced'">{% trans "Both storages in sync" %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-clock"></i>
+                {% trans "Backup Schedule (Cron)" %}
+            </h2>
+            <span ng-show="cronLoading"><i class="fas fa-spinner fa-spin"></i></span>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info" ng-show="!cronConfigured">
+                <i class="fas fa-circle-info"></i>
+                {% trans "No cron file found at" %} <strong>/etc/cron.d/database-backups</strong>. {% trans "Saving a schedule below will create it." %}
+            </div>
+
+            <table class="schedule-table" ng-show="cronJobs.length > 0">
+                <thead>
+                    <tr>
+                        <th>{% trans "Job" %}</th>
+                        <th>{% trans "Script" %}</th>
+                        <th>{% trans "Daily At" %}</th>
+                        <th>{% trans "Enabled" %}</th>
+                        <th style="text-align: right;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="job in cronJobs" ng-class="{'running-row': jobRunning && runningJob == job.key}">
+                        <td>
+                            <div class="job-label">{$ job.label $}</div>
+                        </td>
+                        <td><span class="job-script">{$ job.script $}</span></td>
+                        <td>
+                            <input type="time" class="job-time" ng-model="job.time"
+                                   ng-disabled="!job.enabled" aria-label="{$ job.label $} time">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="enable-check" ng-model="job.enabled"
+                                   aria-label="Enable {$ job.label $}">
+                        </td>
+                        <td style="text-align: right;">
+                            <button type="button" class="btn-run" ng-click="runJob(job.key)"
+                                    ng-disabled="jobRunning">
+                                <i class="fas" ng-class="jobRunning ? 'fa-spinner fa-spin' : 'fa-play'"></i>
+                                {$ jobRunning && runningJob == job.key ? 'Running…' : 'Run Now' $}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-xmark" style="margin-right: 0.5rem; color: var(--accent-color, #5b5fcf);"></i>
+                            {% trans "Retention (days to keep, cleanup job)" %}
+                        </label>
+                        <input type="number" min="1" max="3650" class="form-control" style="max-width: 200px;"
+                               ng-model="retentionDays">
+                    </div>
+                </div>
+                <div class="col-md-6" style="display: flex; align-items: flex-end; justify-content: flex-end;">
+                    <button type="button" class="btn-primary" ng-click="saveSchedule()" ng-disabled="cronLoading">
+                        <i class="fas fa-floppy-disk"></i>
+                        {% trans "Save Schedule & Retention" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database backups -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-database"></i>
+                {% trans "Database Backups" %}
+                <span ng-show="dbLoading" class="loading-spinner"></span>
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="filters-bar">
+                <select ng-model="dbTypeFilter" ng-change="resetDbPage()">
+                    <option value="">{% trans "All Types" %}</option>
+                    <option value="mariadb">MariaDB</option>
+                    <option value="postgresql">PostgreSQL</option>
+                </select>
+                <select ng-model="dbDateFilter" ng-change="resetDbPage()">
+                    <option value="">{% trans "All Dates" %}</option>
+                    <option ng-repeat="d in dbDates" value="{$ d $}">{$ d $}</option>
+                </select>
+                <input type="text" ng-model="dbSearch" ng-change="resetDbPage()"
+                       placeholder="{% trans 'Search database…' %}" style="flex: 1; min-width: 200px;">
+            </div>
+
+            <div class="empty-state" ng-show="!dbLoading && dbBackups.length == 0">
+                <i class="fas fa-database"></i>
+                <div>{% trans "No database backups found." %}</div>
+            </div>
+            <div class="empty-state" ng-show="!dbLoading && dbBackups.length > 0 && filteredDbBackups().length == 0">
+                <i class="fas fa-filter"></i>
+                <div>{% trans "No backups match the current filters." %}</div>
+            </div>
+
+            <div style="overflow-x: auto;" ng-show="filteredDbBackups().length > 0">
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Database" %}</th>
+                            <th>{% trans "Type" %}</th>
+                            <th>{% trans "Date" %}</th>
+                            <th>{% trans "Time" %}</th>
+                            <th>{% trans "Size" %}</th>
+                            <th style="text-align: right;">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="b in pagedDbBackups()">
+                            <td><strong style="color: var(--text-primary, #1e293b);">{$ b.database $}</strong></td>
+                            <td><span class="badge-type" ng-class="b.type == 'mariadb' ? 'badge-mariadb' : 'badge-postgresql'">{$ b.typeLabel $}</span></td>
+                            <td>{$ b.dateFolder $}</td>
+                            <td>{$ b.time $}</td>
+                            <td>{$ b.sizeText $}</td>
+                            <td>
+                                <div class="actions-cell">
+                                    <a class="btn-download" ng-href="/databasebackup/downloadBackup?file={$ b.path | encodeURIComponent $}">
+                                        <i class="fas fa-download"></i> {% trans "Download" %}
+                                    </a>
+                                    <button type="button" class="btn-danger" ng-click="deleteBackup(b, 'db')">
+                                        <i class="fas fa-trash"></i> {% trans "Delete" %}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-bar" ng-show="filteredDbBackups().length > dbPageSize">
+                <span class="pagination-info">
+                    {% trans "Showing" %} {$ (dbPage - 1) * dbPageSize + 1 $}–{$ dbPage * dbPageSize > filteredDbBackups().length ? filteredDbBackups().length : dbPage * dbPageSize $} {% trans "of" %} {$ filteredDbBackups().length $}
+                </span>
+                <div class="pagination-controls">
+                    <button type="button" class="page-btn" ng-click="dbPage = dbPage - 1" ng-disabled="dbPage <= 1">
+                        <i class="fas fa-chevron-left"></i> {% trans "Prev" %}
+                    </button>
+                    <span class="pagination-info">{$ dbPage $} / {$ dbTotalPages() $}</span>
+                    <button type="button" class="page-btn" ng-click="dbPage = dbPage + 1" ng-disabled="dbPage >= dbTotalPages()">
+                        {% trans "Next" %} <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site backups -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-box-archive"></i>
+                {% trans "Site Backups (Uploads / Content)" %}
+                <span ng-show="siteLoading" class="loading-spinner"></span>
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="filters-bar">
+                <select ng-model="siteDateFilter" ng-change="resetSitePage()">
+                    <option value="">{% trans "All Dates" %}</option>
+                    <option ng-repeat="d in siteDates" value="{$ d $}">{$ d $}</option>
+                </select>
+                <input type="text" ng-model="siteSearch" ng-change="resetSitePage()"
+                       placeholder="{% trans 'Search site…' %}" style="flex: 1; min-width: 200px;">
+            </div>
+
+            <div class="empty-state" ng-show="!siteLoading && siteBackups.length == 0">
+                <i class="fas fa-box-archive"></i>
+                <div>{% trans "No site backups found." %}</div>
+            </div>
+
+            <div style="overflow-x: auto;" ng-show="filteredSiteBackups().length > 0">
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Site / Item" %}</th>
+                            <th>{% trans "Kind" %}</th>
+                            <th>{% trans "Date" %}</th>
+                            <th>{% trans "Time" %}</th>
+                            <th>{% trans "Size" %}</th>
+                            <th style="text-align: right;">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="s in pagedSiteBackups()">
+                            <td><strong style="color: var(--text-primary, #1e293b);">{$ s.name $}</strong></td>
+                            <td><span class="badge-type" ng-class="s.kind == 'DB' ? 'badge-sitedb' : 'badge-content'">{$ s.kind $}</span></td>
+                            <td>{$ s.dateFolder $}</td>
+                            <td>{$ s.time $}</td>
+                            <td>{$ s.sizeText $}</td>
+                            <td>
+                                <div class="actions-cell">
+                                    <a class="btn-download" ng-href="/databasebackup/downloadBackup?file={$ s.path | encodeURIComponent $}">
+                                        <i class="fas fa-download"></i> {% trans "Download" %}
+                                    </a>
+                                    <button type="button" class="btn-danger" ng-click="deleteBackup(s, 'site')">
+                                        <i class="fas fa-trash"></i> {% trans "Delete" %}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-bar" ng-show="filteredSiteBackups().length > sitePageSize">
+                <span class="pagination-info">
+                    {% trans "Showing" %} {$ (sitePage - 1) * sitePageSize + 1 $}–{$ sitePage * sitePageSize > filteredSiteBackups().length ? filteredSiteBackups().length : sitePage * sitePageSize $} {% trans "of" %} {$ filteredSiteBackups().length $}
+                </span>
+                <div class="pagination-controls">
+                    <button type="button" class="page-btn" ng-click="sitePage = sitePage - 1" ng-disabled="sitePage <= 1">
+                        <i class="fas fa-chevron-left"></i> {% trans "Prev" %}
+                    </button>
+                    <span class="pagination-info">{$ sitePage $} / {$ siteTotalPages() $}</span>
+                    <button type="button" class="page-btn" ng-click="sitePage = sitePage + 1" ng-disabled="sitePage >= siteTotalPages()">
+                        {% trans "Next" %} <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-cloud-arrow-up"></i>
+                {% trans "Upload Backup" %}
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-circle-info"></i>
+                {% trans "Uploaded files are stored in today's backup folder on the backup SSD and copied to the primary SSD mirror. Database dumps must be .sql.gz; site archives .tar.gz." %}
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Backup Type" %}</label>
+                        <select class="form-control" ng-model="uploadType">
+                            <option value="mariadb">MariaDB (.sql.gz)</option>
+                            <option value="postgresql">PostgreSQL (.sql.gz)</option>
+                            <option value="sites">Site (.tar.gz)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label class="form-label">{% trans "Backup File" %}</label>
+                        <div class="upload-zone" ng-class="{'dragover': uploadDrag}"
+                             ondragover="angular.element(this).scope().uploadDrag = true; angular.element(this).scope().$apply();"
+                             ondragleave="angular.element(this).scope().uploadDrag = false; angular.element(this).scope().$apply();"
+                             ondrop="angular.element(this).scope().handleDrop(event); angular.element(this).scope().$apply();">
+                            <i class="fas fa-file-zipper" style="font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.5;"></i>
+                            <div style="margin-bottom: 0.75rem;">{% trans "Drag & drop a file here, or" %}</div>
+                            <input type="file" id="dbBackupUploadFile" style="max-width: 320px; margin: 0 auto;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <button type="button" class="btn-primary" ng-click="uploadBackup()" ng-disabled="uploading">
+                    <i class="fas" ng-class="uploading ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'"></i>
+                    {$ uploading ? 'Uploading…' : 'Upload to both storages' $}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="main-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-file-lines"></i>
+                {% trans "Backup Logs" %}
+                <span ng-show="logsLoading" class="loading-spinner"></span>
+            </h2>
+            <button type="button" class="btn-secondary" ng-click="fetchLogs()">
+                <i class="fas fa-rotate-right"></i>
+                {% trans "Refresh Logs" %}
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="log-tabs">
+                <button type="button" class="log-tab" ng-repeat="log in backupLogs"
+                        ng-class="{'active': logState.active == log.job}" ng-click="logState.active = log.job">
+                    {$ log.label $}
+                </button>
+            </div>
+            <div ng-repeat="log in backupLogs" ng-show="logState.active == log.job">
+                <pre class="log-box">{$ log.content || ('No log file found for ' + log.label) $}</pre>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

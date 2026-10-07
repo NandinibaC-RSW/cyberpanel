@@ -47,5 +47,6 @@ urlpatterns = [
     path('aiscanner/', include('aiScanner.urls')),
     path('webmail/', include('webmail.urls')),
     path('emailDelivery/', include('emailDelivery.urls')),
+    path('databasebackup/', include('databaseBackup.urls')),
     # path('Terminal/', include('WebTerminal.urls')),
 ]
