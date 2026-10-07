@@ -18,38 +18,9 @@
         padding: 2rem;
     }
 
-    .page-header {
-        text-align: center;
-        margin-bottom: 3rem;
-        padding: 3rem 0;
-        background: linear-gradient(135deg, var(--bg-hover, #f8f9ff) 0%, var(--bg-gradient, #f0f1ff) 100%);
-        border-radius: 20px;
-        animation: fadeInDown 0.5s ease-out;
-    }
 
-    .page-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: var(--text-primary, #1e293b);
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-    }
 
-    .page-subtitle {
-        font-size: 14px;
-        color: var(--text-secondary, #64748b);
-        margin-bottom: 1.5rem;
-    }
 
-    .header-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
 
     .btn-primary {
         background: var(--accent-color, #5b5fcf);
@@ -648,38 +619,18 @@
         to { transform: rotate(360deg); }
     }
 
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
     @media (max-width: 768px) {
-        .page-title { font-size: 24px; }
         .backup-table th, .backup-table td { padding: 0.6rem; }
         .card-body { padding: 1.25rem; }
     }
 </style>
 
 <div class="modern-container" ng-controller="dbBackupManagerControl">
-
-    <div class="page-header">
-        <h1 class="page-title">
-            <i class="fas fa-database"></i>
-            {% trans "DB Backup Manager" %}
-        </h1>
-        <p class="page-subtitle">{% trans "Server database and site backups on the backup SSD, mirrored to the primary SSD" %}</p>
-        <div class="header-actions">
-            <button type="button" class="btn-secondary" ng-click="refreshAll()">
-                <i class="fas fa-rotate-right"></i>
-                {% trans "Refresh" %}
-            </button>
-        </div>
-    </div>
 
     <!-- Storage not mounted warning -->
     <div class="alert alert-warning" ng-show="statsLoaded && !stats.storagePresent">
