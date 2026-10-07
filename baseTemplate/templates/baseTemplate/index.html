@@ -317,6 +317,7 @@
             {% if admin or createBackup %}{l:'{% trans "One-Click Backups" %}', h:'{% url "OneClickBackups" %}', i:'fa-bolt', g:'{% trans "Backups" %}'},
             {l:'{% trans "Incremental Backups" %}', h:'{% url "backupDestinationsInc" %}', i:'fa-layer-group', g:'{% trans "Backups" %}'},
             {l:'{% trans "Create Backup" %}', h:'{% url "backupSite" %}', i:'fa-box-archive', g:'{% trans "Backups" %}'},{% endif %}
+            {% if admin %}{l:'{% trans "DB Backup Manager" %}', h:'{% url "loadDBBackupManager" %}', i:'fa-database', g:'{% trans "Backups" %}'},{% endif %}
             {% if admin or restoreBackup %}{l:'{% trans "Restore Backup" %}', h:'{% url "restoreSite" %}', i:'fa-rotate-left', g:'{% trans "Backups" %}'},{% endif %}
             {% if admin or scheduleBackups %}{l:'{% trans "Schedule Backup" %}', h:'{% url "scheduleBackup" %}', i:'fa-clock', g:'{% trans "Backups" %}'},{% endif %}
             // Account
@@ -473,6 +474,7 @@
     <script defer src="{% static 'mailServer/mailServer.js' %}?v={{ CP_VERSION }}"></script>
     <script defer src="{% static 'ftp/ftp.js' %}?v={{ CP_VERSION }}"></script>
     <script defer src="{% static 'backup/backup.js' %}?v={{ CP_VERSION }}"></script>
+    <script defer src="{% static 'databaseBackup/databaseBackup.js' %}?v={{ CP_VERSION }}"></script>
     <script defer src="{% static 'managePHP/managePHP.js' %}?v={{ CP_VERSION }}"></script>
     <script defer src="{% static 'serverLogs/serverLogs.js' %}?v={{ CP_VERSION }}"></script>
     <script defer src="{% static 'serverStatus/serverStatus.js' %}?v={{ CP_VERSION }}"></script>
