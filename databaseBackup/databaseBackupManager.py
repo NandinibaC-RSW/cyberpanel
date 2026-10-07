@@ -136,6 +136,21 @@ class DBBackupManager:
         return False, last_error
 
     @classmethod
+    def _elevation_available(cls):
+        """For non-root panels, verify passwordless sudo actually works
+        before spawning any elevated job."""
+        if cls._is_root():
+            return True, None
+        try:
+            proc = subprocess.run(['/bin/bash', '-c', 'sudo -n /bin/true'],
+                                  capture_output=True, text=True, timeout=30)
+        except OSError as msg:
+            return False, str(msg)
+        if proc.returncode == 0:
+            return True, None
+        return False, (proc.stderr or 'sudo: password required').strip()
+
+    @classmethod
     def _privileged_write(cls, path, content, mode=0o644):
         """Write content to path; fall back to an elevated install of a
         temp copy when the direct write is denied. Returns (ok, error)."""
@@ -541,7 +556,7 @@ class DBBackupManager:
                     script, log_path, shlex.quote(job), self.JOB_DONE_FILE)
                 elevated = 'sudo -n /bin/bash -c %s' % shlex.quote(inner)
                 # verify elevation is available before spawning the job
-                ok, error = self._run_elevated('true')
+                ok, error = self._elevation_available()
                 if not ok:
                     return self._deny(
                         'The panel process lacks permission to run backup jobs. '
@@ -559,6 +574,76 @@ class DBBackupManager:
         except OSError:
             pass
         return self._json({'status': 1, 'job': job, 'started': status['started']})
+
+    def backupSingleDatabase(self, userID, data):
+        """Dump one MariaDB database on demand into today's backup folder
+        (mirrored to the backup-mirror copy) without touching other
+        databases or the cron schedule."""
+        if not self._isAdmin(userID):
+            return self._deny('Only administrators can run backups.')
+        database = (data.get('database') or '').strip()
+        if data.get('type', 'mariadb') != 'mariadb':
+            return self._deny('Single-database backup currently supports '
+                              'MariaDB databases only.')
+        if not re.match(r'^[A-Za-z0-9_\-]{1,64}$', database):
+            return self._deny('Invalid database name.')
+
+        if self._jobRunning():
+            return self._deny('Another backup job is still running. Wait for it to finish.')
+
+        now = datetime.now()
+        day_dir = now.strftime('%Y-%m-%d')
+        file_name = '%s_%s.sql.gz' % (database, now.strftime('%Y-%m-%d_%H%M%S'))
+        primary_dir = os.path.join(self.BACKUP_BASE, 'mariadb', day_dir)
+        mirror_dir = os.path.join(self.MIRROR_BASE, 'mariadb', day_dir)
+        primary_path = os.path.join(primary_dir, file_name)
+        mirror_path = os.path.join(mirror_dir, file_name)
+        log_path = os.path.join(self.LOG_DIR, 'single-database.log')
+
+        dump_cmd = ('/usr/bin/mysqldump --events --single-transaction --quick %s'
+                    % shlex.quote(database))
+        job_key = 'single:%s' % database
+        inner = (
+            'mkdir -p -- %s %s; '
+            'if %s | gzip > %s; then '
+            'chmod 644 %s; cp -f -- %s %s; rc=0; '
+            'else rc=$?; fi; '
+            'printf \'{"job": "%%s", "exit_code": %%s, "finished": "%%s"}\' %s "$rc" "$(date +%%s)" > %s; '
+            'exit $rc'
+            % (shlex.quote(primary_dir), shlex.quote(mirror_dir),
+               dump_cmd, shlex.quote(primary_path),
+               shlex.quote(primary_path), shlex.quote(primary_path),
+               shlex.quote(mirror_path),
+               shlex.quote(job_key), self.JOB_DONE_FILE)
+        )
+        wrapper = '{ %s >> %s 2>&1; } ' % (inner, shlex.quote(log_path))
+
+        try:
+            if self._is_root():
+                shell = wrapper
+            else:
+                # non-root panel: mysqldump needs root socket auth and the
+                # backup folders are root-owned, so run the wrapper elevated
+                ok, error = self._elevation_available()
+                if not ok:
+                    return self._deny(
+                        'The panel process lacks permission to run backups. '
+                        'Give it root or passwordless sudo (failed: %s)' % error)
+                shell = 'sudo -n /bin/bash -c %s' % shlex.quote(wrapper)
+            subprocess.Popen(['/bin/bash', '-c', shell], start_new_session=True,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             stdin=subprocess.DEVNULL)
+        except BaseException as msg:
+            return self._deny('Failed to start the backup: %s' % str(msg))
+
+        status = {'job': job_key, 'pid': None, 'started': int(now.timestamp())}
+        try:
+            with open(self.JOB_STATUS_FILE, 'w') as status_file:
+                status_file.write(json.dumps(status))
+        except OSError:
+            pass
+        return self._json({'status': 1, 'database': database,
+                           'started': status['started']})
 
     def _jobRunning(self):
         """True while the wrapper started by runBackupJob has not written its

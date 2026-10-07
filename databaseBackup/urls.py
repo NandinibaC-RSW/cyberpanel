@@ -16,4 +16,5 @@ urlpatterns = [
     re_path(r'^fetchRetention$', views.fetchRetention, name='dbfetchRetention'),
     re_path(r'^saveRetention$', views.saveRetention, name='dbsaveRetention'),
     re_path(r'^fetchBackupLogs$', views.fetchBackupLogs, name='dbfetchBackupLogs'),
+    re_path(r'^backupSingleDatabase$', views.backupSingleDatabase, name='dbbackupSingleDatabase'),
 ]

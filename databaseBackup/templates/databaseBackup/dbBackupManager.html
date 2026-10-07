@@ -741,7 +741,6 @@
                         <th>{% trans "Script" %}</th>
                         <th>{% trans "Daily At" %}</th>
                         <th>{% trans "Enabled" %}</th>
-                        <th style="text-align: right;">{% trans "Actions" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -757,13 +756,6 @@
                         <td style="text-align: center;">
                             <input type="checkbox" class="enable-check" ng-model="job.enabled"
                                    aria-label="Enable {$ job.label $}">
-                        </td>
-                        <td style="text-align: right;">
-                            <button type="button" class="btn-run" ng-click="runJob(job.key)"
-                                    ng-disabled="jobRunning">
-                                <i class="fas" ng-class="jobRunning ? 'fa-spinner fa-spin' : 'fa-play'"></i>
-                                {$ jobRunning && runningJob == job.key ? 'Running…' : 'Run Now' $}
-                            </button>
                         </td>
                     </tr>
                 </tbody>
@@ -844,6 +836,12 @@
                             <td>{$ b.sizeText $}</td>
                             <td>
                                 <div class="actions-cell">
+                                    <button type="button" class="btn-run" ng-show="b.type === 'mariadb'"
+                                            ng-click="backupNow(b)" ng-disabled="jobRunning"
+                                            title="{% trans 'Dump only this database now' %}">
+                                        <i class="fas" ng-class="jobRunning && runningJob == ('single:' + b.database) ? 'fa-spinner fa-spin' : 'fa-play'"></i>
+                                        {$ jobRunning && runningJob == ('single:' + b.database) ? 'Backing up…' : 'Backup Now' $}
+                                    </button>
                                     <a class="btn-download" ng-href="/databasebackup/downloadBackup?file={$ b.path | encodeURIComponent $}">
                                         <i class="fas fa-download"></i> {% trans "Download" %}
                                     </a>

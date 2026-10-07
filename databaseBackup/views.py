@@ -125,6 +125,15 @@ def saveRetention(request):
         return redirect(loadLoginPage)
 
 
+def backupSingleDatabase(request):
+    try:
+        userID = request.session['userID']
+        manager = DBBackupManager()
+        return manager.backupSingleDatabase(userID, json.loads(request.body))
+    except KeyError:
+        return redirect(loadLoginPage)
+
+
 def fetchBackupLogs(request):
     try:
         userID = request.session['userID']
