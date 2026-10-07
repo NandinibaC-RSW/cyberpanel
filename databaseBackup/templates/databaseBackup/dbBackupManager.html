@@ -772,7 +772,7 @@
                 <div class="storage-meta" ng-show="stats.mirror">
                     <span>{% trans "Used" %} {$ stats.mirror.usedText $} / {$ stats.mirror.totalText $}</span>
                     <span ng-show="stats.mirrorCheck && stats.mirrorCheck.state == 'drift'" style="color: #92400e;">
-                        {$ stats.mirrorCheck.missingOnMirror.length $}+ {% trans "files missing on mirror" %}
+                        {$ stats.mirrorCheck.missingOnMirrorCount $} {% trans "file(s) missing on mirror" %}
                     </span>
                     <span ng-show="stats.mirrorCheck && stats.mirrorCheck.state == 'synced'">{% trans "Both storages in sync" %}</span>
                 </div>
