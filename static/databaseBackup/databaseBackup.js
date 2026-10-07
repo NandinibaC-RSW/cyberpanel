@@ -359,8 +359,15 @@ app.controller('dbBackupManagerControl', function ($scope, $http, $timeout) {
                 $scope.jobRunning = response.data.running;
                 $scope.runningJob = response.data.job;
                 if (wasRunning && !response.data.running) {
-                    notify('success', 'Backup job finished',
-                        'The ' + response.data.job + ' job completed. Refreshing data.');
+                    var done = response.data.done;
+                    var label = (response.data.job || '').replace(/^single:/, 'database ');
+                    if (done && done.exit_code !== 0) {
+                        notify('error', 'Backup job failed',
+                            'The ' + label + ' job finished with errors — check Backup Logs.');
+                    } else {
+                        notify('success', 'Backup job finished',
+                            'The ' + label + ' job completed. Refreshing data.');
+                    }
                     $scope.fetchStats();
                     $scope.fetchDatabaseBackups();
                     $scope.fetchSiteBackups();
@@ -373,25 +380,25 @@ app.controller('dbBackupManagerControl', function ($scope, $http, $timeout) {
         });
     }
 
-    $scope.runJob = function (jobKey) {
+    $scope.backupNow = function (item) {
         if ($scope.jobRunning) {
             notify('warning', 'Busy', 'Another backup job is already running.');
             return;
         }
-        if (!window.confirm('Run the ' + jobKey + ' backup job now? It will append to the regular log.')) {
+        if (!window.confirm('Back up only the database "' + item.database + '" now?\n\nThe dump is stored in today\'s backup folder and mirrored.')) {
             return;
         }
-        $http.post('/databasebackup/runBackupJob', {job: jobKey}, csrfConfig)
+        $http.post('/databasebackup/backupSingleDatabase', {database: item.database, type: item.type}, csrfConfig)
             .then(function (response) {
                 if (response.data.status === 1) {
-                    notify('success', 'Started', 'The ' + jobKey + ' job is running. It may take a while for large databases.');
+                    notify('success', 'Started', 'Backing up ' + item.database + '. Large databases can take a while.');
                     $scope.jobRunning = true;
-                    $scope.runningJob = jobKey;
+                    $scope.runningJob = 'single:' + item.database;
                     statusTimer = $timeout(pollJobStatus, 3000);
                 } else {
                     notify('error', 'Error', response.data.error_message);
                 }
-            }, handleError('Could not start the job'));
+            }, handleError('Could not start the backup'));
     };
 
     // ------------------------------------------------------------------
