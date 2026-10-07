@@ -328,7 +328,12 @@ app.controller('dbBackupManagerControl', function ($scope, $http, $timeout) {
             };
         });
         $http.post('/databasebackup/saveCronConfig', {jobs: jobs}, csrfConfig)
-            .then(function () {
+            .then(function (response) {
+                if (response.data.status !== 1) {
+                    $scope.cronLoading = false;
+                    notify('error', 'Error', response.data.error_message);
+                    return;
+                }
                 $http.post('/databasebackup/saveRetention', {days: $scope.retentionDays}, csrfConfig)
                     .then(function (response) {
                         $scope.cronLoading = false;
