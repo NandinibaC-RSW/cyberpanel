@@ -213,7 +213,7 @@
             <div class="icon-wrapper"><i class="fas fa-database"></i></div>
             <span>{% trans "Databases & FTP" %}</span>
         </a>
-        <a href="{% url 'cpHub' 'backups' %}" class="menu-item">
+        <a href="{% if admin %}{% url 'loadDBBackupManager' %}{% else %}{% url 'cpHub' 'backups' %}{% endif %}" class="menu-item">
             <div class="icon-wrapper"><i class="fas fa-shield-halved"></i></div>
             <span>{% trans "Backups" %}</span>
         </a>
