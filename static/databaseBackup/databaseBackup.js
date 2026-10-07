@@ -51,9 +51,6 @@ app.controller('dbBackupManagerControl', function ($scope, $http, $timeout) {
 
     $scope.jobRunning = false;
     $scope.runningJob = '';
-    $scope.uploadType = 'mariadb';
-    $scope.uploading = false;
-    $scope.uploadDrag = false;
 
     var csrfConfig = {
         headers: {'X-CSRFToken': getCookie('csrftoken')}
@@ -395,53 +392,6 @@ app.controller('dbBackupManagerControl', function ($scope, $http, $timeout) {
                     notify('error', 'Error', response.data.error_message);
                 }
             }, handleError('Could not start the job'));
-    };
-
-    // ------------------------------------------------------------------
-    // Upload
-    // ------------------------------------------------------------------
-
-    $scope.uploadBackup = function () {
-        var input = document.getElementById('dbBackupUploadFile');
-        if (!input || !input.files || input.files.length === 0) {
-            notify('warning', 'No file', 'Choose a backup file first.');
-            return;
-        }
-        var formData = new FormData();
-        formData.append('file', input.files[0]);
-        formData.append('type', $scope.uploadType);
-
-        $scope.uploading = true;
-        $http.post('/databasebackup/uploadBackup', formData, {
-            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': undefined},
-            transformRequest: angular.identity
-        }).then(function (response) {
-            $scope.uploading = false;
-            if (response.data.status === 1) {
-                notify('success', 'Uploaded', 'Stored on the backup SSD and mirrored to the primary SSD.');
-                input.value = '';
-                $scope.fetchStats();
-                if ($scope.uploadType === 'sites') {
-                    $scope.fetchSiteBackups();
-                } else {
-                    $scope.fetchDatabaseBackups();
-                }
-            } else {
-                notify('error', 'Upload failed', response.data.error_message);
-            }
-        }, function (response) {
-            $scope.uploading = false;
-            handleError('Upload failed')(response);
-        });
-    };
-
-    $scope.handleDrop = function (event) {
-        event.preventDefault();
-        $scope.uploadDrag = false;
-        if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-            var input = document.getElementById('dbBackupUploadFile');
-            input.files = event.dataTransfer.files;
-        }
     };
 
     // ------------------------------------------------------------------
