@@ -625,19 +625,7 @@
         border-color: var(--accent-color, #5b5fcf);
     }
 
-    .upload-zone {
-        border: 2px dashed var(--border-color, #e8e9ff);
-        border-radius: 12px;
-        padding: 2rem;
-        text-align: center;
-        color: var(--text-secondary, #64748b);
-        transition: all 0.3s ease;
-    }
 
-    .upload-zone.dragover {
-        border-color: var(--accent-color, #5b5fcf);
-        background: var(--bg-hover, #f8f9ff);
-    }
 
     .loading-spinner {
         width: 20px;
@@ -1006,53 +994,6 @@
                         {% trans "Next" %} <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upload -->
-    <div class="main-card">
-        <div class="card-header">
-            <h2 class="card-title">
-                <i class="fas fa-cloud-arrow-up"></i>
-                {% trans "Upload Backup" %}
-            </h2>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-info">
-                <i class="fas fa-circle-info"></i>
-                {% trans "Uploaded files are stored in today's backup folder on the backup SSD and copied to the primary SSD mirror. Database dumps must be .sql.gz; site archives .tar.gz." %}
-            </div>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="form-label">{% trans "Backup Type" %}</label>
-                        <select class="form-control" ng-model="uploadType">
-                            <option value="mariadb">MariaDB (.sql.gz)</option>
-                            <option value="postgresql">PostgreSQL (.sql.gz)</option>
-                            <option value="sites">Site (.tar.gz)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-8">
-                    <div class="form-group">
-                        <label class="form-label">{% trans "Backup File" %}</label>
-                        <div class="upload-zone" ng-class="{'dragover': uploadDrag}"
-                             ondragover="angular.element(this).scope().uploadDrag = true; angular.element(this).scope().$apply();"
-                             ondragleave="angular.element(this).scope().uploadDrag = false; angular.element(this).scope().$apply();"
-                             ondrop="angular.element(this).scope().handleDrop(event); angular.element(this).scope().$apply();">
-                            <i class="fas fa-file-zipper" style="font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.5;"></i>
-                            <div style="margin-bottom: 0.75rem;">{% trans "Drag & drop a file here, or" %}</div>
-                            <input type="file" id="dbBackupUploadFile" style="max-width: 320px; margin: 0 auto;">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div style="text-align: right;">
-                <button type="button" class="btn-primary" ng-click="uploadBackup()" ng-disabled="uploading">
-                    <i class="fas" ng-class="uploading ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'"></i>
-                    {$ uploading ? 'Uploading…' : 'Upload to both storages' $}
-                </button>
             </div>
         </div>
     </div>
