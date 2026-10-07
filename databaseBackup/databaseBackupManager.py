@@ -3,8 +3,10 @@
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
+import tempfile
 from datetime import datetime
 
 from django.http import HttpResponse, FileResponse
@@ -29,8 +31,8 @@ class DBBackupManager:
     CRON_FILE = '/etc/cron.d/database-backups'
     LOG_DIR = '/var/log/backup'
     RETENTION_SCRIPT = '/usr/local/bin/cleanup-old-backups.sh'
-    JOB_STATUS_FILE = '/home/cyberpanel/dbbackup-job.json'
-    JOB_DONE_FILE = '/home/cyberpanel/dbbackup-job-done.json'
+    JOB_STATUS_FILE = '/tmp/cyberpanel-dbbackup-status.json'
+    JOB_DONE_FILE = '/tmp/cyberpanel-dbbackup-done.json'
 
     # cron job key -> (script path, log file)
     JOB_SCRIPTS = {
@@ -84,6 +86,96 @@ class DBBackupManager:
         if bytes_size >= 1024:
             return '%.2f KB' % round(bytes_size / 1024.0, 2)
         return '%s B' % bytes_size
+
+    ###########################################################
+    # Privileged operations
+    #
+    # The panel process may not run as root (staging gunicorn etc.),
+    # but the targets it manages — /usr/local/bin scripts, /etc/cron.d,
+    # /mnt/backup contents — are root-owned. Every privileged operation
+    # therefore tries a direct write first and falls back to
+    # passwordless `sudo -n` when the direct attempt is denied.
+    ###########################################################
+
+    @classmethod
+    def _is_root(cls):
+        return hasattr(os, 'geteuid') and os.geteuid() == 0
+
+    @classmethod
+    def _run_elevated(cls, command):
+        """Run a shell command, retrying under `sudo -n` when the direct
+        run fails (or immediately under sudo for non-root processes).
+        Returns (ok, error_message)."""
+        attempts = []
+        if cls._is_root():
+            attempts.append(command)
+        else:
+            attempts.append(command)
+            attempts.append('sudo -n ' + command)
+        last_error = 'permission denied'
+        for cmd in attempts:
+            try:
+                proc = subprocess.run(['/bin/bash', '-c', cmd],
+                                      capture_output=True, text=True, timeout=180)
+            except subprocess.TimeoutExpired:
+                last_error = 'command timed out: %s' % cmd
+                continue
+            except OSError as msg:
+                last_error = str(msg)
+                continue
+            if proc.returncode == 0:
+                return True, None
+            error = (proc.stderr or proc.stdout or
+                     'exit code %s' % proc.returncode).strip()
+            last_error = error if last_error == 'permission denied' else \
+                '%s; sudo fallback: %s' % (last_error, error)
+        return False, last_error
+
+    @classmethod
+    def _privileged_write(cls, path, content, mode=0o644):
+        """Write content to path; fall back to an elevated install of a
+        temp copy when the direct write is denied. Returns (ok, error)."""
+        direct_error = None
+        try:
+            with open(path, 'w') as target:
+                target.write(content)
+            try:
+                os.chmod(path, mode)
+            except OSError:
+                pass
+            return True, None
+        except OSError as msg:
+            direct_error = str(msg)
+
+        fd, tmp_path = tempfile.mkstemp(prefix='cyberpanel-dbbackup-')
+        try:
+            with os.fdopen(fd, 'w') as tmp_file:
+                tmp_file.write(content)
+            os.chmod(tmp_path, mode)
+            ok, error = cls._run_elevated('install -m %o %s %s' % (
+                mode, shlex.quote(tmp_path), shlex.quote(path)))
+            if ok:
+                return True, None
+            return False, '%s (sudo fallback: %s)' % (direct_error, error)
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+
+    @classmethod
+    def _unlink(cls, path):
+        """Remove a file, falling back to elevated rm when denied."""
+        try:
+            os.unlink(path)
+            return True, None
+        except FileNotFoundError:
+            return True, None
+        except OSError as direct_error:
+            ok, error = cls._run_elevated('rm -f -- %s' % shlex.quote(path))
+            if ok:
+                return True, None
+            return False, '%s; %s' % (direct_error, error)
 
     @classmethod
     def _validateBackupPath(cls, candidate):
@@ -314,20 +406,19 @@ class DBBackupManager:
         real = self._validateBackupPath(data.get('file', ''))
         if real is None:
             return self._deny('Invalid file path.')
-        try:
-            os.unlink(real)
-        except OSError as msg:
-            logging.writeToFile('DBBackupManager delete failed: %s' % str(msg))
-            return self._deny('Could not delete the file on the backup disk.')
+        ok, error = self._unlink(real)
+        if not ok:
+            logging.writeToFile('DBBackupManager delete failed: %s' % error)
+            return self._deny('Could not delete the file on the backup disk: %s' % error)
         # keep both storages consistent
         removed_mirror = False
         twin = self._mirrorTwin(real)
         if twin and os.path.isfile(twin):
-            try:
-                os.unlink(twin)
+            ok, error = self._unlink(twin)
+            if ok:
                 removed_mirror = True
-            except OSError as msg:
-                logging.writeToFile('DBBackupManager mirror delete failed: %s' % str(msg))
+            else:
+                logging.writeToFile('DBBackupManager mirror delete failed: %s' % error)
         return self._json({'status': 1, 'mirrorRemoved': removed_mirror})
 
     ###########################################################
@@ -361,30 +452,42 @@ class DBBackupManager:
         day_dir = datetime.now().strftime('%Y-%m-%d')
         primary_dir = os.path.join(self.BACKUP_BASE, target, day_dir)
         mirror_dir = os.path.join(self.MIRROR_BASE, target, day_dir)
-        try:
-            os.makedirs(primary_dir, exist_ok=True)
-            os.makedirs(mirror_dir, exist_ok=True)
-        except OSError as msg:
-            return self._deny('Cannot create backup folder: %s' % str(msg))
-
         primary_path = os.path.join(primary_dir, name)
-        try:
-            with open(primary_path, 'wb') as dest:
-                for chunk in upload.chunks():
-                    dest.write(chunk)
-            shutil.copyfile(primary_path, os.path.join(mirror_dir, name))
-        except OSError as msg:
-            logging.writeToFile('DBBackupManager upload failed: %s' % str(msg))
-            return self._deny('Could not store the uploaded file: %s' % str(msg))
+        mirror_path = os.path.join(mirror_dir, name)
 
+        fd, staging_path = tempfile.mkstemp(prefix='cyberpanel-dbupload-')
         try:
-            os.chmod(primary_path, 0o640)
-            os.chmod(os.path.join(mirror_dir, name), 0o640)
-        except OSError:
-            pass
+            with os.fdopen(fd, 'wb') as staging:
+                for chunk in upload.chunks():
+                    staging.write(chunk)
+            os.chmod(staging_path, 0o640)
+
+            # fast path: the panel process owns the backup folders
+            try:
+                os.makedirs(primary_dir, exist_ok=True)
+                os.makedirs(mirror_dir, exist_ok=True)
+                shutil.copyfile(staging_path, primary_path)
+                shutil.copyfile(staging_path, mirror_path)
+            except OSError:
+                # fallback: stage in /tmp and install with elevated copy
+                ok, error = self._run_elevated('mkdir -p -- %s %s' % (
+                    shlex.quote(primary_dir), shlex.quote(mirror_dir)))
+                if not ok:
+                    return self._deny('Cannot create backup folders: %s' % error)
+                for dest in (primary_path, mirror_path):
+                    ok, error = self._run_elevated('install -m 644 -- %s %s' % (
+                        shlex.quote(staging_path), shlex.quote(dest)))
+                    if not ok:
+                        return self._deny('Could not store %s: %s' % (
+                            os.path.basename(dest), error))
+        finally:
+            try:
+                os.unlink(staging_path)
+            except OSError:
+                pass
 
         return self._json({'status': 1, 'path': primary_path,
-                           'mirrorPath': os.path.join(mirror_dir, name)})
+                           'mirrorPath': mirror_path})
 
     ###########################################################
     # Run now / job status
@@ -405,16 +508,34 @@ class DBBackupManager:
 
         log_path = os.path.join(self.LOG_DIR, self.JOB_LOGS[job])
         try:
-            os.makedirs(os.path.dirname(self.JOB_STATUS_FILE), exist_ok=True)
             os.makedirs(self.LOG_DIR, exist_ok=True)
-            shell = (
-                '%s >> %s 2>&1; rc=$?; printf \'{"job": "%%s", "exit_code": %%s, '
-                '"finished": "%%s"}\' "%s" "$rc" "$(date +%%s)" > %s'
-                % (script, log_path, job, self.JOB_DONE_FILE)
-            )
-            subprocess.Popen(['/bin/bash', '-c', shell], start_new_session=True,
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             stdin=subprocess.DEVNULL)
+        except OSError:
+            pass  # the elevated run creates it
+        try:
+            if self._is_root():
+                shell = (
+                    '%s >> %s 2>&1; rc=$?; printf \'{"job": "%%s", "exit_code": %%s, '
+                    '"finished": "%%s"}\' "%s" "$rc" "$(date +%%s)" > %s'
+                    % (script, log_path, job, self.JOB_DONE_FILE)
+                )
+                subprocess.Popen(['/bin/bash', '-c', shell], start_new_session=True,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 stdin=subprocess.DEVNULL)
+            else:
+                # non-root panel: the script and its log both live in
+                # root-owned paths, so run the whole wrapper under sudo
+                inner = '%s >> %s 2>&1; rc=$?; printf \'{"job": "%%s", "exit_code": %%s, "finished": "%%s"}\' %s "$rc" "$(date +%%s)" > %s' % (
+                    script, log_path, shlex.quote(job), self.JOB_DONE_FILE)
+                elevated = 'sudo -n /bin/bash -c %s' % shlex.quote(inner)
+                # verify elevation is available before spawning the job
+                ok, error = self._run_elevated('true')
+                if not ok:
+                    return self._deny(
+                        'The panel process lacks permission to run backup jobs. '
+                        'Give it root or passwordless sudo (failed: %s)' % error)
+                subprocess.Popen(['/bin/bash', '-c', elevated], start_new_session=True,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 stdin=subprocess.DEVNULL)
         except BaseException as msg:
             return self._deny('Failed to start job: %s' % str(msg))
 
@@ -481,8 +602,22 @@ class DBBackupManager:
             return self._deny('Only administrators can view the backup schedule.')
         jobs = self._readCronConfig()
         if jobs is None:
-            return self._json({'status': 1, 'configured': False, 'jobs': []})
+            return self._json({'status': 1, 'configured': False,
+                               'jobs': self._defaultCronJobs()})
         return self._json({'status': 1, 'configured': True, 'jobs': jobs})
+
+    @classmethod
+    def _defaultCronJobs(cls):
+        """Sensible schedule shown (and savable) when no cron file exists."""
+        defaults = {'mariadb': ('0', '2'), 'postgresql': ('0', '3'),
+                    'cleanup': ('0', '4'), 'uploads': ('0', '5')}
+        jobs = []
+        for key, script in cls.JOB_SCRIPTS.items():
+            minute, hour = defaults[key]
+            jobs.append({'key': key, 'script': script, 'label': cls.JOB_LABELS[key],
+                         'minute': minute, 'hour': hour, 'enabled': True,
+                         'found': False})
+        return jobs
 
     @classmethod
     def _readCronConfig(cls):
@@ -572,21 +707,15 @@ class DBBackupManager:
         if not changed:
             return self._json({'status': 1, 'changed': False})
 
-        try:
-            tmp_path = self.CRON_FILE + '.cyberpanel.tmp'
-            with open(tmp_path, 'w') as tmp_file:
-                tmp_file.write('\n'.join(new_lines) + '\n')
-            os.replace(tmp_path, self.CRON_FILE)
-            os.chmod(self.CRON_FILE, 0o644)
-        except OSError as msg:
-            logging.writeToFile('DBBackupManager cron save failed: %s' % str(msg))
-            return self._deny('Could not write the cron file: %s' % str(msg))
+        ok, error = self._privileged_write(
+            self.CRON_FILE, '\n'.join(new_lines) + '\n', 0o644)
+        if not ok:
+            logging.writeToFile('DBBackupManager cron save failed: %s' % error)
+            return self._deny('Could not write the cron file: %s' % error)
 
-        try:
-            subprocess.run(['systemctl', 'restart', 'cron'], timeout=30,
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except BaseException:
-            pass
+        ok, error = self._run_elevated('systemctl restart cron')
+        if not ok:
+            logging.writeToFile('DBBackupManager cron restart failed: %s' % error)
 
         return self._json({'status': 1, 'changed': True, 'jobs': self._readCronConfig()})
 
@@ -635,14 +764,12 @@ class DBBackupManager:
         )
         if count == 0:
             return self._deny('RETENTION_DAYS not found in the cleanup script.')
-        try:
-            tmp_path = self.RETENTION_SCRIPT + '.cyberpanel.tmp'
-            with open(tmp_path, 'w') as tmp_file:
-                tmp_file.write(new_content)
-            os.replace(tmp_path, self.RETENTION_SCRIPT)
-            os.chmod(self.RETENTION_SCRIPT, 0o755)
-        except OSError as msg:
-            return self._deny('Could not update the cleanup script: %s' % str(msg))
+        ok, error = self._privileged_write(self.RETENTION_SCRIPT, new_content, 0o755)
+        if not ok:
+            logging.writeToFile('DBBackupManager retention save failed: %s' % error)
+            return self._deny('Could not update the cleanup script: %s. '
+                              'The panel process needs root or passwordless sudo '
+                              'to manage backup scripts.' % error)
         return self._json({'status': 1, 'days': days})
 
     ###########################################################
